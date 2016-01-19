@@ -20,7 +20,7 @@
   },
   "autoload": {
     "files": [
-      "fifsky/Core/helper.php"
+      "src/Very/helper.php"
     ],
     "psr-4": {
       "Very\\": "src/Very/"
