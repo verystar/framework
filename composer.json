@@ -1,0 +1,29 @@
+{
+  "name": "fifsky/very",
+  "description": "The verystar php framework",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "fifsky",
+      "email": "caixudong@verystar.cn"
+    }
+  ],
+  "repositories": [
+    {
+      "type": "git",
+      "url": "git@git.verystar.cn:fifsky/very.git"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "monolog/monolog": "~1.17"
+  },
+  "autoload": {
+    "files": [
+      "fifsky/Core/helper.php"
+    ],
+    "psr-4": {
+      "Very\\": "src/Very/"
+    }
+  }
+}
