@@ -43,9 +43,9 @@ class FStat {
         }
     }
 
-    static public function getInstance() {
+    static public function getInstance($singleton = true) {
         static $_instance = null;
-        return $_instance ?: $_instance = new self;
+        return $_instance && $singleton ? $_instance : $_instance = new self;
     }
 
     /**
