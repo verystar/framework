@@ -108,13 +108,13 @@ function is_page($controller, $action = NULL) {
         }
     }
 
+    unset($request);
     return $has;
 }
 
 //xml转换为array
 function xml_to_array($xml) {
-    $array_data = json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
-    return $array_data;
+    return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
 }
 
 /**
