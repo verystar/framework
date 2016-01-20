@@ -1,15 +1,18 @@
 <?php namespace Very\Library;
 
-    /**
-     * @package       allowHTML
-     * @version       1.0.0
-     * @author        Simon Emery
-     * @copyright (c) 2010 allowHTML
-     * @link          http://allowhtml.com
-     * @license       http://allowhtml.com/download/license
-     * @depends http://www.owasp.org/index.php/Category:OWASP_AntiSamy_Project
-     **/
-//core class
+/**
+ * 过滤html类库
+ * @package       allowHTML
+ * @version       1.0.0
+ * @author        Simon Emery
+ * @copyright (c) 2010 allowHTML
+ * @link          http://allowhtml.com
+ * @license       http://allowhtml.com/download/license
+ * @depends http://www.owasp.org/index.php/Category:OWASP_AntiSamy_Project
+ **/
+
+use DOMDocument;
+
 class AllowHTML {
 
     //charset to use when processing input
@@ -118,6 +121,7 @@ class AllowHTML {
                 $this->allowed_attr['*'] = array();
             }
         }
+        $tags = [];
         //format tags / attributes
         foreach ($this->allowed_tags as $tag) {
             //set tag
@@ -203,7 +207,11 @@ class AllowHTML {
         return trim($output);
     }
 
-    //strip attributes
+    /**
+     * strip attributes
+     * @param     $node DOMDocument;
+     * @param int $level
+     */
     protected function strip_attr($node, $level = 0) {
         //set vars
         static $remove_nodes = array();
@@ -466,7 +474,7 @@ class AllowHTML {
         }
         //create xml object
         if (!$xml && !$xml = @simplexml_load_file(str_replace('\\', '/', dirname(__FILE__)) . "/" . $this->policy_file)) {
-            throw new Exception("Unable to load policy file - " . $this->policy_file);
+            throw new \Exception("Unable to load policy file - " . $this->policy_file);
         }
         //literal rule matches
         if (!$results = $xml->xpath("//" . $routes[$type] . "[@name='" . $name . "']/literal-list/literal")) {

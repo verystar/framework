@@ -50,11 +50,6 @@ class Email {
 
 
     public function __construct() {
-
-        if (self::$smtpCon) {
-            return;
-        }
-
         $config = config('email');
 
         $this->senderName = $this->senderMail = $this->mailUser = $config['smtp_user'];
@@ -63,26 +58,22 @@ class Email {
         $this->timeout = $config['smtp_timeout'];
         if ($this->mailUser == '') {
             $this->error('请配置好邮件登录用户名!');
-            return false;
         }
 
         $this->mailPwd = $config['smtp_pass'];
 
         if ($this->mailPwd == '') {
             $this->error('请配置好邮件登录密码!');
-            return false;
         }
 
         $this->server = $config['smtp_host'];
         if ($this->server == '') {
             $this->error('请配置好邮服务器地址!');
-            return false;
         }
 
         $this->port = $config['smtp_port'];
         if (!is_numeric($this->port)) {
             $this->error('请配置好邮服务器端口!');
-            return false;
         }
 
         $this->useSSL = $config['ssl'];
@@ -94,10 +85,8 @@ class Email {
 
         self::$smtpCon = @fsockopen($server, $this->port, $errno, $errstr, 10);;
 
-
         if (!self::$smtpCon) {
             $this->error('SMTP服务器连接失败:'.$errno . $errstr);
-            return false;
         }
 
 
@@ -114,7 +103,6 @@ class Email {
         if (!$resp) {
             $this->failed = true;
         }
-
     }
 
     static public function getInstance() {
@@ -354,9 +342,9 @@ class Email {
     /*
     邮件时间格式
     */
-    protected function gmtime() {
+    protected function gmtime($format) {
 
-        return (time() - date('Z'));
+        return date($format,(time() - date('Z')));
 
     }
 

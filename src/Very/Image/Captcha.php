@@ -41,10 +41,7 @@ class Captcha {
     private $showBorder;
 //定义验证码图片源
     private $image;
-
-    /**
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
-     */
+    
     public function __construct() {
         $this->textNum    = 4;
         $this->fontSize   = 16;
@@ -61,7 +58,6 @@ class Captcha {
      * 设置图片宽度
      * @param $w
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setWidth($w) {
         $this->width = $w;
@@ -71,7 +67,6 @@ class Captcha {
      * 设置图片高度
      * @param $h
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setHeight($h) {
         $this->height = $h;
@@ -81,7 +76,6 @@ class Captcha {
      * 设置字符个数
      * @param $textN
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setTextNumber($textN) {
         $this->textNum = $textN;
@@ -91,7 +85,6 @@ class Captcha {
      * 设置字符颜色
      * @param $fc
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setFontColor($fc) {
         $this->fontColor = sscanf($fc, '#%2x%2x%2x');
@@ -106,7 +99,6 @@ class Captcha {
      * 设置字体
      * @param $ffUrl
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setFontFamily($ffUrl) {
         $this->fontFamily = $ffUrl;
@@ -116,7 +108,6 @@ class Captcha {
      * 设置字符语言
      * @param $lang
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setTextLang($lang) {
         $this->textLang = $lang;
@@ -126,7 +117,6 @@ class Captcha {
      * 设置图片背景
      * @param $bc
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setBgColor($bc) {
         $this->bgColor = sscanf($bc, '#%2x%2x%2x');
@@ -136,7 +126,6 @@ class Captcha {
      * 设置干扰点数量
      * @param $n
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setNoisePoint($n) {
         $this->noisePoint = $n;
@@ -146,7 +135,6 @@ class Captcha {
      * 设置干扰线数量
      * @param $n
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setNoiseLine($n) {
         $this->noiseLine = $n;
@@ -156,7 +144,6 @@ class Captcha {
      * 设置是否扭曲
      * @param $b
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setDistortion($b) {
         $this->distortion = $b;
@@ -166,7 +153,6 @@ class Captcha {
      * 设置是否显示边框
      * @param $border
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function setShowBorder($border) {
         $this->showBorder = $border;
@@ -174,7 +160,6 @@ class Captcha {
 
     /**
      * 初始化验证码图片
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function initImage() {
 
@@ -202,7 +187,6 @@ class Captcha {
      * 产生随机字符
      * @param $type
      *
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      * @return string
      */
     public function randText($type) {
@@ -226,7 +210,6 @@ class Captcha {
 
     /**
      * 输出文字到验证码
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function createText() {
         $textArray         = explode(',', $this->randText($this->textLang));
@@ -253,7 +236,6 @@ class Captcha {
 
     /**
      * 生成干扰点
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function createNoisePoint() {
         for ($i = 0; $i < $this->noisePoint; $i++) {
@@ -266,7 +248,6 @@ class Captcha {
 
     /**
      * 产生干扰线
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function createNoiseLine() {
         for ($i = 0; $i < $this->noiseLine; $i++) {
@@ -277,7 +258,6 @@ class Captcha {
 
     /**
      * 扭曲文字
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
     public function distortionText() {
         $this->distortionImage = imagecreatetruecolor($this->width, $this->height);
@@ -293,7 +273,6 @@ class Captcha {
 
     /**
      * 生成验证码图片
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      * @return mixed
      */
     public function createImage() {
@@ -317,10 +296,9 @@ class Captcha {
 
 }
 
-
-
-/*
-
+/**
+ * example
+ *
 $token       = isset($_GET['token']) ? trim($_GET['token']) : '';
 $width      = isset($_GET['width']) ? (int)$_GET['width'] : 0;
 $height     = isset($_GET['height']) ? (int)$_GET['height'] : 0;

@@ -212,17 +212,6 @@ function rand_sample($str, $prob = 100) {
     return $rt == 8 ? $str : NULL;
 }
 
-// array_diff's bug for PHP5.2.6-5.3.3
-function my_array_diff($a1, $a2) {
-    $a2 = array_flip((array)$a2);
-    foreach ((array)$a1 as $key => $item) {
-        if (isset($a2[$item])) {
-            unset($a1[$key]);
-        }
-    }
-    return $a1;
-}
-
 //去除空格判断空
 function trim_empty($str, $is_zh = false) {
     $str = $is_zh ? trim_space($str) : trim($str);
@@ -629,8 +618,7 @@ function required_params() {
  *
  * @return array
  */
-function filter_array_empty_value($arr) {
-
+function filter_empty($arr) {
     return array_filter($arr, function ($val) {
         if (is_bool($val) || is_array($val)) {
             //此处之所以做出这样的判断因为trim对false 和 true返回值完全不同
@@ -639,17 +627,6 @@ function filter_array_empty_value($arr) {
 
         return ($val !== '' && $val !== NULL && strlen(trim($val)) > 0);
     });
-}
-
-/**
- * 别名
- *
- * @param $arr
- *
- * @return array
- */
-function filter_empty($arr) {
-    return filter_array_empty_value($arr);
 }
 
 /**
