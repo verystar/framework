@@ -18,6 +18,11 @@ class Connection {
         return self::$instances;
     }
 
+    /**
+     * @param $db
+     *
+     * @return MysqlConnection
+     */
     static public function getInstance($db) {
         if (!isset(self::$instances[$db])) {
             $config = config('db', $db);
