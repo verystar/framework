@@ -53,6 +53,70 @@ function resource_url($var = NULL, $url_type = 'resource_url') {
     }
 }
 
+//获取request_uri
+function request_uri() {
+    if (isset($_SERVER['REQUEST_URI'])) {
+        $uri = $_SERVER['REQUEST_URI'];
+    } else {
+        if (isset($_SERVER['argv'])) {
+            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['argv'][0];
+        } else {
+            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'];
+        }
+    }
+    return $uri;
+}
+
+/**
+ * 构建URL
+ * @param array $add_params 添加的参数
+ * @param array $del_params 删除的参数
+ *
+ * @return string
+ */
+function make_url($add_params = [], $del_params = []) {
+    $uri   = request_uri();
+    $de    = strpos('?', $uri) === false ? '?' : '&';
+    $query = parse_url($uri, PHP_URL_QUERY);
+
+    parse_str($query, $params);
+    $params = array_merge($params, $add_params);
+    foreach ($params as $k => $v) {
+        if (in_array($k, $del_params)) {
+            unset($params[$k]);
+        }
+    }
+    $uri = parse_url($uri, PHP_URL_PATH) . ($params ? $de . http_build_query($params) : '');
+    return site_url($uri);
+}
+
+//判断是否为某个页面
+function is_page($controller, $action = NULL) {
+    $request    = request();
+    $has        = false;
+    $controller = is_array($controller) ? $controller : [$controller];
+
+    if (in_array($request->getControllerName(), $controller)) {
+        $has = true;
+        if ($action !== NULL) {
+            $action = is_array($action) ? $action : [$action];
+            if (in_array($request->getActionName(), $action)) {
+                $has = true;
+            } else {
+                $has = false;
+            }
+        }
+    }
+
+    return $has;
+}
+
+//xml转换为array
+function xml_to_array($xml) {
+    $array_data = json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
+    return $array_data;
+}
+
 /**
  * 调试函数一律禁止在线上输出
  * @return bool
@@ -371,20 +435,6 @@ function set_status_header($code = 200, $text = '') {
             header("HTTP/1.1 {$code} {$text}", TRUE, $code);
         }
     }
-}
-
-//获取request_uri
-function request_uri() {
-    if (isset($_SERVER['REQUEST_URI'])) {
-        $uri = $_SERVER['REQUEST_URI'];
-    } else {
-        if (isset($_SERVER['argv'])) {
-            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['argv'][0];
-        } else {
-            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'];
-        }
-    }
-    return $uri;
 }
 
 /**
