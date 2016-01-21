@@ -586,6 +586,8 @@ function show_human_time($timestamp, $format = 'Y-m-d H:i') {
 }
 
 function is_utf8($string) {
+    //可以使用mb_detect_encoding($string,"UTF-8")替代
+
     return preg_match('%^(?:
        [\x09\x0A\x0D\x20-\x7E]              # ASCII
        | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte

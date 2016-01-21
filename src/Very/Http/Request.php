@@ -66,6 +66,19 @@ class Request {
         }
     }
 
+    public function put($key = null, $default = null) {
+        parse_str(file_get_contents("php://input"), $_PUT);
+        if (empty($key)) {
+            return isset($_PUT) ? $_PUT : null;
+        } else {
+            return $this->fetchArray($_PUT, $key, $default);
+        }
+    }
+
+    public function del($key) {
+        parse_str(file_get_contents("php://input"), $_DEL);
+        return $this->fetchArray($_DEL, $key);
+    }
 
     public function isRequest($method) {
         $request_method = $_SERVER['REQUEST_METHOD'];

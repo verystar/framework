@@ -10,7 +10,7 @@ use Very\Database\Connection;
 use Very\Database\Pager;
 use Very\Cache\Redis;
 
-class Model {
+abstract class Model {
     public $use_db = 'default';
     public $use_redis = 'default';
 

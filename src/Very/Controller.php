@@ -5,7 +5,7 @@
  * Date: 15/2/16 下午4:18
  */
 
-class Controller {
+abstract class Controller {
 
     public function __call($fun, $arg) {
         throw new Exception($fun . 'Action method not found file in: ' . request()->getControllerName() . 'Controller', Exception::ERR_NOTFOUND_ACTION);
