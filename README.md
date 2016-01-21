@@ -1,9 +1,9 @@
-#The Verystar php framework
+# The Verystar php framework
 
-##说明
-这是一个简单的遵循PSR-4的框架，借鉴了Laravel的DI思想，目前为了兼容老的项目代码精简了Laravel的设计，后续会逐步的完善
+## 说明
+这是一个简单的遵循PSR-4的框架，借鉴了Laravel的DI思想，采用了优秀的开源组件(symfony,monolog)设计的轻量级MVC框架，目前为了兼容老的项目代码精简了Laravel的设计，后续会逐步的完善
 
-##Install
+## Install
 
 你可以使用composer来安装框架，创建composer.json文件，内容如下：
 
@@ -35,7 +35,7 @@
 
 执行`composer install`来安装，然后引入include PATH . '/vendor/autoload.php'
 
-##待完善功能
+## 待完善功能
 
 - Logger支持多种记录，系统日志记录
 - Redis主从配置在twemproxy代理下的根据本地IP区分配置支持
@@ -45,6 +45,6 @@
 - Email考虑采用swiftmailer替代
 - Process支持，直接采用symfony组件
 
-##待开发功能
+## 待开发功能
 
 - Event事件监听模型开发
