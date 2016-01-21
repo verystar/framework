@@ -1,5 +1,6 @@
 <?php namespace Very\Encryption;
 /**
+ * 纯数字加密算法
  * Created by PhpStorm.
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/9/30 下午2:31
