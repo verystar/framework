@@ -48,3 +48,11 @@
 ## 待开发功能
 
 - Event事件监听模型开发
+
+## 测试
+
+```
+phpunit --bootstrap tests/bootstrap.php tests
+```
+
+> 目前测试文档还没有来得及编写，欢迎补充测试文档
