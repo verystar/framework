@@ -207,7 +207,12 @@ class PDOConnection extends PDO {
         }
 
         $sql = "delete from {$table} where $where";
-        return $this->execute($sql, $params);
+        $ret = $this->execute($sql, $params);
+
+        if ($ret->errorCode() != '00000') {
+            return false;
+        }
+        return $ret;
     }
 
     public function getConnTime() {
