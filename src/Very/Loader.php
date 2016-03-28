@@ -58,22 +58,6 @@ class Loader {
                 $file = app('path.models') . substr($class_name, 0, -5);
                 break;
             }
-
-            $type = substr($class_name, -10);
-            if ($type === "controller") {
-                if (app('controller.namespace')) {
-                    $len                  = strlen(app('controller.namespace'));
-                    $class_name_namespace = substr($class_name, 0, $len);
-
-                    if ($class_name_namespace == app('controller.namespace')) {
-                        $class_name = substr($class_name, $len + 1);
-                    }
-                }
-
-                $file = app('path.controllers') . substr($class_name, 0, -10);
-                break;
-            }
-
         } while (0);
 
         if ($file) {
@@ -98,43 +82,6 @@ class Loader {
         if (!isset($instances[$path . $class_name])) {
             self::import($path . $class_name . '.php');
         }
-    }
-
-    /**
-     * 加载控制器
-     * @return mixed
-     * @throws Exception
-     */
-    public function controller() {
-
-        $classname = request()->getControllerName();
-        $classname = strtolower($classname . 'Controller');
-        $classname = strtolower(str_replace("/", "\\", $classname));
-
-        if (app('controller.namespace')) {
-            $classname = '\\' . app('controller.namespace') . '\\' . $classname;
-        }
-
-        $params = func_get_args();
-
-        static $instances = array();
-
-        if (!isset($instances[$classname])) {
-
-            if (class_exists($classname)) {
-
-                if ($params) {
-                    //带参数的控制层构造函数实例化需要用反射API实例化
-                    $class                 = new \ReflectionClass($classname);
-                    $instances[$classname] = $class->newInstanceArgs($params);
-                } else {
-                    $instances[$classname] = new $classname();
-                }
-            } else {
-                throw new Exception('Controller ' . $classname . ' not found.', Exception::ERR_NOTFOUND_CONTROLLER);
-            }
-        }
-        return $instances[$classname];
     }
 
     /**

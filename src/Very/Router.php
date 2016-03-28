@@ -42,7 +42,7 @@ class Router {
                 //目前仅仅简单的实现第一段为controller第二段为action，其他的都不考虑
                 if ($count_params == 1) {
                     if (preg_match('/([a-zA-Z]\w*)/', $params[0])) {
-                        $controller = config('app', 'default_controller', 'index');
+                        $controller = $default_controller;
                         $action     = $params[0];
                     } else {
                         $controller = 'error';
@@ -83,24 +83,22 @@ class Router {
         request()->setControllerName($controller);
         request()->setActionName($action);
 
-        try {
+        $controller_namespace = app('controller.namespace') ? '\\' . app('controller.namespace') : '\\';
 
-            $controllername = strtolower($controller . 'Controller');
-            $controllername = strtolower(str_replace("/", "\\", $controllername));
-            if (app('controller.namespace')) {
-                $controllername = '\\' . app('controller.namespace') . '\\' . $controllername;
-            }
+        try {
+            $controllername = implode('/', array_map('ucfirst', explode('/', $controller))) . 'Controller';
+            $controllername = str_replace("/", "\\", $controllername);
+            $controllername = $controller_namespace . '\\Controllers\\' . $controllername;
 
             if (!method_exists($controllername, $action . 'Action')) {
                 throw new Exception($action . 'Action method not found in ' . $controllername, Exception::ERR_NOTFOUND_ACTION);
             }
 
-            app('loader')->controller()->{$action . 'Action'}();
+            $controller = new $controllername;
+            $controller->{$action . 'Action'}();
         } catch (Exception $e) {
-            request()->setControllerName('error');
-            request()->setActionName('error');
-
-            app('loader')->controller()->errorAction($e);
+            $excption   = new  $controller_namespace . '\\Exceptions\\Handler';
+            $excption->render($e);
         }
     }
 }

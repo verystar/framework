@@ -32,14 +32,17 @@ class FStat {
             $this->db_prefix    = config('fstat', 'db_prefix');
             $this->redis_config = config('fstat', 'redis_config');
             $this->environ      = config('fstat', 'environ');
+        }
+    }
 
-            try {
-                $this->redis  = new Redis();
-                $redis_config = $this->redis_config[$this->environ];
-                $this->redis->connect($redis_config['host'], $redis_config['port'], $redis_config['timeout']);
-            } catch (RedisException $e) {
-                //die($e->getMessage());
-            }
+
+    private function connect() {
+        try {
+            $this->redis  = new Redis();
+            $redis_config = $this->redis_config[$this->environ];
+            $this->redis->connect($redis_config['host'], $redis_config['port'], $redis_config['timeout']);
+        } catch (RedisException $e) {
+            //die($e->getMessage());
         }
     }
 
@@ -105,10 +108,19 @@ class FStat {
     }
 
     public function lpushLog($data) {
-        try {
-            $data = json_encode($data);
-            $this->redis->lPush('__stat__', $data);
-        } catch (RedisException $e) {
+        for ($i = 0; $i < 2; $i++) {
+            try {
+                $data = json_encode($data);
+                $this->redis->lPush('__stat__', $data);
+            } catch (RedisException $e) {
+                //如果redis断开了连接则需要重新连接执行
+                if (strpos($e->getMessage(), 'Redis server went away') !== false) {
+                    $this->connect();
+                    continue;
+                }
+            }
+
+            break;
         }
     }
 
@@ -118,16 +130,27 @@ class FStat {
         if (!$this->is_stat) {
             return false;
         }
-        try {
-            $redis = $this->redis->multi(Redis::PIPELINE);
 
-            foreach ($this->data as $data) {
-                $data = json_encode($data);
-                $redis->rPush('__stat__', $data);
+        for ($i = 0; $i < 2; $i++) {
+
+            try {
+                $redis = $this->redis->multi(Redis::PIPELINE);
+
+                foreach ($this->data as $data) {
+                    $data = json_encode($data);
+                    $redis->rPush('__stat__', $data);
+                }
+                $redis->exec();
+                $this->data = [];
+            } catch (RedisException $e) {
+                //如果redis断开了连接则需要重新连接执行
+                if (strpos($e->getMessage(), 'Redis server went away') !== false) {
+                    $this->connect();
+                    continue;
+                }
             }
-            $redis->exec();
-            $this->data = [];
-        } catch (RedisException $e) {
+
+            break;
         }
     }
 
@@ -275,7 +298,7 @@ class FStat {
         $start_time = $add_time . ' 00:00:00';
         $end_time   = $add_time . ' 23:59:59';
 
-        $sql = "select sum(num) as num,v1,v2,md5_v2 from {$db_prefix}stat where add_time BETWEEN :start_time and :end_time group by md5_v2";
+        $sql      = "select sum(num) as num,v1,v2,md5_v2 from {$db_prefix}stat where add_time BETWEEN :start_time and :end_time group by md5_v2";
         $hour_arr = $this->db()->getAll($sql, array('start_time' => $start_time, 'end_time' => $end_time));
 
         $sql1   = "update {$db_prefix}stat_day set num = :num where md5 = :md5";
