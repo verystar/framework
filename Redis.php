@@ -55,15 +55,8 @@ class Redis {
 
 
     private function connect($func) {
-        $func     = strtolower($func);
-        $node_num = count($this->config);
-
-        if ($node_num > 1) {
-            //随机
-            $config = $this->config[array_rand($this->config)];
-        } else {
-            $config = array_pop($this->config);
-        }
+        $func   = strtolower($func);
+        $config = $this->config[array_rand($this->config)];
 
         if (!$config) {
             throw new \RuntimeException('redis config error.');
