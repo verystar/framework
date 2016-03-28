@@ -32,6 +32,8 @@ class FStat {
             $this->db_prefix    = config('fstat', 'db_prefix');
             $this->redis_config = config('fstat', 'redis_config');
             $this->environ      = config('fstat', 'environ');
+
+            $this->connect();
         }
     }
 
