@@ -83,23 +83,43 @@ class Router {
         request()->setControllerName($controller);
         request()->setActionName($action);
 
-        $controller_namespace = app('controller.namespace') ? '\\' . app('controller.namespace') : '\\';
-
         try {
-            $controllername = implode('/', array_map('ucfirst', explode('/', $controller))) . 'Controller';
-            $controllername = str_replace("/", "\\", $controllername);
-            $controllername = $controller_namespace . '\\Controllers\\' . $controllername;
-
-            if (!method_exists($controllername, $action . 'Action')) {
-                throw new Exception($action . 'Action method not found in ' . $controllername, Exception::ERR_NOTFOUND_ACTION);
-            }
-
-            $controller = new $controllername;
-            $controller->{$action . 'Action'}();
+            $this->run($controller, $action);
         } catch (Exception $e) {
-            $controllername = $controller_namespace . '\\Exceptions\\Handler';
+            $controllername = $this->getNamespace() . '\\Exceptions\\Handler';
             $excption       = new  $controllername;
             $excption->render($e);
         }
+    }
+
+    public function run($controller, $action, $params = []) {
+        $controllername = $this->getControllerClassName($controller);
+
+        if (!method_exists($controllername, $action . 'Action')) {
+            throw new Exception($action . 'Action method not found in ' . $controllername, Exception::ERR_NOTFOUND_ACTION);
+        }
+
+        if (count($params) > 2) {
+            //带参数的控制层构造函数实例化需要用反射API实例化
+            $obj = new \ReflectionClass($controllername);
+            $obj->newInstanceArgs(array_splice($params, 2));
+        } else {
+            $obj = new $controllername();
+        }
+
+        $obj->{$action . 'Action'}();
+    }
+
+    private function getNamespace() {
+        return app('controller.namespace') ? '\\' . app('controller.namespace') : '\\';
+    }
+
+    private function getControllerClassName($controller) {
+        $controller_namespace = $this->getNamespace();
+        $controllername       = implode('/', array_map('ucfirst', explode('/', $controller))) . 'Controller';
+        $controllername       = str_replace("/", "\\", $controllername);
+        $controllername       = $controller_namespace . '\\Controllers\\' . $controllername;
+
+        return $controllername;
     }
 }

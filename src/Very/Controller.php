@@ -16,21 +16,11 @@ abstract class Controller {
      *
      * @param $controller
      * @param $action
+     *
+     * @throws Exception
      */
     protected function forward($controller, $action) {
         $params = func_get_args();
-
-        if (count($params) >1 ) {
-            request()->setControllerName($params[0]);
-            request()->setActionName($params[1]);
-
-        } else {
-            request()->setControllerName('error');
-            request()->setActionName('error');
-        }
-
-        $loader = app('loader');
-        $controller_instance  = call_user_func_array([$loader,'controller'],array_splice($params,2));
-        $controller_instance->{$action.'Action'}();
+        app('router')->run($controller, $action, array_splice($params, 2));
     }
 }
