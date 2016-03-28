@@ -26,6 +26,8 @@ class Redis {
     public $is_stat = false;
 
     private $config;//配置
+    private $ip;
+    private $port;
 
     /**
      * @param $node
@@ -51,30 +53,16 @@ class Redis {
         return $this;
     }
 
-    /**
-     * @param $func
-     * @param $params
-     *
-     * @return bool|mixed
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
-     */
-    public function __call($func, $params) {
-        $func = strtolower($func);
-        //之所以不采用随机选取一个代理的原因，因为发现从A服务器访问B服务器代理可能产生超时或者网络不稳定因素导致的失败
-//        $node = NULL;
-//        if(VIP){
-//            $hostname = explode('-',VIP);
-//            $ip = $hostname ? explode('.',array_pop($hostname)) : array();
-//            $node = isset($ip[0]) && is_numeric($ip[0]) ? $ip[0] : NULL;
-//        }
 
-        $node = 1;
+    private function connect($func) {
+        $func     = strtolower($func);
+        $node_num = count($this->config);
 
-        if ($node === NULL || !isset($this->config[$node])) {
+        if ($node_num > 1) {
             //随机
             $config = $this->config[array_rand($this->config)];
         } else {
-            $config = $this->config[$node];
+            $config = array_pop($this->config);
         }
 
         if (!$config) {
@@ -97,10 +85,14 @@ class Redis {
 
         //保持唯一连接
         list($ip, $port) = explode(':', $server);
+
+        $this->ip   = $ip;
+        $this->port = $port;
+
         static $redis_cache = array();
 
         if ($this->is_stat) {
-            $_stat = FStat::getInstance();;
+            $_stat = FStat::getInstance();
         }
 
         if (!isset($redis_cache[$server])) {
@@ -119,19 +111,44 @@ class Redis {
                 }
                 throw new \RuntimeException('redis connect error:' . $e->getMessage());
             }
+
         }
 
-        try {
-            $_start_time = microtime(true);
-            $ret         = call_user_func_array(array($redis_cache[$server], $func), $params);
-            if ($this->is_stat) {
-                $_stat->set(1, 'Redis执行效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), "{$ip}:{$port}({$func})");
+        return $redis_cache[$server];
+    }
+
+    /**
+     * @param $func
+     * @param $params
+     *
+     * @return bool|mixed
+     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
+     */
+    public function __call($func, $params) {
+        if ($this->is_stat) {
+            $_stat = FStat::getInstance();
+        }
+
+        $redis_server = $this->connect($func);
+        for ($i = 0; $i < 2; $i++) {
+
+            try {
+                $_start_time = microtime(true);
+                $ret         = call_user_func_array(array($redis_server, $func), $params);
+                if ($this->is_stat) {
+                    $_stat->set(1, 'Redis执行效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), "{$this->ip}:{$this->port}({$func})");
+                }
+            } catch (\RedisException $e) {
+                if ($this->is_stat) {
+                    $_stat->set(1, 'BUG错误', 'Redis执行错误', "{$this->ip}:{$this->port}", $e->getMessage(), 0.1);
+                }
+                if (strpos($e->getMessage(), 'Redis server went away') !== false) {
+                    $redis_server = $this->connect($func);
+                    continue;
+                } else {
+                    return false;
+                }
             }
-        } catch (\RedisException $e) {
-            if ($this->is_stat) {
-                $_stat->set(1, 'BUG错误', 'Redis执行错误', "{$ip}:{$port}", $e->getMessage(), 0.1);
-            }
-            return false;
         }
 
         return $ret;
