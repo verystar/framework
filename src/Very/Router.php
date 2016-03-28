@@ -97,7 +97,8 @@ class Router {
             $controller = new $controllername;
             $controller->{$action . 'Action'}();
         } catch (Exception $e) {
-            $excption   = new  $controller_namespace . '\\Exceptions\\Handler';
+            $controllername = $controller_namespace . '\\Exceptions\\Handler';
+            $excption       = new  $controllername;
             $excption->render($e);
         }
     }
