@@ -110,6 +110,13 @@ class Redis {
         return $redis_cache[$server];
     }
 
+    private function isConnectionLost(\RedisException $e) {
+        if (strpos($e->getMessage(), 'Redis server went away') !== false || strpos($e->getMessage(), 'Connection lost') !== false) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * @param $func
      * @param $params
@@ -135,7 +142,7 @@ class Redis {
                 if ($this->is_stat) {
                     $_stat->set(1, 'BUG错误', 'Redis执行错误', "{$this->ip}:{$this->port}", $e->getMessage(), 0.1);
                 }
-                if (strpos($e->getMessage(), 'Redis server went away') !== false) {
+                if ($this->isConnectionLost($e)) {
                     $redis_server = $this->connect($func);
                     continue;
                 } else {

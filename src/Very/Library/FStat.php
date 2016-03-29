@@ -109,6 +109,13 @@ class FStat {
         }
     }
 
+    private function isConnectionLost(\RedisException $e) {
+        if (strpos($e->getMessage(), 'Redis server went away') !== false || strpos($e->getMessage(), 'Connection lost') !== false) {
+            return true;
+        }
+        return false;
+    }
+
     public function lpushLog($data) {
         for ($i = 0; $i < 2; $i++) {
             try {
@@ -116,7 +123,7 @@ class FStat {
                 $this->redis->lPush('__stat__', $data);
             } catch (RedisException $e) {
                 //如果redis断开了连接则需要重新连接执行
-                if (strpos($e->getMessage(), 'Redis server went away') !== false) {
+                if ($this->isConnectionLost($e)) {
                     $this->connect();
                     continue;
                 }
@@ -146,7 +153,7 @@ class FStat {
                 $this->data = [];
             } catch (RedisException $e) {
                 //如果redis断开了连接则需要重新连接执行
-                if (strpos($e->getMessage(), 'Redis server went away') !== false) {
+                if ($this->isConnectionLost($e)) {
                     $this->connect();
                     continue;
                 }
