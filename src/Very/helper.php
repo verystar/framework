@@ -130,7 +130,7 @@ function e() {
     $params = func_get_args();
     foreach ($params as $value) {
         if (is_array($value) || is_object($value)) {
-            if (isCli()) {
+            if (is_cli()) {
                 print_r($value);
                 echo "\n";
             } else {
@@ -138,7 +138,7 @@ function e() {
                 echo '<br/>';
             }
         } else {
-            if (isCli()) {
+            if (is_cli()) {
                 echo $value, "\n";
             } else {
                 echo $value, '<br/>';
@@ -168,7 +168,7 @@ function return_ip() {
     return $ip;
 }
 
-function isCli() {
+function is_cli() {
     return PHP_SAPI == 'cli' && empty($_SERVER['REMOTE_ADDR']);
 }
 
@@ -188,7 +188,7 @@ function p($info, $exit = true) {
     $debug  = debug_backtrace();
     $output = '';
 
-    if (isCli()) {
+    if (is_cli()) {
         foreach ($debug as $v) {
             $output .= 'File:' . $v['file'];
             $output .= 'Line:' . $v['line'];
@@ -765,7 +765,7 @@ if (!function_exists('app')) {
             return app()->make($make);
         }
 
-        return Very\Application::getInstance();
+        return \Very\Application::getInstance();
     }
 }
 
@@ -821,7 +821,7 @@ if (!function_exists('logger')) {
      * @param  string $message
      * @param  array  $context
      *
-     * @return Very\Logger
+     * @return \Very\Logger
      */
     function logger($message = null, array $context = array()) {
         if (is_null($message))
@@ -847,7 +847,7 @@ if (!function_exists('cookie')) {
      */
     function cookie($name = null, $value = null, $time = 86400, $path = '/', $domain = null, $secure = false, $httpOnly = true) {
         /**
-         * @var $cookie Very\Http\Cookie
+         * @var $cookie \Very\Http\Cookie
          */
         $cookie = app('cookie');
 
@@ -873,7 +873,7 @@ if (!function_exists('session')) {
      */
     function session($key = null, $default = null) {
         /**
-         * @var $session Very\Http\Session
+         * @var $session \Very\Http\Session
          */
         $session = app('session');
 
@@ -890,7 +890,7 @@ if (!function_exists('session')) {
 if (!function_exists('request')) {
     /**
      *
-     * @return Very\Http\Request
+     * @return \Very\Http\Request
      */
     function request() {
         return app('request');
@@ -899,7 +899,7 @@ if (!function_exists('request')) {
 
 if (!function_exists('response')) {
     /**
-     * @return Very\Http\Response
+     * @return \Very\Http\Response
      */
     function response() {
         return app('response');
@@ -951,7 +951,7 @@ if (!function_exists('model')) {
             if (class_exists($classname)) {
                 $instances[$classname] = new $classname;
             } else {
-                throw new Exception('Model ' . $classname . ' not found.', Very\Exception::ERR_NOTFOUND_MODEL);
+                throw new Exception('Model ' . $classname . ' not found.', \Very\Exception::ERR_NOTFOUND_MODEL);
             }
         }
         return $instances[$classname];
