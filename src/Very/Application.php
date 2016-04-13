@@ -83,9 +83,6 @@ class Application implements ArrayAccess {
             return $env;
         });
 
-        $env = new Loader();
-        $this->singleton('loader', $env);
-
         $this->setInstance($this);
     }
 

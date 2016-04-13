@@ -69,6 +69,7 @@ function request_uri() {
 
 /**
  * 构建URL
+ *
  * @param array $add_params 添加的参数
  * @param array $del_params 删除的参数
  *
@@ -801,17 +802,6 @@ if (!function_exists('logger')) {
     }
 }
 
-if (!function_exists('model')) {
-    /**
-     * @param  string $model
-     *
-     * @return Object
-     */
-    function model($model = null) {
-        return app('loader')->model($model);
-    }
-}
-
 if (!function_exists('cookie')) {
     /**
      * Create a new cookie instance.
@@ -888,8 +878,47 @@ if (!function_exists('response')) {
 }
 
 if (!function_exists('helper')) {
-    function helper($helper) {
-        return app('loader')->helper($helper);
+    function helper($file_name) {
+        $path       = app('path.helpers');
+        $file       = $path . $file_name . '.php';
+        static $import_files = [];
+
+        if (!isset($import_files[$file])) {
+            if (is_file($file)) {
+                require $file;
+                $import_files[$file] = 1;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
+if (!function_exists('model')) {
+    /**
+     * model加载辅助函数，如model('user')对应的就是加载Model\User
+     *
+     * @param $model
+     *
+     * @return mixed
+     * @throws Exception
+     */
+    function model($model) {
+        $classname = implode('/', array_map('ucfirst', explode('/', $model)));
+        $classname = '\\Model\\' . str_replace("/", "\\", $classname);
+        static $instances = array();
+
+        if (!isset($instances[$classname])) {
+            if (class_exists($classname)) {
+                $instances[$classname] = new $classname;
+            } else {
+                throw new Exception('Model ' . $classname . ' not found.', Very\Exception::ERR_NOTFOUND_MODEL);
+            }
+        }
+        return $instances[$classname];
     }
 }
 
