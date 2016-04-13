@@ -6,9 +6,6 @@
  */
 
 class Loader {
-
-    private static $is_register = false;
-
     /**
      * 替代require_once
      *
@@ -30,40 +27,6 @@ class Loader {
         }
 
         return true;
-    }
-
-    public function register($autoload = NULL) {
-        if (!self::$is_register) {
-            $autoload = $autoload === NULL ? array($this, 'autoload') : $autoload;
-            spl_autoload_register($autoload);
-            self::$is_register = true;
-        }
-    }
-
-    public function unregister($autoload = NULL) {
-        if (self::$is_register) {
-            $autoload = $autoload === NULL ? array($this, 'autoload') : $autoload;
-            spl_autoload_unregister($autoload);
-        }
-    }
-
-    protected function autoload($class_name) {
-
-        $class_name = ltrim(strtolower(str_replace("\\", "/", $class_name)), '/');
-
-        $file = '';
-        do {
-            $type = substr($class_name, -5);
-            if ($type === "model") {
-                $file = app('path.models') . substr($class_name, 0, -5);
-                break;
-            }
-        } while (0);
-
-        if ($file) {
-            $file = $file . ".php";
-            self::import($file);
-        }
     }
 
     /**
@@ -93,9 +56,8 @@ class Loader {
      * @throws Exception
      */
     public function model($model) {
-
-        $classname = strtolower($model . 'Model');
-        $classname = strtolower(str_replace("/", "\\", $classname));
+        $classname = implode('/', array_map('ucfirst', explode('/', $model))) . 'Model';
+        $classname = '\\Models\\' . str_replace("/", "\\", $classname);
 
         static $instances = array();
 

@@ -84,8 +84,6 @@ class Application implements ArrayAccess {
         });
 
         $env = new Loader();
-        //注册controller,model的的加载方式
-        $env->register();
         $this->singleton('loader', $env);
 
         $this->setInstance($this);
@@ -185,7 +183,7 @@ class Application implements ArrayAccess {
         $this['path']     = dirname(__DIR__) . DIRECTORY_SEPARATOR;
         $this['path.app'] = $app_path;
 
-        foreach (['config', 'views', 'models', 'modules', 'controllers', 'helpers', 'logs'] as $v) {
+        foreach (['config', 'views', 'modules', 'helpers', 'logs'] as $v) {
             $this['path.' . $v] = realpath($app_path . '/' . $v) . DIRECTORY_SEPARATOR;
         }
         return $this;
