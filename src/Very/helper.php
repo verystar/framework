@@ -843,7 +843,7 @@ if (!function_exists('helper')) {
 
 if (!function_exists('model')) {
     /**
-     * model加载辅助函数，如model('user')对应的就是加载Model\UserModel
+     * model加载辅助函数，如model('user')对应的就是加载Model\User
      *
      * @param $model
      *
