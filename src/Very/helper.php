@@ -907,8 +907,9 @@ if (!function_exists('model')) {
      * @throws Exception
      */
     function model($model) {
+
         $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-        $classname = '\\Model\\' . str_replace("/", "\\", $classname). 'Model';
+        $classname = '\\Model\\' . str_replace("/", "\\", $classname);
         static $instances = array();
 
         if (!isset($instances[$classname])) {

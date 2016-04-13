@@ -59,9 +59,11 @@ abstract class Model {
      */
     public function singleton() {
         $model = get_called_class();
-        if (strtolower(substr($model, -5)) === 'model') {
-            $model = substr($model, 0, -5);
+        $tmp = array_map('strtolower', explode('\\', $model));
+        if ($tmp[0] === 'model') {
+            unset($tmp[0]);
         }
+        $model          = implode('/', $tmp);
         $model_instance = model($model);
         $aa             = Singleton::getInstance($model_instance);
         return $aa;
