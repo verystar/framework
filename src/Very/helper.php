@@ -723,6 +723,32 @@ function emptystr_tonull($arr) {
     }, $arr);
 }
 
+/**
+ * 驼峰转下划线
+ * @param $str
+ *
+ * @return string
+ */
+function hump_to_underline($str) {
+    if(!$str){
+        return $str;
+    }
+    return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
+}
+
+/**
+ * 下划线转驼峰
+ * @param $str
+ *
+ * @return string
+ */
+function underline_to_hump($str) {
+    if(!$str){
+        return $str;
+    }
+    return implode('', array_map('ucfirst', explode('_', $str)));
+}
+
 
 if (!function_exists('app')) {
     /**
@@ -915,7 +941,7 @@ if (!function_exists('model')) {
             $classname = $model;
         } else {
             $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-            $classname = '\\Models\\' . str_replace("/", "\\", $classname);
+            $classname = '\\Models\\' . str_replace("/", "\\", underline_to_hump($classname));
         }
 
         if (!isset($instances[$classname])) {

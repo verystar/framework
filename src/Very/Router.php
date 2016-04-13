@@ -107,7 +107,7 @@ class Router {
             $obj = new $controllername();
         }
 
-        $obj->{$action . 'Action'}();
+        $obj->{underline_to_hump($action) . 'Action'}();
     }
 
     private function getNamespace() {
@@ -118,7 +118,7 @@ class Router {
         $controller_namespace = $this->getNamespace();
         $controllername       = implode('/', array_map('ucfirst', explode('/', $controller)));
         $controllername       = str_replace("/", "\\", $controllername);
-        $controllername       = $controller_namespace . '\\Controllers\\' . $controllername;
+        $controllername       = $controller_namespace . '\\Controllers\\' . underline_to_hump($controllername);
 
         return $controllername;
     }
