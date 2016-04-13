@@ -941,7 +941,7 @@ if (!function_exists('model')) {
             $classname = $model;
         } else {
             $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-            $classname = '\\Models\\' . str_replace("/", "\\", underline_to_hump($classname));
+            $classname = '\\Models\\' . str_replace("/", "\\", $classname);
         }
 
         if (!isset($instances[$classname])) {
