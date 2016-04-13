@@ -77,7 +77,7 @@ class Redis {
         }
 
         //保持唯一连接
-        list($ip, $port) = explode(':', $server);
+        list($ip, $port, $dbnum) = explode(':', $server);
 
         $this->ip   = $ip;
         $this->port = $port;
@@ -94,6 +94,10 @@ class Redis {
 
                 $redis_cache[$server] = new \Redis();
                 $redis_cache[$server]->connect($ip, $port, 1);
+
+                if ($dbnum) {
+                    $redis_cache[$server]->select($dbnum);
+                }
 
                 if ($this->is_stat) {
                     $_stat->set(1, 'Redis连接效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), $ip . ':' . $port);
