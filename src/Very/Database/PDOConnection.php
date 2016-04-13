@@ -167,7 +167,7 @@ class PDOConnection extends PDO {
         $sets = array();
         foreach ($params as $k => $v) {
             if (!in_array($k, $where_field)) {
-                $sets[] = ' ' . $k . '=:' . $k;
+                $sets[] = ' `' . $k . '` =:' . $k;
             }
         }
 
@@ -189,7 +189,7 @@ class PDOConnection extends PDO {
         }
 
         $keys         = array_keys($params);
-        $fileds       = implode(',', $keys);
+        $fileds       = implode('`,`', $keys);
         $filed_values = ':' . implode(',:', $keys);
 
         $sql = "insert into {$table}($fileds) values($filed_values)";
