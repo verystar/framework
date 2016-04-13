@@ -58,13 +58,8 @@ abstract class Model {
      * @return object
      */
     public function singleton() {
-        $model = get_called_class();
-        $tmp = array_map('strtolower', explode('\\', $model));
-        if ($tmp[0] === 'model') {
-            unset($tmp[0]);
-        }
-        $model          = implode('/', $tmp);
-        $model_instance = model($model);
+        $class_name = get_called_class();
+        $model_instance = model($class_name);
         $aa             = Singleton::getInstance($model_instance);
         return $aa;
     }

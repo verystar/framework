@@ -851,11 +851,16 @@ if (!function_exists('model')) {
      * @throws Exception
      */
     function model($model) {
-        $namespace = app('namespace') ? '\\' . app('namespace') : '';
-
-        $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-        $classname = $namespace . '\\Models\\' . str_replace("/", "\\", $classname);
         static $instances = array();
+
+        //如果传进来的已经是真是的类名则不处理
+        if (class_exists($model)) {
+            $classname = $model;
+        } else {
+            $namespace = app('namespace') ? '\\' . app('namespace') : '';
+            $classname = implode('/', array_map('ucfirst', explode('/', $model)));
+            $classname = $namespace . '\\Models\\' . str_replace("/", "\\", $classname);
+        }
 
         if (!isset($instances[$classname])) {
             if (class_exists($classname)) {
