@@ -914,9 +914,8 @@ if (!function_exists('model')) {
         if (isset($instances[$model]) || class_exists($model)) {
             $classname = $model;
         } else {
-            $namespace = app('namespace') ? '\\' . app('namespace') : '';
             $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-            $classname = $namespace . '\\Models\\' . str_replace("/", "\\", $classname);
+            $classname = '\\Models\\' . str_replace("/", "\\", $classname);
         }
 
         if (!isset($instances[$classname])) {
