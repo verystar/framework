@@ -854,7 +854,7 @@ if (!function_exists('model')) {
         static $instances = array();
 
         //如果传进来的已经是真是的类名则不处理
-        if (class_exists($model)) {
+        if (isset($instances[$model]) || class_exists($model)) {
             $classname = $model;
         } else {
             $namespace = app('namespace') ? '\\' . app('namespace') : '';
