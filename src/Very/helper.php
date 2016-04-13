@@ -725,12 +725,13 @@ function emptystr_tonull($arr) {
 
 /**
  * 驼峰转下划线
+ *
  * @param $str
  *
  * @return string
  */
 function hump_to_underline($str) {
-    if(!$str){
+    if (!$str) {
         return $str;
     }
     return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
@@ -738,12 +739,13 @@ function hump_to_underline($str) {
 
 /**
  * 下划线转驼峰
+ *
  * @param $str
  *
  * @return string
  */
 function underline_to_hump($str) {
-    if(!$str){
+    if (!$str) {
         return $str;
     }
     return implode('', array_map('ucfirst', explode('_', $str)));
@@ -940,8 +942,9 @@ if (!function_exists('model')) {
         if (isset($instances[$model]) || class_exists($model)) {
             $classname = $model;
         } else {
+            $namespace = app('namespace') ? '\\' . app('namespace') : '';
             $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-            $classname = '\\Models\\' . str_replace("/", "\\", $classname);
+            $classname = $namespace . '\\Models\\' . str_replace("/", "\\", $classname);
         }
 
         if (!isset($instances[$classname])) {
