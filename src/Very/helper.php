@@ -899,7 +899,7 @@ if (!function_exists('helper')) {
 
 if (!function_exists('model')) {
     /**
-     * model加载辅助函数，如model('user')对应的就是加载Model\User
+     * model加载辅助函数，如model('user')对应的就是加载Model\UserModel
      *
      * @param $model
      *
@@ -908,7 +908,7 @@ if (!function_exists('model')) {
      */
     function model($model) {
         $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-        $classname = '\\Model\\' . str_replace("/", "\\", $classname);
+        $classname = '\\Model\\' . str_replace("/", "\\", $classname). 'Model';
         static $instances = array();
 
         if (!isset($instances[$classname])) {
