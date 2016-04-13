@@ -172,62 +172,6 @@ function isCli() {
     return PHP_SAPI == 'cli' && empty($_SERVER['REMOTE_ADDR']);
 }
 
-/**
- * 调试函数一律禁止在线上输出
- *
- * @param           $info
- * @param bool|true $exit
- *
- * @return bool
- */
-function p($info, $exit = true) {
-    if (!defined('DEBUG') || !DEBUG) {
-        return false;
-    }
-
-    $debug  = debug_backtrace();
-    $output = '';
-
-    if (isCli()) {
-        foreach ($debug as $v) {
-            $output .= 'File:' . $v['file'];
-            $output .= 'Line:' . $v['line'];
-            $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
-            foreach ($v['args'] as $k => $argv) {
-                if (is_object($argv)) {
-                    $v['args'][$k] = 'Object[' . get_class($argv) . ']';
-                }
-            }
-            $output .= implode('\',\' ', $v['args']);
-            $output .= '\')' . PHP_EOL;
-        }
-        $output .= '[Info]' . PHP_EOL;
-        $output .= var_export($info, true) . PHP_EOL;
-    } else {
-        foreach ($debug as $v) {
-            $output .= '<b>File</b>:' . $v['file'] . '&nbsp;';
-            $output .= '<b>Line</b>:' . $v['line'] . '&nbsp;';
-            $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
-
-            foreach ($v['args'] as $k => $argv) {
-                if (is_object($argv)) {
-                    $v['args'][$k] = 'Object[' . get_class($argv) . ']';
-                }
-            }
-            $output .= implode('\',\' ', $v['args']);
-
-            $output .= '\')<br/>';
-        }
-        $output .= '<b>Info</b>:<br/>';
-        $output .= '<pre>';
-        $output .= var_export($info, true);
-        $output .= '</pre>';
-    }
-
-    echo $output;
-    if ($exit)
-        exit;
-}
 
 /**
  * 字符串截取，支持中文和其他编码
@@ -879,8 +823,8 @@ if (!function_exists('response')) {
 
 if (!function_exists('helper')) {
     function helper($file_name) {
-        $path       = app('path.helpers');
-        $file       = $path . $file_name . '.php';
+        $path = app('path.helpers');
+        $file = $path . $file_name . '.php';
         static $import_files = [];
 
         if (!isset($import_files[$file])) {
@@ -907,9 +851,10 @@ if (!function_exists('model')) {
      * @throws Exception
      */
     function model($model) {
+        $namespace = app('namespace') ? '\\' . app('namespace') : '';
 
         $classname = implode('/', array_map('ucfirst', explode('/', $model)));
-        $classname = '\\Model\\' . str_replace("/", "\\", $classname);
+        $classname = $namespace . '\\Model\\' . str_replace("/", "\\", $classname);
         static $instances = array();
 
         if (!isset($instances[$classname])) {

@@ -111,7 +111,7 @@ class Router {
     }
 
     private function getNamespace() {
-        return app('controller.namespace') ? '\\' . app('controller.namespace') : '\\';
+        return app('namespace') ? '\\' . app('namespace') : '';
     }
 
     private function getControllerClassName($controller) {
