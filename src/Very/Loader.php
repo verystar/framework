@@ -57,7 +57,7 @@ class Loader {
      */
     public function model($model) {
         $classname = implode('/', array_map('ucfirst', explode('/', $model))) . 'Model';
-        $classname = '\\Models\\' . str_replace("/", "\\", $classname);
+        $classname = '\\Model\\' . str_replace("/", "\\", $classname);
 
         static $instances = array();
 
