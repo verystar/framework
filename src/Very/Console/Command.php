@@ -97,9 +97,9 @@ class Command extends \Symfony\Component\Console\Command\Command {
      * @return mixed
      */
     protected function execute(InputInterface $input, OutputInterface $output) {
-        $method = method_exists($this, 'handle') ? 'handle' : 'fire';
-
-        return $this->laravel->call([$this, $method]);
+        if (method_exists($this, 'handle')) {
+            return call_user_func_array([$this, 'handle'], []);
+        }
     }
 
     /**
