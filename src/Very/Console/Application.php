@@ -15,7 +15,7 @@ class Application extends SymfonyApplication {
     /**
      * The output from the previous command.
      *
-     * @var \Symfony\Component\Console\Output\OutputInterface
+     * @var \Symfony\Component\Console\Output\BufferedOutput
      */
     protected $lastOutput;
 
@@ -29,7 +29,7 @@ class Application extends SymfonyApplication {
     }
 
     /**
-     * Run an Artisan console command by name.
+     * Run an cmd console command by name.
      *
      * @param  string $command
      * @param  array  $parameters
