@@ -11,9 +11,17 @@ use Very\Http\Request;
 use Very\Http\Response;
 use Very\Http\Session;
 use Very\Http\Cookie;
+use Very\Console\Application as Console;
 
 
 class Application implements ArrayAccess {
+
+    /**
+     * The Very framework version.
+     *
+     * @var string
+     */
+    const VERSION = '1.0.2';
 
     protected $basePath;
 
@@ -164,7 +172,7 @@ class Application implements ArrayAccess {
         return isset($this->instances[$abstract]) || $shared === true;
     }
 
-    public function singleton($abstract, $concrete) {
+    public function singleton($abstract, $concrete = null) {
         $this->bind($abstract, $concrete, true);
     }
 
@@ -189,6 +197,15 @@ class Application implements ArrayAccess {
     public function setPath($key, $path) {
         $this['path.' . $key] = rtrim($path, '/') . DIRECTORY_SEPARATOR;
         return $this;
+    }
+
+    /**
+     * Get the version number of the application.
+     *
+     * @return string
+     */
+    public function version() {
+        return static::VERSION;
     }
 
     /**
