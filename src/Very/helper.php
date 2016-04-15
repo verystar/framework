@@ -758,7 +758,7 @@ if (!function_exists('app')) {
      *
      * @param  string $make
      *
-     * @return mixed
+     * @return mixed | \Very\Application
      */
     function app($make = null) {
         if (!is_null($make)) {
@@ -800,7 +800,7 @@ if (!function_exists('config')) {
      * @param  string $key
      * @param  mixed  $default
      *
-     * @return mixed
+     * @return mixed | \Very\Config
      */
     function config($config = NULL, $key = null, $default = null) {
         if (is_null($config))
@@ -843,7 +843,7 @@ if (!function_exists('cookie')) {
      * @param  bool   $secure
      * @param  bool   $httpOnly
      *
-     * @return mixed
+     * @return mixed | Very\Http\Cookie
      */
     function cookie($name = null, $value = null, $time = 86400, $path = '/', $domain = null, $secure = false, $httpOnly = true) {
         /**
@@ -869,7 +869,7 @@ if (!function_exists('session')) {
      * @param  array|string $key
      * @param  mixed        $default
      *
-     * @return mixed
+     * @return mixed | Very\Http\Session
      */
     function session($key = null, $default = null) {
         /**
