@@ -31,6 +31,7 @@ class Message {
 
     public function body($content) {
         $this->swift->setBody($content, 'text/html');
+        return $this;
     }
 
     /**
