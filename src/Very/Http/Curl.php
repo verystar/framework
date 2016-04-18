@@ -53,6 +53,10 @@ class Curl {
         if ($post_data) {
             $post_data = is_array($post_data) ? http_build_query($post_data) : $post_data;
             curl_setopt($this->ch, CURLOPT_POSTFIELDS, $post_data);
+
+            if ($post_data{0} == "{") {
+                curl_setopt($this->ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+            }
         }
 
         if ($this->http_header) {

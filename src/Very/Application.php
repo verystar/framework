@@ -92,19 +92,16 @@ class Application implements ArrayAccess {
         });
 
 
-//        $this->singleton('mailer', function ($app) {
-//            $mailer = new Mailer();
-//
-//            $from = $app['config']['mail.from'];
-//            if (is_array($from) && isset($from['address'])) {
-//                $mailer->alwaysFrom($from['address'], $from['name']);
-//            }
-//            $to = $app['config']['mail.to'];
-//            if (is_array($to) && isset($to['address'])) {
-//                $mailer->alwaysTo($to['address'], $to['name']);
-//            }
-//            return $mailer;
-//        });
+        $this->singleton('mail', function ($app) {
+            $mailer = new Mailer();
+
+            $from = config('mail', 'from');
+            if (is_array($from) && isset($from['address'])) {
+                $mailer->alwaysFrom($from['address'], $from['name']);
+            }
+
+            return $mailer;
+        });
 
         $this->setInstance($this);
     }
