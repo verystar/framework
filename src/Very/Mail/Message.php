@@ -26,7 +26,7 @@ class Message {
      * @param  \Swift_Message $swift
      */
     public function __construct($swift) {
-        $this->swift = \Swift_Message::newInstance();
+        $this->swift = $swift;
     }
 
     /**

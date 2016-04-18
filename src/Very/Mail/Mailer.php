@@ -56,6 +56,8 @@ class Mailer {
      */
     protected $parsedViews = array();
 
+    protected $message;
+
     /**
      * Create a new Mailer instance.
      */
@@ -89,116 +91,22 @@ class Mailer {
     }
 
     /**
-     * Send a new message when only a raw text part.
-     *
-     * @param  string $text
-     * @param  mixed  $callback
-     *
-     * @return int
-     */
-    public function raw($text, $callback) {
-        return $this->send(array('raw' => $text), [], $callback);
-    }
-
-    /**
-     * Send a new message when only a plain part.
-     *
-     * @param  string $view
-     * @param  array  $data
-     * @param  mixed  $callback
-     *
-     * @return int
-     */
-    public function plain($view, array $data, $callback) {
-        return $this->send(array('text' => $view), $data, $callback);
-    }
-
-    /**
      * Send a new message using a view.
      *
-     * @param  string|array    $view
-     * @param  array           $data
      * @param  \Closure|string $callback
      *
      * @return mixed
      */
-    public function send($view, array $data, $callback) {
-        // First we need to parse the view, which could either be a string or an array
-        // containing both an HTML and plain text versions of the view which should
-        // be used when sending an e-mail. We will extract both of them out here.
-        list($view, $plain, $raw) = $this->parseView($view);
+    public function send($callback) {
 
-        $data['message'] = $message = $this->createMessage();
-
-        $this->callMessageBuilder($callback, $message);
-
-        // Once we have retrieved the view content for the e-mail we will set the body
-        // of this message using the HTML type, which will provide a simple wrapper
-        // to creating view based emails that are able to receive arrays of data.
-        $this->addContent($message, $view, $plain, $raw, $data);
-
-        $message = $message->getSwiftMessage();
+        if ($callback instanceof Closure) {
+            $message = $this->createMessage();
+            call_user_func($callback, $message);
+        } else {
+            throw new InvalidArgumentException("Callback is not valid.");
+        }
 
         return $this->sendSwiftMessage($message);
-    }
-
-    /**
-     * Add the content to a given message.
-     *
-     * @param  \Very\Mail\Message $message
-     * @param  string             $view
-     * @param  string             $plain
-     * @param  string             $raw
-     * @param  array              $data
-     *
-     * @return void
-     */
-    protected function addContent($message, $view, $plain, $raw, $data) {
-        if (isset($view)) {
-            $message->setBody($this->getView($view, $data), 'text/html');
-        }
-
-        if (isset($plain)) {
-            $message->addPart($this->getView($plain, $data), 'text/plain');
-        }
-
-        if (isset($raw)) {
-            $message->addPart($raw, 'text/plain');
-        }
-    }
-
-    /**
-     * Parse the given view name or array.
-     *
-     * @param  string|array $view
-     *
-     * @return array
-     *
-     * @throws \InvalidArgumentException
-     */
-    protected function parseView($view) {
-        if (is_string($view))
-            return [$view, null, null];
-
-        // If the given view is an array with numeric keys, we will just assume that
-        // both a "pretty" and "plain" view were provided, so we will return this
-        // array as is, since must should contain both views with numeric keys.
-        if (is_array($view) && isset($view[0])) {
-            return [$view[0], $view[1], null];
-        }
-
-        // If the view is an array, but doesn't contain numeric keys, we will assume
-        // the the views are being explicitly specified and will extract them via
-        // named keys instead, allowing the developers to use one or the other.
-        elseif (is_array($view)) {
-            return [
-                array_get($view, 'html'),
-                array_get($view, 'text'),
-                array_get($view, 'raw'),
-            ];
-        }
-
-        throw new InvalidArgumentException("Invalid view.");
     }
 
     /**
@@ -206,7 +114,7 @@ class Mailer {
      *
      * @param  \Swift_Message $message
      *
-     * @return void
+     * @return mixed
      */
     protected function sendSwiftMessage($message) {
         if (!$this->pretending) {
@@ -225,28 +133,7 @@ class Mailer {
      */
     protected function logMessage($message) {
         $emails = implode(', ', array_keys((array)$message->getTo()));
-
         logger()->info("Pretending to mail message to: {$emails}");
-    }
-
-    /**
-     * Call the provided message builder.
-     *
-     * @param  \Closure|string    $callback
-     * @param  \Very\Mail\Message $message
-     *
-     * @return mixed
-     *
-     * @throws \InvalidArgumentException
-     */
-    protected function callMessageBuilder($callback, $message) {
-        if ($callback instanceof Closure) {
-            return call_user_func($callback, $message);
-        } elseif (is_string($callback)) {
-            return $this->container->make($callback)->mail($message);
-        }
-
-        throw new InvalidArgumentException("Callback is not valid.");
     }
 
     /**
