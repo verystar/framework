@@ -29,6 +29,10 @@ class Message {
         $this->swift = $swift;
     }
 
+    public function body($content) {
+        $this->swift->setBody($content, 'text/html');
+    }
+
     /**
      * Add a "from" address to the message.
      *
