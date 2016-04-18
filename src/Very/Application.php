@@ -11,7 +11,7 @@ use Very\Http\Request;
 use Very\Http\Response;
 use Very\Http\Session;
 use Very\Http\Cookie;
-use Very\Console\Application as Console;
+use Very\Mail\Mailer;
 
 
 class Application implements ArrayAccess {
@@ -90,6 +90,21 @@ class Application implements ArrayAccess {
             $env = new Logger();
             return $env;
         });
+
+
+//        $this->singleton('mailer', function ($app) {
+//            $mailer = new Mailer();
+//
+//            $from = $app['config']['mail.from'];
+//            if (is_array($from) && isset($from['address'])) {
+//                $mailer->alwaysFrom($from['address'], $from['name']);
+//            }
+//            $to = $app['config']['mail.to'];
+//            if (is_array($to) && isset($to['address'])) {
+//                $mailer->alwaysTo($to['address'], $to['name']);
+//            }
+//            return $mailer;
+//        });
 
         $this->setInstance($this);
     }

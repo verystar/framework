@@ -116,7 +116,7 @@ class Router {
 
     private function getControllerClassName($controller) {
         $controller_namespace = $this->getNamespace();
-        $controllername       = implode('/', array_map('ucfirst', explode('/', $controller)));
+        $controllername       = implode('/', array_map('ucfirst', explode('/', strtolower($controller))));
         $controllername       = str_replace("/", "\\", $controllername);
         $controllername       = $controller_namespace . '\\Controllers\\' . $controllername;
 
