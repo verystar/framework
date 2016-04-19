@@ -206,19 +206,37 @@ class Curl {
         return $this->exec($url, 'PUT', $data);
     }
 
-    public function multi($urls) {
+    public function multi($urls, $method = 'GET') {
         $mh = curl_multi_init();
 
         $conn = $contents = [];
-        foreach ($urls as $i => $url) {
+        foreach ($urls as $i => $val) {
+            if (is_array($val)) {
+                $url       = $val['url'];
+                $post_data = isset($val['post_data']) ? $val['post_data'] : '';
+            } else {
+                $url       = $val;
+                $post_data = '';
+            }
+
             $conn[$i] = curl_init($url);
             $this->defaultOptions($conn[$i], $url);
             curl_multi_add_handle($mh, $conn[$i]);
+            curl_setopt($conn[$i], CURLOPT_CUSTOMREQUEST, $method);
+            if ($post_data) {
+                $post_data = is_array($post_data) ? http_build_query($post_data) : $post_data;
+                curl_setopt($conn[$i], CURLOPT_POSTFIELDS, $post_data);
+
+                if ($post_data{0} == "{") {
+                    curl_setopt($conn[$i], CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+                }
+            }
         } // 初始化  
 
         do {
-            curl_multi_exec($mh, $active);
-        } while ($active); // 执行  
+            $status = curl_multi_exec($mh, $active);
+            //此处是所有请求全部返回结果之后再处理结果，如果需要有返回就立即处理，则需要使用curl_multi_info_read，然后将逻辑写入到此处
+        } while ($status === CURLM_CALL_MULTI_PERFORM || $active); // 执行  
 
         foreach ($urls as $i => $url) {
             $contents[$i] = curl_multi_getcontent($conn[$i]);
