@@ -104,7 +104,11 @@ class Router {
     }
 
     private function getNamespace() {
-        return app('namespace') ? '\\' . app('namespace') : '';
+        $controller_namespace = app('controller.namespace') ? '\\' . app('controller.namespace') : '';
+        if (!$controller_namespace) {
+            $controller_namespace = app('namespace') ? '\\' . app('namespace') : '';
+        }
+        return $controller_namespace;
     }
 
     private function getControllerClassName($controller) {
