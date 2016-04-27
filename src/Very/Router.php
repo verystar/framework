@@ -99,8 +99,21 @@ class Router {
             throw new Exception($action . 'Action method not found in ' . $controllername, Exception::ERR_NOTFOUND_ACTION);
         }
 
-        $obj = app()->make($controllername, $params);
-        $obj->{$action . 'Action'}();
+        $instance  = app()->make($controllername, $params);
+        $action    = $action . 'Action';
+        $reflector = new \ReflectionMethod($instance, $action);
+
+        $parameters = [];
+        foreach ($reflector->getParameters() as $key => $parameter) {
+            $class = $parameter->getClass();
+            if ($class) {
+                array_splice(
+                    $parameters, $key, 0, [app()->make($class->name)]
+                );
+            }
+        }
+
+        call_user_func_array([$instance, $action], $parameters);
     }
 
     private function getNamespace() {
