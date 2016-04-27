@@ -113,9 +113,11 @@ class Application extends Container {
         $this['path']     = dirname(__DIR__) . DIRECTORY_SEPARATOR;
         $this['path.app'] = $app_path;
 
-        foreach (['config', 'views', 'modules', 'models', 'helpers', 'logs'] as $v) {
+        foreach (['config', 'views', 'modules', 'helpers', 'logs'] as $v) {
             $this['path.' . $v] = realpath($app_path . '/' . $v) . DIRECTORY_SEPARATOR;
         }
+
+        $this['namespace.controller'] = '';
         return $this;
     }
 
