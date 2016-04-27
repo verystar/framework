@@ -87,8 +87,7 @@ class Router {
             $this->run($controller, $action);
         } catch (Exception $e) {
             $controllername = $this->getNamespace() . '\\Exceptions\\Handler';
-            $excption       = new  $controllername;
-            $excption->render($e);
+            app()->make($controllername)->render($e);
         }
     }
 
