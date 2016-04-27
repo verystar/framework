@@ -949,7 +949,7 @@ if (!function_exists('model')) {
 
         if (!isset($instances[$classname])) {
             if (class_exists($classname)) {
-                $instances[$classname] = new $classname;
+                $instances[$classname] = app()->make($classname);
             } else {
                 throw new Exception('Model ' . $classname . ' not found.', \Very\Exception::ERR_NOTFOUND_MODEL);
             }

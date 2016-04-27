@@ -99,14 +99,7 @@ class Router {
             throw new Exception($action . 'Action method not found in ' . $controllername, Exception::ERR_NOTFOUND_ACTION);
         }
 
-        if (count($params) > 2) {
-            //带参数的控制层构造函数实例化需要用反射API实例化
-            $obj = new \ReflectionClass($controllername);
-            $obj->newInstanceArgs(array_splice($params, 2));
-        } else {
-            $obj = new $controllername();
-        }
-
+        $obj = app()->make($controllername, $params);
         $obj->{$action . 'Action'}();
     }
 
