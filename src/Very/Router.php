@@ -102,6 +102,9 @@ class Router {
         $action    = $action . 'Action';
         $reflector = new \ReflectionMethod($instance, $action);
 
+        /**
+         * action 自动注入
+         */
         $parameters = [];
         foreach ($reflector->getParameters() as $key => $parameter) {
             $class = $parameter->getClass();
