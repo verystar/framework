@@ -130,7 +130,7 @@ class Router {
         $controller_namespace = $this->getNamespace();
         $controllername       = implode('/', array_map('ucfirst', explode('/', strtolower($controller))));
         $controllername       = str_replace("/", "\\", $controllername);
-        $controllername       = $controller_namespace . '\\Controllers\\' . $controllername;
+        $controllername       = $controller_namespace . '\\Controllers\\' . $controllername . "Controller";
 
         return $controllername;
     }
