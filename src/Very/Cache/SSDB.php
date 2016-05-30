@@ -1,650 +1,160 @@
 <?php namespace Very\Cache;
 
-use Exception;
-
 /**
- * Copyright (c) 2012, ideawu
- * All rights reserved.
- * @author: ideawu
- * @link  : http://www.ideawu.com/
- *
- * SSDB PHP client SDK.
+ * Created by JetBrains PhpStorm.
+ * User: CAIXUDONG
+ * Date: 13-1-22
+ * Time: 下午5:25
  */
-class SSDBException extends Exception {
-}
 
-class SSDBTimeoutException extends SSDBException {
-}
-
-/**
- * All methods(except *exists) returns false on error,
- * so one should use Identical(if($ret === false)) to test the return value.
- */
-class SimpleSSDB extends SSDB {
-    function __construct($host, $port, $timeout_ms = 2000) {
-        parent::connect($host, $port, $timeout_ms);
-        $this->easy();
-    }
-}
-
-class SSDB_Response {
-    public $cmd;
-    public $code;
-    public $data = null;
-    public $message;
-
-    function __construct($code = 'ok', $data_or_message = null) {
-        $this->code = $code;
-        if ($code == 'ok') {
-            $this->data = $data_or_message;
-        } else {
-            $this->message = $data_or_message;
-        }
-    }
-
-    function __toString() {
-        if ($this->code == 'ok') {
-            $s = $this->data === null ? '' : json_encode($this->data);
-        } else {
-            $s = $this->message;
-        }
-        return sprintf('%-13s %12s %s', $this->cmd, $this->code, $s);
-    }
-
-    function ok() {
-        return $this->code == 'ok';
-    }
-
-    function not_found() {
-        return $this->code == 'not_found';
-    }
-}
+use Very\Library\FStat;
 
 class SSDB {
-    private $debug = false;
-    public $sock = null;
-    private $_closed = false;
-    private $recv_buf = '';
-    private $_easy = false;
-    public $last_resp = null;
+
+    //https://github.com/jonnywang/phpssdb/wiki
+    //注意lpop rpop属于写操作
+    private $write_methods = array(
+        'set' => 1, 'setx' => 1, 'setnx' => 1, 'expire' => 1, 'ttl' => 1, 'getset' => 1, 'del' => 1, 'incr' => 1, 'setbit' => 1, 'multi_set' => 1, 'multi_del' => 1, 'hset' => 1, 'hdel' => 1, 'hincr' => 1, 'hclear' => 1, 'multi_hset' => 1, 'multi_hdel' => 1, 'qclear' => 1, 'qpush' => 1, 'qpush_back' => 1, 'qpush_front' => 1, 'qpop' => 1, 'qpop_back' => 1, 'qpop_front' => 1, 'qfront' => 1, 'qback' => 1, 'qget' => 1, 'qset' => 1, 'qtrim_front' => 1, 'qtrim_back' => 1, 'geo_set' => 1, 'geo_del' => 1, 'geo_clear' => 1
+    );
+    private $read_methods = array(
+        'ping' => 1, 'version' => 1, 'dbsize' => 1, 'info' => 1, 'get' => 1, 'exists' => 1, 'getbit' => 1, 'countbit' => 1, 'substr' => 1, 'strlen' => 1, 'keys' => 1, 'scan' => 1, 'smembers' => 1, 'rscan' => 1, 'multi_get' => 1, 'hget' => 1, 'hexists' => 1, 'hsize' => 1, 'hlist' => 1, 'hrlist' => 1, 'hkeys' => 1, 'hgetall' => 1, 'hscan' => 1, 'hrscan' => 1, 'multi_hget' => 1, 'qsize' => 1, 'qlist' => 1, 'qrlist' => 1, 'geo_get' => 1, 'geo_neighbour' => 1, 'geo_distance' => 1
+    );
+
+    //是否加入统计队列，因为刷新内存的代码并不需要加入统计队列，否则统计队列会撑挂掉
+    public $is_stat = false;
+
+    private $config;//配置
+    private $ip;
+    private $port;
 
     /**
-     * @param $db
+     * @param $node
      * @param $singleton
      *
-     * @return $this
-     * @author 蔡旭东
+     * @return mixed
+     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
      */
-    static public function getInstance($db, $singleton = true) {
+    static public function getInstance($node, $singleton = true) {
         static $cache = array();
 
-        if (!isset($cache[$db]) || !$singleton) {
-            $cache[$db] = new self();
-            $config     = config('ssdb', $db);
-
-            //之所以不采用随机选取一个代理的原因，因为发现从A服务器访问B服务器代理可能产生超时或者网络不稳定因素导致的失败
-//        $node = NULL;
-//        if(VIP){
-//            $hostname = explode('-',VIP);
-//            $ip = $hostname ? explode('.',array_pop($hostname)) : array();
-//            $node = isset($ip[0]) && is_numeric($ip[0]) ? $ip[0] : NULL;
-//        }
-
-            $node = 1;
-
-            if ($node === NULL || !isset($config[$node])) {
-                //随机
-                $config = $config[array_rand($config)];
-            } else {
-                $config = $config[$node];
-            }
-
-            if (!$config) {
-                throw new \RuntimeException('redis config error.');
-            }
-
-            //暂时只支持master
-            $server = $config['master'];
-            list($ip, $port) = explode(':', $server);
-
-            $cache[$db]->connect($ip, $port);
-            $cache[$db]->easy();
+        if (!isset($cache[$node]) || !$singleton) {
+            $cache[$node]         = new self();
+            $cache[$node]->config = config('ssdb', $node);
         }
 
-        return $cache[$db];
+        return $cache[$node];
     }
 
-    function connect($host, $port, $timeout_ms = 5000) {
-        $timeout_f  = (float)$timeout_ms / 1000;
-        $this->sock = @stream_socket_client("$host:$port", $errno, $errstr, $timeout_f);
-        if (!$this->sock) {
-            throw new SSDBException("$errno: $errstr");
-        }
-        $timeout_sec  = intval($timeout_ms / 1000);
-        $timeout_usec = ($timeout_ms - $timeout_sec * 1000) * 1000;
-        @stream_set_timeout($this->sock, $timeout_sec, $timeout_usec);
-        if (function_exists('stream_set_chunk_size')) {
-            @stream_set_chunk_size($this->sock, 1024 * 1024);
-        }
-    }
-
-    /**
-     * After this method invoked with yesno=true, all requesting methods
-     * will not return a SSDB_Response object.
-     * And some certain methods like get/zget will return false
-     * when response is not ok(not_found, etc)
-     */
-    function easy() {
-        $this->_easy = true;
-    }
-
-    function close() {
-        if (!$this->_closed) {
-            @fclose($this->sock);
-            $this->_closed = true;
-            $this->sock    = null;
-        }
-    }
-
-    function closed() {
-        return $this->_closed;
-    }
-
-    private $batch_mode = false;
-    private $batch_cmds = array();
-
-    function batch() {
-        $this->batch_mode = true;
-        $this->batch_cmds = array();
+    //是否开启监控统计
+    public function setStat($is_stat) {
+        $this->is_stat = $is_stat;
         return $this;
     }
 
-    function multi() {
-        return $this->batch();
-    }
 
-    function exec() {
-        $ret = array();
-        foreach ($this->batch_cmds as $op) {
-            list($cmd, $params) = $op;
-            $this->send_req($cmd, $params);
-        }
-        foreach ($this->batch_cmds as $op) {
-            list($cmd, $params) = $op;
-            $resp  = $this->recv_resp($cmd, $params);
-            $resp  = $this->check_easy_resp($cmd, $resp);
-            $ret[] = $resp;
-        }
-        $this->batch_mode = false;
-        $this->batch_cmds = array();
-        return $ret;
-    }
+    private function connect($func) {
+        $func   = strtolower($func);
+        $config = $this->config[array_rand($this->config)];
 
-    function request() {
-        $args = func_get_args();
-        $cmd  = array_shift($args);
-        return $this->__call($cmd, $args);
-    }
-
-    private $async_auth_password = null;
-
-    function auth($password) {
-        $this->async_auth_password = $password;
-        return null;
-    }
-
-    function __call($cmd, $params = array()) {
-        $cmd = strtolower($cmd);
-        if ($this->async_auth_password !== null) {
-            $pass                      = $this->async_auth_password;
-            $this->async_auth_password = null;
-            $auth                      = $this->__call('auth', array($pass));
-            if ($auth !== true) {
-                throw new Exception("Authentication failed");
-            }
+        if (!$config) {
+            throw new \RuntimeException('ssdb config error.');
         }
 
-        if ($this->batch_mode) {
-            $this->batch_cmds[] = array($cmd, $params);
-            return $this;
-        }
-
-        try {
-            if ($this->send_req($cmd, $params) === false) {
-                $resp = new SSDB_Response('error', 'send error');
-            } else {
-                $resp = $this->recv_resp($cmd, $params);
-            }
-        } catch (SSDBException $e) {
-            if ($this->_easy) {
-                throw $e;
-            } else {
-                $resp = new SSDB_Response('error', $e->getMessage());
-            }
-        }
-
-        if ($resp->code == 'noauth') {
-            $msg = $resp->message;
-            throw new Exception($msg);
-        }
-
-        $resp = $this->check_easy_resp($cmd, $resp);
-        return $resp;
-    }
-
-    private function check_easy_resp($cmd, $resp) {
-        $this->last_resp = $resp;
-        if ($this->_easy) {
-            if ($resp->not_found()) {
-                return NULL;
-            } else if (!$resp->ok() && !is_array($resp->data)) {
-                return false;
-            } else {
-                return $resp->data;
+        if (isset($config['slave'])) {
+            if (isset($this->write_methods[$func])) {
+                $server = $config['master'];
+            } elseif (isset($this->read_methods[$func])) {
+                $server = $config['slave'][array_rand($config['slave'])];
             }
         } else {
-            $resp->cmd = $cmd;
-            return $resp;
+            $server = $config['master'];
         }
-    }
 
-    function multi_set($kvs = array()) {
-        $args = array();
-        foreach ($kvs as $k => $v) {
-            $args[] = $k;
-            $args[] = $v;
+        if (!isset($server)) {
+            throw new \RuntimeException('ssdb server not find.');
         }
-        return $this->__call(__FUNCTION__, $args);
-    }
 
-    function multi_hset($name, $kvs = array()) {
-        $args = array($name);
-        foreach ($kvs as $k => $v) {
-            $args[] = $k;
-            $args[] = $v;
+        //保持唯一连接
+        list($ip, $port, $dbnum) = explode(':', $server);
+
+        $this->ip   = $ip;
+        $this->port = $port;
+
+        static $redis_cache = array();
+
+        if ($this->is_stat) {
+            $_stat = FStat::getInstance();
         }
-        return $this->__call(__FUNCTION__, $args);
-    }
 
-    function multi_zset($name, $kvs = array()) {
-        $args = array($name);
-        foreach ($kvs as $k => $v) {
-            $args[] = $k;
-            $args[] = $v;
+        if (!isset($redis_cache[$server])) {
+            try {
+                $_start_time = microtime(true);
+
+
+                if (class_exists('\SSDB', false)) {
+                    $redis_cache[$server] = new \SSDB();
+                } else {
+                    $redis_cache[$server] = new SSDBClient();
+                }
+
+                $redis_cache[$server]->connect($ip, $port, 1);
+
+                if ($this->is_stat) {
+                    $_stat->set(1, 'SSDB连接效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), $ip . ':' . $port);
+                }
+            } catch (\SSDBException $e) {
+                if ($this->is_stat) {
+                    $_stat->set(1, 'BUG错误', 'SSDB连接错误', "{$ip}:{$port}");
+                }
+                throw new \RuntimeException('SSDB connect error:' . $e->getMessage());
+            }
+
         }
-        return $this->__call(__FUNCTION__, $args);
+
+        return $redis_cache[$server];
     }
 
-    function incr($key, $val = 1) {
-        $args = func_get_args();
-        return $this->__call(__FUNCTION__, $args);
+    private function isConnectionLost(\SSDBException $e) {
+        if (strpos($e->getMessage(), 'SSDB server went away') !== false || strpos($e->getMessage(), 'Connection lost') !== false || strpos($e->getMessage(), 'Connection refused') !== false) {
+            return true;
+        }
+        return false;
     }
 
-    function decr($key, $val = 1) {
-        $args = func_get_args();
-        return $this->__call(__FUNCTION__, $args);
-    }
+    /**
+     * @param $func
+     * @param $params
+     *
+     * @return bool|mixed
+     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
+     */
+    public function __call($func, $params) {
+        if ($this->is_stat) {
+            $_stat = FStat::getInstance();
+        }
 
-    function zincr($name, $key, $score = 1) {
-        $args = func_get_args();
-        return $this->__call(__FUNCTION__, $args);
-    }
+        $redis_server = $this->connect($func);
+        for ($i = 0; $i < 2; $i++) {
 
-    function zdecr($name, $key, $score = 1) {
-        $args = func_get_args();
-        return $this->__call(__FUNCTION__, $args);
-    }
-
-    function zadd($key, $score, $value) {
-        $args = array($key, $value, $score);
-        return $this->__call('zset', $args);
-    }
-
-    function zRevRank($name, $key) {
-        $args = func_get_args();
-        return $this->__call("zrrank", $args);
-    }
-
-    function zRevRange($name, $offset, $limit) {
-        $args = func_get_args();
-        return $this->__call("zrrange", $args);
-    }
-
-    function hincr($name, $key, $val = 1) {
-        $args = func_get_args();
-        return $this->__call(__FUNCTION__, $args);
-    }
-
-    function hdecr($name, $key, $val = 1) {
-        $args = func_get_args();
-        return $this->__call(__FUNCTION__, $args);
-    }
-
-    private function send_req($cmd, $params) {
-        $req = array($cmd);
-        foreach ($params as $p) {
-            if (is_array($p)) {
-                $req = array_merge($req, $p);
-            } else {
-                $req[] = $p;
+            try {
+                $_start_time = microtime(true);
+                $ret         = call_user_func_array(array($redis_server, $func), $params);
+                if ($this->is_stat) {
+                    $_stat->set(1, 'SSDB执行效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), "{$this->ip}:{$this->port}({$func})");
+                }
+            } catch (\SSDBException $e) {
+                if ($this->is_stat) {
+                    $_stat->set(1, 'BUG错误', 'SSDB执行错误', "{$this->ip}:{$this->port}", $e->getMessage(), 0.1);
+                }
+                if ($this->isConnectionLost($e)) {
+                    $redis_server = $this->connect($func);
+                    continue;
+                } else {
+                    return false;
+                }
             }
         }
-        return $this->send($req);
-    }
 
-    private function recv_resp($cmd, $params) {
-        $resp = $this->recv();
-        if ($resp === false) {
-            return new SSDB_Response('error', 'Unknown error');
-        } else if (!$resp) {
-            return new SSDB_Response('disconnected', 'Connection closed');
-        }
-        if ($resp[0] == 'noauth') {
-            $errmsg = isset($resp[1]) ? $resp[1] : '';
-            return new SSDB_Response($resp[0], $errmsg);
-        }
-        switch ($cmd) {
-            case 'dbsize':
-            case 'ping':
-            case 'qset':
-            case 'getbit':
-            case 'setbit':
-            case 'countbit':
-            case 'strlen':
-            case 'set':
-            case 'setx':
-            case 'setnx':
-            case 'zset':
-            case 'hset':
-            case 'qpush':
-            case 'qpush_front':
-            case 'qpush_back':
-            case 'qtrim_front':
-            case 'qtrim_back':
-            case 'del':
-            case 'zdel':
-            case 'hdel':
-            case 'hsize':
-            case 'zsize':
-            case 'qsize':
-            case 'hclear':
-            case 'zclear':
-            case 'qclear':
-            case 'multi_set':
-            case 'multi_del':
-            case 'multi_hset':
-            case 'multi_hdel':
-            case 'multi_zset':
-            case 'multi_zdel':
-            case 'incr':
-            case 'decr':
-            case 'zincr':
-            case 'zdecr':
-            case 'hincr':
-            case 'hdecr':
-            case 'zget':
-            case 'zrank':
-            case 'zrrank':
-            case 'zcount':
-            case 'zsum':
-            case 'zremrangebyrank':
-            case 'zremrangebyscore':
-                if ($resp[0] == 'ok') {
-                    $val = isset($resp[1]) ? intval($resp[1]) : 0;
-                    return new SSDB_Response($resp[0], $val);
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-            case 'zavg':
-                if ($resp[0] == 'ok') {
-                    $val = isset($resp[1]) ? floatval($resp[1]) : (float)0;
-                    return new SSDB_Response($resp[0], $val);
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-            case 'get':
-            case 'substr':
-            case 'getset':
-            case 'hget':
-            case 'qget':
-            case 'qfront':
-            case 'qback':
-                if ($resp[0] == 'ok') {
-                    if (count($resp) == 2) {
-                        return new SSDB_Response('ok', $resp[1]);
-                    } else {
-                        return new SSDB_Response('server_error', 'Invalid response');
-                    }
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-                break;
-            case 'qpop':
-            case 'qpop_front':
-            case 'qpop_back':
-                if ($resp[0] == 'ok') {
-                    $size = 1;
-                    if (isset($params[1])) {
-                        $size = intval($params[1]);
-                    }
-                    if ($size <= 1) {
-                        if (count($resp) == 2) {
-                            return new SSDB_Response('ok', $resp[1]);
-                        } else {
-                            return new SSDB_Response('server_error', 'Invalid response');
-                        }
-                    } else {
-                        $data = array_slice($resp, 1);
-                        return new SSDB_Response('ok', $data);
-                    }
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-                break;
-            case 'keys':
-            case 'zkeys':
-            case 'hkeys':
-            case 'hlist':
-            case 'zlist':
-            case 'qslice':
-                if ($resp[0] == 'ok') {
-                    $data = array();
-                    if ($resp[0] == 'ok') {
-                        $data = array_slice($resp, 1);
-                    }
-                    return new SSDB_Response($resp[0], $data);
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-            case 'auth':
-            case 'exists':
-            case 'hexists':
-            case 'zexists':
-                if ($resp[0] == 'ok') {
-                    if (count($resp) == 2) {
-                        return new SSDB_Response('ok', (bool)$resp[1]);
-                    } else {
-                        return new SSDB_Response('server_error', 'Invalid response');
-                    }
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-                break;
-            case 'multi_exists':
-            case 'multi_hexists':
-            case 'multi_zexists':
-                if ($resp[0] == 'ok') {
-                    if (count($resp) % 2 == 1) {
-                        $data = array();
-                        for ($i = 1; $i < count($resp); $i += 2) {
-                            $data[$resp[$i]] = (bool)$resp[$i + 1];
-                        }
-                        return new SSDB_Response('ok', $data);
-                    } else {
-                        return new SSDB_Response('server_error', 'Invalid response');
-                    }
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-                break;
-            case 'scan':
-            case 'rscan':
-            case 'zscan':
-            case 'zrscan':
-            case 'zrange':
-            case 'zrrange':
-            case 'hscan':
-            case 'hrscan':
-            case 'hgetall':
-            case 'multi_hsize':
-            case 'multi_zsize':
-            case 'multi_get':
-            case 'multi_hget':
-            case 'multi_zget':
-                if ($resp[0] == 'ok') {
-                    if (count($resp) % 2 == 1) {
-                        $data = array();
-                        for ($i = 1; $i < count($resp); $i += 2) {
-                            if ($cmd[0] == 'z') {
-                                $data[$resp[$i]] = intval($resp[$i + 1]);
-                            } else {
-                                $data[$resp[$i]] = $resp[$i + 1];
-                            }
-                        }
-                        return new SSDB_Response('ok', $data);
-                    } else {
-                        return new SSDB_Response('server_error', 'Invalid response');
-                    }
-                } else {
-                    $errmsg = isset($resp[1]) ? $resp[1] : '';
-                    return new SSDB_Response($resp[0], $errmsg);
-                }
-                break;
-            default:
-                return new SSDB_Response($resp[0], array_slice($resp, 1));
-        }
-        return new SSDB_Response('error', 'Unknown command: $cmd');
-    }
-
-    private function send($data) {
-        $ps = array();
-        foreach ($data as $p) {
-            $ps[] = strlen($p);
-            $ps[] = $p;
-        }
-        $s = join("\n", $ps) . "\n\n";
-        if ($this->debug) {
-            echo '> ' . str_replace(array("\r", "\n"), array('\r', '\n'), $s) . "\n";
-        }
-        try {
-            while (true) {
-                $ret = @fwrite($this->sock, $s);
-                if ($ret === false) {
-                    $this->close();
-                    throw new SSDBException('Connection lost');
-                }
-                $s = substr($s, $ret);
-                if (strlen($s) == 0) {
-                    break;
-                }
-                @fflush($this->sock);
-            }
-        } catch (Exception $e) {
-            $this->close();
-            throw new SSDBException($e->getMessage());
-        }
         return $ret;
-    }
-
-    private function recv() {
-        $this->step = self::STEP_SIZE;
-        while (true) {
-            $ret = $this->parse();
-            if ($ret === null) {
-                try {
-                    $data = @fread($this->sock, 1024 * 1024);
-                    if ($this->debug) {
-                        echo '< ' . str_replace(array("\r", "\n"), array('\r', '\n'), $data) . "\n";
-                    }
-                } catch (Exception $e) {
-                    $data = '';
-                }
-                if ($data === false || $data === '') {
-                    if (feof($this->sock)) {
-                        $this->close();
-                        throw new SSDBException('Connection lost');
-                    } else {
-                        throw new SSDBTimeoutException('Connection timeout');
-                    }
-                }
-                $this->recv_buf .= $data;
-#				echo "read " . strlen($data) . " total: " . strlen($this->recv_buf) . "\n";
-            } else {
-                return $ret;
-            }
-        }
-    }
-
-    const STEP_SIZE = 0;
-    const STEP_DATA = 1;
-    public $resp = array();
-    public $step;
-    public $block_size;
-
-    private function parse() {
-        $spos     = 0;
-        $epos     = 0;
-        $buf_size = strlen($this->recv_buf);
-        // performance issue for large reponse
-        //$this->recv_buf = ltrim($this->recv_buf);
-        while (true) {
-            $spos = $epos;
-            if ($this->step === self::STEP_SIZE) {
-                $epos = strpos($this->recv_buf, "\n", $spos);
-                if ($epos === false) {
-                    break;
-                }
-                $epos += 1;
-                $line = substr($this->recv_buf, $spos, $epos - $spos);
-                $spos = $epos;
-
-                $line = trim($line);
-                if (strlen($line) == 0) { // head end
-                    $this->recv_buf = substr($this->recv_buf, $spos);
-                    $ret            = $this->resp;
-                    $this->resp     = array();
-                    return $ret;
-                }
-                $this->block_size = intval($line);
-                $this->step       = self::STEP_DATA;
-            }
-            if ($this->step === self::STEP_DATA) {
-                $epos = $spos + $this->block_size;
-                if ($epos <= $buf_size) {
-                    $n = strpos($this->recv_buf, "\n", $epos);
-                    if ($n !== false) {
-                        $data         = substr($this->recv_buf, $spos, $epos - $spos);
-                        $this->resp[] = $data;
-                        $epos         = $n + 1;
-                        $this->step   = self::STEP_SIZE;
-                        continue;
-                    }
-                }
-                break;
-            }
-        }
-
-        // packet not ready
-        if ($spos > 0) {
-            $this->recv_buf = substr($this->recv_buf, $spos);
-        }
-        return null;
     }
 }
