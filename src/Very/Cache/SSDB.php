@@ -80,24 +80,24 @@ class SSDB {
         $this->ip   = $ip;
         $this->port = $port;
 
-        static $redis_cache = array();
+        static $instance_cache = array();
 
         if ($this->is_stat) {
             $_stat = FStat::getInstance();
         }
 
-        if (!isset($redis_cache[$server])) {
+        if (!isset($instance_cache[$server])) {
             try {
                 $_start_time = microtime(true);
 
 
                 if (class_exists('\SSDB', false)) {
-                    $redis_cache[$server] = new \SSDB();
+                    $instance_cache[$server] = new \SSDB();
                 } else {
-                    $redis_cache[$server] = new SSDBClient();
+                    $instance_cache[$server] = new SSDBClient();
                 }
 
-                $redis_cache[$server]->connect($ip, $port, 1);
+                $instance_cache[$server]->connect($ip, $port, 1);
 
                 if ($this->is_stat) {
                     $_stat->set(1, 'SSDB连接效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), $ip . ':' . $port);
@@ -106,11 +106,11 @@ class SSDB {
                 if ($this->is_stat) {
                     $_stat->set(1, 'BUG错误', 'SSDB连接错误', "{$ip}:{$port}");
                 }
-                throw new \RuntimeException('SSDB connect error:' . $e->getMessage());
+                throw new SSDBException('SSDB connect error:' . $e->getMessage());
             }
         }
 
-        return $redis_cache[$server];
+        return $instance_cache[$server];
     }
 
     private function isConnectionLost(SSDBException $e) {
@@ -124,8 +124,8 @@ class SSDB {
      * @param $func
      * @param $params
      *
-     * @return bool|mixed
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
+     * @return mixed
+     * @throws SSDBException
      */
     public function __call($func, $params) {
         if ($this->is_stat) {
@@ -149,7 +149,7 @@ class SSDB {
                     $redis_server = $this->connect($func);
                     continue;
                 } else {
-                    return false;
+                    throw new SSDBException('SSDB execute error:' . $e->getMessage());
                 }
             }
         }

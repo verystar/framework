@@ -106,7 +106,7 @@ class Redis {
                 if ($this->is_stat) {
                     $_stat->set(1, 'BUG错误', 'Redis连接错误', "{$ip}:{$port}");
                 }
-                throw new \RuntimeException('redis connect error:' . $e->getMessage());
+                throw new \RedisException('redis connect error:' . $e->getMessage());
             }
 
         }
@@ -125,8 +125,8 @@ class Redis {
      * @param $func
      * @param $params
      *
-     * @return bool|mixed
-     * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
+     * @return mixed
+     * @throws \RedisException
      */
     public function __call($func, $params) {
         if ($this->is_stat) {
@@ -150,7 +150,7 @@ class Redis {
                     $redis_server = $this->connect($func);
                     continue;
                 } else {
-                    return false;
+                    throw new \RedisException('redis execute error:' . $e->getMessage());
                 }
             }
         }
