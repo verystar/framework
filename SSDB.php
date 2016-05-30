@@ -102,19 +102,18 @@ class SSDB {
                 if ($this->is_stat) {
                     $_stat->set(1, 'SSDB连接效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), $ip . ':' . $port);
                 }
-            } catch (\SSDBException $e) {
+            } catch (SSDBException $e) {
                 if ($this->is_stat) {
                     $_stat->set(1, 'BUG错误', 'SSDB连接错误', "{$ip}:{$port}");
                 }
                 throw new \RuntimeException('SSDB connect error:' . $e->getMessage());
             }
-
         }
 
         return $redis_cache[$server];
     }
 
-    private function isConnectionLost(\SSDBException $e) {
+    private function isConnectionLost(SSDBException $e) {
         if (strpos($e->getMessage(), 'SSDB server went away') !== false || strpos($e->getMessage(), 'Connection lost') !== false || strpos($e->getMessage(), 'Connection refused') !== false) {
             return true;
         }
@@ -142,7 +141,7 @@ class SSDB {
                 if ($this->is_stat) {
                     $_stat->set(1, 'SSDB执行效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), "{$this->ip}:{$this->port}({$func})");
                 }
-            } catch (\SSDBException $e) {
+            } catch (SSDBException $e) {
                 if ($this->is_stat) {
                     $_stat->set(1, 'BUG错误', 'SSDB执行错误', "{$this->ip}:{$this->port}", $e->getMessage(), 0.1);
                 }
