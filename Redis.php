@@ -153,6 +153,7 @@ class Redis {
                     throw new \RedisException('redis execute error:' . $e->getMessage());
                 }
             }
+            break;
         }
 
         return $ret;

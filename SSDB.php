@@ -152,6 +152,7 @@ class SSDB {
                     throw new SSDBException('SSDB execute error:' . $e->getMessage());
                 }
             }
+            break;
         }
 
         return $ret;
