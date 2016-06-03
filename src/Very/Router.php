@@ -1,18 +1,18 @@
-<?php namespace Very;
+<?php
+
+namespace Very;
 
 /**
- * 路由操作库，调用方法library('router')
+ * 路由操作库，调用方法library('router').
+ *
  * @author caixudong
  */
-
-
-class Router {
-
-    public function init($rewrite = true) {
-
-
+class Router
+{
+    public function init($rewrite = true)
+    {
         $default_controller = config('app', 'default_controller', 'index');
-        $default_action     = config('app', 'default_action', 'index');
+        $default_action = config('app', 'default_action', 'index');
 
         if ($rewrite) {
             $uri = $_SERVER['REQUEST_URI'];
@@ -30,7 +30,7 @@ class Router {
 
             if ($count_params) {
                 $last_params = &$params[$count_params - 1];
-                $ext         = pathinfo($last_params);
+                $ext = pathinfo($last_params);
                 if (isset($ext['extension']) && in_array(strtolower($ext['extension']), ['json', 'msgpack', 'appcache'])) {
                     $last_params = $ext['filename'];
                     request()->setParam('extension', strtolower($ext['extension']));
@@ -43,10 +43,10 @@ class Router {
                 if ($count_params == 1) {
                     if (preg_match('/([a-zA-Z]\w*)/', $params[0])) {
                         $controller = $default_controller;
-                        $action     = $params[0];
+                        $action = $params[0];
                     } else {
                         $controller = 'error';
-                        $action     = 'error';
+                        $action = 'error';
                     }
                     break;
                 }
@@ -61,23 +61,21 @@ class Router {
                     }
 
                     if ($is_val) {
-                        $action     = array_pop($params);
+                        $action = array_pop($params);
                         $controller = implode('/', $params);
-
                     } else {
                         $controller = 'error';
-                        $action     = 'error';
+                        $action = 'error';
                     }
                     break;
                 }
 
                 $controller = $default_controller;
-                $action     = $default_action;
+                $action = $default_action;
             } while (0);
-
         } else {
             $controller = request()->get('m', $default_controller);
-            $action     = request()->get('a', $default_action);
+            $action = request()->get('a', $default_action);
         }
 
         request()->setControllerName($controller);
@@ -86,23 +84,24 @@ class Router {
         try {
             $this->run($controller, $action);
         } catch (Exception $e) {
-            $controllername = $this->getNamespace() . '\\Exceptions\\Handler';
+            $controllername = $this->getNamespace().'\\Exceptions\\Handler';
             app()->make($controllername)->render($e);
         }
     }
 
-    public function run($controller, $action, $params = []) {
+    public function run($controller, $action, $params = [])
+    {
         $controllername = $this->getControllerClassName($controller);
 
-        if (!method_exists($controllername, $action . 'Action')) {
-            throw new Exception($action . 'Action method not found in ' . $controllername, Exception::ERR_NOTFOUND_ACTION);
+        if (!method_exists($controllername, $action.'Action')) {
+            throw new Exception($action.'Action method not found in '.$controllername, Exception::ERR_NOTFOUND_ACTION);
         }
 
-        $instance  = app()->make($controllername, $params);
-        $action    = $action . 'Action';
+        $instance = app()->make($controllername, $params);
+        $action = $action.'Action';
         $reflector = new \ReflectionMethod($instance, $action);
 
-        /**
+        /*
          * action 自动注入
          */
         $parameters = [];
@@ -118,19 +117,22 @@ class Router {
         call_user_func_array([$instance, $action], $parameters);
     }
 
-    private function getNamespace() {
-        $controller_namespace = app('namespace.controller') ? '\\' . app('namespace.controller') : '';
+    private function getNamespace()
+    {
+        $controller_namespace = app('namespace.controller') ? '\\'.app('namespace.controller') : '';
         if (!$controller_namespace) {
-            $controller_namespace = app('namespace') ? '\\' . app('namespace') : '';
+            $controller_namespace = app('namespace') ? '\\'.app('namespace') : '';
         }
+
         return $controller_namespace;
     }
 
-    private function getControllerClassName($controller) {
+    private function getControllerClassName($controller)
+    {
         $controller_namespace = $this->getNamespace();
-        $controllername       = implode('/', array_map('ucfirst', explode('/', strtolower($controller))));
-        $controllername       = str_replace("/", "\\", $controllername);
-        $controllername       = $controller_namespace . '\\Controllers\\' . $controllername . "Controller";
+        $controllername = implode('/', array_map('ucfirst', explode('/', strtolower($controller))));
+        $controllername = str_replace('/', '\\', $controllername);
+        $controllername = $controller_namespace.'\\Controllers\\'.$controllername.'Controller';
 
         return $controllername;
     }

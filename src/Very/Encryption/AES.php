@@ -1,7 +1,9 @@
 <?php
+
 namespace Very\Encryption;
+
 /**
- * AES 256加密
+ * AES 256加密.
  */
 class AES extends ThirdDes
 {

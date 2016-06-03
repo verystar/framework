@@ -1,17 +1,20 @@
-<?php namespace Very\Mail;
+<?php
+
+namespace Very\Mail;
 
 use Swift_SmtpTransport as SmtpTransport;
 use Swift_MailTransport as MailTransport;
 use Swift_SendmailTransport as SendmailTransport;
 
-class TransportManager {
-
+class TransportManager
+{
     /**
      * Create an instance of the SMTP Swift Transport driver.
      *
      * @return \Swift_SmtpTransport
      */
-    public static function createSmtpDriver() {
+    public static function createSmtpDriver()
+    {
         $config = config('mail');
 
         // The Swift SMTP transport instance will allow us to use any SMTP backend
@@ -42,7 +45,8 @@ class TransportManager {
      *
      * @return \Swift_SendmailTransport
      */
-    public static function createSendmailDriver() {
+    public static function createSendmailDriver()
+    {
         $command = config('mail', 'sendmail');
 
         return SendmailTransport::newInstance($command);
@@ -53,7 +57,8 @@ class TransportManager {
      *
      * @return \Swift_MailTransport
      */
-    public static function createMailDriver() {
+    public static function createMailDriver()
+    {
         return MailTransport::newInstance();
     }
 }

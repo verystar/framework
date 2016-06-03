@@ -1,13 +1,16 @@
-<?php namespace Very\Image;
+<?php
+
+namespace Very\Image;
+
 /**
  * Captcha Class base on PHP GD Lib
  * User: 蔡旭东 fifsky@dev.ppstream.com
  * Date: 13-3-6
- * Time: 下午5:25
+ * Time: 下午5:25.
  */
-
-class Captcha {
-//定义验证码图片高度
+class Captcha
+{
+    //定义验证码图片高度
     private $height;
 //定义验证码图片宽度
     private $width;
@@ -41,52 +44,56 @@ class Captcha {
     private $showBorder;
 //定义验证码图片源
     private $image;
-    
-    public function __construct() {
-        $this->textNum    = 4;
-        $this->fontSize   = 16;
-        $this->fontFamily = __DIR__ . '/vcodefont.ttf'; //设置中文字体，可以改成linux的目录
-        $this->textLang   = 'en';
+
+    public function __construct()
+    {
+        $this->textNum = 4;
+        $this->fontSize = 16;
+        $this->fontFamily = __DIR__.'/vcodefont.ttf'; //设置中文字体，可以改成linux的目录
+        $this->textLang = 'en';
         $this->noisePoint = 30;
-        $this->noiseLine  = 3;
+        $this->noiseLine = 3;
         $this->distortion = false;
         $this->showBorder = false;
     } // from liehuo.net
 
-
     /**
-     * 设置图片宽度
-     * @param $w
+     * 设置图片宽度.
      *
+     * @param $w
      */
-    public function setWidth($w) {
+    public function setWidth($w)
+    {
         $this->width = $w;
     }
 
     /**
-     * 设置图片高度
-     * @param $h
+     * 设置图片高度.
      *
+     * @param $h
      */
-    public function setHeight($h) {
+    public function setHeight($h)
+    {
         $this->height = $h;
     }
 
     /**
-     * 设置字符个数
-     * @param $textN
+     * 设置字符个数.
      *
+     * @param $textN
      */
-    public function setTextNumber($textN) {
+    public function setTextNumber($textN)
+    {
         $this->textNum = $textN;
     }
 
     /**
-     * 设置字符颜色
-     * @param $fc
+     * 设置字符颜色.
      *
+     * @param $fc
      */
-    public function setFontColor($fc) {
+    public function setFontColor($fc)
+    {
         $this->fontColor = sscanf($fc, '#%2x%2x%2x');
     }
 
@@ -96,78 +103,85 @@ class Captcha {
 //    }
 
     /**
-     * 设置字体
-     * @param $ffUrl
+     * 设置字体.
      *
+     * @param $ffUrl
      */
-    public function setFontFamily($ffUrl) {
+    public function setFontFamily($ffUrl)
+    {
         $this->fontFamily = $ffUrl;
     }
 
     /**
      * 设置字符语言
-     * @param $lang
      *
+     * @param $lang
      */
-    public function setTextLang($lang) {
+    public function setTextLang($lang)
+    {
         $this->textLang = $lang;
     }
 
     /**
-     * 设置图片背景
-     * @param $bc
+     * 设置图片背景.
      *
+     * @param $bc
      */
-    public function setBgColor($bc) {
+    public function setBgColor($bc)
+    {
         $this->bgColor = sscanf($bc, '#%2x%2x%2x');
     }
 
     /**
-     * 设置干扰点数量
-     * @param $n
+     * 设置干扰点数量.
      *
+     * @param $n
      */
-    public function setNoisePoint($n) {
+    public function setNoisePoint($n)
+    {
         $this->noisePoint = $n;
     }
 
     /**
-     * 设置干扰线数量
-     * @param $n
+     * 设置干扰线数量.
      *
+     * @param $n
      */
-    public function setNoiseLine($n) {
+    public function setNoiseLine($n)
+    {
         $this->noiseLine = $n;
     }
 
     /**
-     * 设置是否扭曲
-     * @param $b
+     * 设置是否扭曲.
      *
+     * @param $b
      */
-    public function setDistortion($b) {
+    public function setDistortion($b)
+    {
         $this->distortion = $b;
     }
 
     /**
-     * 设置是否显示边框
-     * @param $border
+     * 设置是否显示边框.
      *
+     * @param $border
      */
-    public function setShowBorder($border) {
+    public function setShowBorder($border)
+    {
         $this->showBorder = $border;
     }
 
     /**
-     * 初始化验证码图片
+     * 初始化验证码图片.
      */
-    public function initImage() {
-
+    public function initImage()
+    {
         if (empty($this->width)) {
             $this->width = floor($this->fontSize) * $this->textNum + 10;
         } else {
             //根据宽度自动计算字体大小
-            $this->fontSize = max(floor(($this->width - 20) / $this->textNum),$this->fontSize);
+            $this->fontSize = max(floor(($this->width - 20) / $this->textNum), $this->fontSize);
         }
 
         if (empty($this->height)) {
@@ -184,36 +198,40 @@ class Captcha {
     }
 
     /**
-     * 产生随机字符
+     * 产生随机字符.
+     *
      * @param $type
      *
      * @return string
      */
-    public function randText($type) {
+    public function randText($type)
+    {
         $string = '';
         switch ($type) {
             case 'en':
                 $str = 'ABCDEFGHJKLMNPQRSTUVWXY3456789';
-                for ($i = 0; $i < $this->textNum; $i++) {
-                    $string = $string . ',' . $str[mt_rand(0, 29)];
+                for ($i = 0; $i < $this->textNum; ++$i) {
+                    $string = $string.','.$str[mt_rand(0, 29)];
                 }
                 break;
             case 'cn':
-                for ($i = 0; $i < $this->textNum; $i++) {
-                    $string = $string . ',' . chr(rand(0xB0, 0xCC)) . chr(rand(0xA1, 0xBB));
+                for ($i = 0; $i < $this->textNum; ++$i) {
+                    $string = $string.','.chr(rand(0xB0, 0xCC)).chr(rand(0xA1, 0xBB));
                 }
                 $string = iconv('GB2312', 'UTF-8', $string); //转换编码到utf8
                 break;
         }
+
         return substr($string, 1);
     }
 
     /**
      * 输出文字到验证码
      */
-    public function createText() {
-        $textArray         = explode(',', $this->randText($this->textLang));
-        $this->textContent = join('', $textArray);
+    public function createText()
+    {
+        $textArray = explode(',', $this->randText($this->textLang));
+        $this->textContent = implode('', $textArray);
         if (empty($this->fontColor)) {
             $this->randFontColor = imagecolorallocate($this->image, mt_rand(0, 200), mt_rand(0, 200), mt_rand(0, 200));
         } else {
@@ -228,54 +246,57 @@ class Captcha {
             $x_pos = floor(($this->width - $font_width) / 2) + 2;
         }
 
-        for ($i = 0; $i < $this->textNum; $i++) {
+        for ($i = 0; $i < $this->textNum; ++$i) {
             $angle = mt_rand(-1, 1) * mt_rand(2, 20);
             imagettftext($this->image, $this->fontSize, $angle, $x_pos + $i * floor($this->fontSize), floor(($this->height - $this->fontSize) / 2) + $this->fontSize - 2, $this->randFontColor, $this->fontFamily, $textArray[$i]);
         }
     }
 
     /**
-     * 生成干扰点
+     * 生成干扰点.
      */
-    public function createNoisePoint() {
-        for ($i = 0; $i < $this->noisePoint; $i++) {
+    public function createNoisePoint()
+    {
+        for ($i = 0; $i < $this->noisePoint; ++$i) {
             $pointColor = imagecolorallocate($this->image, mt_rand(0, 255), mt_rand(0, 255), mt_rand(0, 255));
             imagesetpixel($this->image, mt_rand(0, $this->width), mt_rand(0, $this->height), $pointColor);
         }
-
     }
-
 
     /**
      * 产生干扰线
      */
-    public function createNoiseLine() {
-        for ($i = 0; $i < $this->noiseLine; $i++) {
+    public function createNoiseLine()
+    {
+        for ($i = 0; $i < $this->noiseLine; ++$i) {
             $lineColor = imagecolorallocate($this->image, mt_rand(0, 255), mt_rand(0, 255), 20);
             imageline($this->image, 0, mt_rand(0, $this->width), $this->width, mt_rand(0, $this->height), $lineColor);
         }
     }
 
     /**
-     * 扭曲文字
+     * 扭曲文字.
      */
-    public function distortionText() {
+    public function distortionText()
+    {
         $this->distortionImage = imagecreatetruecolor($this->width, $this->height);
         imagefill($this->distortionImage, 0, 0, $this->randBgColor);
-        for ($x = 0; $x < $this->width; $x++) {
-            for ($y = 0; $y < $this->height; $y++) {
+        for ($x = 0; $x < $this->width; ++$x) {
+            for ($y = 0; $y < $this->height; ++$y) {
                 $rgbColor = imagecolorat($this->image, $x, $y);
-                imagesetpixel($this->distortionImage, (int)($x + sin($y / $this->height * 2 * M_PI - M_PI * 0.5) * 3), $y, $rgbColor);
+                imagesetpixel($this->distortionImage, (int) ($x + sin($y / $this->height * 2 * M_PI - M_PI * 0.5) * 3), $y, $rgbColor);
             }
         }
         $this->image = $this->distortionImage;
     }
 
     /**
-     * 生成验证码图片
+     * 生成验证码图片.
+     *
      * @return mixed
      */
-    public function createImage() {
+    public function createImage()
+    {
         $this->initImage(); //创建基本图片
         $this->createText(); //输出验证码字符
         if ($this->distortion) {
@@ -291,12 +312,12 @@ class Captcha {
         if ($this->distortion) {
             imagedestroy($this->distortionImage);
         }
+
         return $this->textContent;
     }
-
 }
 
-/**
+/*
  * example
  *
 $token       = isset($_GET['token']) ? trim($_GET['token']) : '';

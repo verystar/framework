@@ -1,6 +1,8 @@
-<?php namespace Very;
+<?php
 
-/**
+namespace Very;
+
+/*
  * Created by PhpStorm.
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/1/7 下午4:38
@@ -15,8 +17,8 @@ use Monolog\Handler\SyslogHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
 
-class Logger implements PsrLoggerInterface {
-
+class Logger implements PsrLoggerInterface
+{
     /**
      * The Monolog logger instance.
      *
@@ -30,156 +32,146 @@ class Logger implements PsrLoggerInterface {
      * @var array
      */
     protected $levels = [
-        'debug'     => MonologLogger::DEBUG,
-        'info'      => MonologLogger::INFO,
-        'notice'    => MonologLogger::NOTICE,
-        'warning'   => MonologLogger::WARNING,
-        'error'     => MonologLogger::ERROR,
-        'critical'  => MonologLogger::CRITICAL,
-        'alert'     => MonologLogger::ALERT,
+        'debug' => MonologLogger::DEBUG,
+        'info' => MonologLogger::INFO,
+        'notice' => MonologLogger::NOTICE,
+        'warning' => MonologLogger::WARNING,
+        'error' => MonologLogger::ERROR,
+        'critical' => MonologLogger::CRITICAL,
+        'alert' => MonologLogger::ALERT,
         'emergency' => MonologLogger::EMERGENCY,
     ];
 
     /**
      * Create a new log writer instance.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->monolog = new MonologLogger('log');
-        $path          = config('app', 'log_base_path');
-        $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'log.log', 7);
+        $path = config('app', 'log_base_path');
+        $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'log.log', 7);
     }
 
     /**
      * Log an emergency message to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function emergency($message, array $context = array()) {
+    public function emergency($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log an alert message to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function alert($message, array $context = array()) {
+    public function alert($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log a critical message to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function critical($message, array $context = array()) {
+    public function critical($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log an error message to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function error($message, array $context = array()) {
+    public function error($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log a warning message to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function warning($message, array $context = array()) {
+    public function warning($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log a notice to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function notice($message, array $context = array()) {
+    public function notice($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log an informational message to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function info($message, array $context = array()) {
+    public function info($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log a debug message to the logs.
      *
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $message
+     * @param array  $context
      */
-    public function debug($message, array $context = array()) {
+    public function debug($message, array $context = array())
+    {
         $this->writeLog(__FUNCTION__, $message, $context);
     }
 
     /**
      * Log a message to the logs.
      *
-     * @param  string $level
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $level
+     * @param string $message
+     * @param array  $context
      */
-    public function log($level, $message, array $context = array()) {
+    public function log($level, $message, array $context = array())
+    {
         $this->writeLog($level, $message, $context);
     }
 
     /**
      * Write a message to Monolog.
      *
-     * @param  string $level
-     * @param  string $message
-     * @param  array  $context
-     *
-     * @return void
+     * @param string $level
+     * @param string $message
+     * @param array  $context
      */
-    protected function writeLog($level, $message, $context) {
+    protected function writeLog($level, $message, $context)
+    {
         $this->monolog->{$level}($message, $context);
     }
 
     /**
      * Register a file log handler.
      *
-     * @param  string $path
-     * @param  string $level
-     *
-     * @return void
+     * @param string $path
+     * @param string $level
      */
-    public function useFiles($path, $level = 'debug') {
+    public function useFiles($path, $level = 'debug')
+    {
         $this->monolog->pushHandler($handler = new StreamHandler($path, $this->parseLevel($level)));
 
         $handler->setFormatter($this->getDefaultFormatter());
@@ -188,13 +180,12 @@ class Logger implements PsrLoggerInterface {
     /**
      * Register a daily file log handler.
      *
-     * @param  string $path
-     * @param  int    $days
-     * @param  string $level
-     *
-     * @return void
+     * @param string $path
+     * @param int    $days
+     * @param string $level
      */
-    public function useDailyFiles($path, $days = 0, $level = 'debug') {
+    public function useDailyFiles($path, $days = 0, $level = 'debug')
+    {
         $this->monolog->pushHandler(
             $handler = new RotatingFileHandler($path, $days, $this->parseLevel($level))
         );
@@ -205,24 +196,22 @@ class Logger implements PsrLoggerInterface {
     /**
      * Register a Syslog handler.
      *
-     * @param  string $name
-     * @param  string $level
-     *
-     * @return void
+     * @param string $name
+     * @param string $level
      */
-    public function useSyslog($name = 'laravel', $level = 'debug') {
+    public function useSyslog($name = 'laravel', $level = 'debug')
+    {
         $this->monolog->pushHandler(new SyslogHandler($name, LOG_USER, $level));
     }
 
     /**
      * Register an error_log handler.
      *
-     * @param  string  $level
-     * @param  integer $messageType
-     *
-     * @return void
+     * @param string $level
+     * @param int    $messageType
      */
-    public function useErrorLog($level = 'debug', $messageType = ErrorLogHandler::OPERATING_SYSTEM) {
+    public function useErrorLog($level = 'debug', $messageType = ErrorLogHandler::OPERATING_SYSTEM)
+    {
         $this->monolog->pushHandler(
             $handler = new ErrorLogHandler($messageType, $this->parseLevel($level))
         );
@@ -233,14 +222,15 @@ class Logger implements PsrLoggerInterface {
     /**
      * Format the parameters for the logger.
      *
-     * @param  mixed $message
+     * @param mixed $message
      *
      * @return string
      */
-    protected function formatMessage($message) {
+    protected function formatMessage($message)
+    {
         if (is_array($message)) {
             $message = var_export($message, true);
-        } else if (is_object($message)) {
+        } elseif (is_object($message)) {
             $message = get_object_vars($message);
         }
 
@@ -250,18 +240,19 @@ class Logger implements PsrLoggerInterface {
     /**
      * Parse the string level into a Monolog constant.
      *
-     * @param  string $level
+     * @param string $level
      *
      * @return int
      *
      * @throws \InvalidArgumentException
      */
-    protected function parseLevel($level) {
+    protected function parseLevel($level)
+    {
         if (isset($this->levels[$level])) {
             return $this->levels[$level];
         }
 
-        throw new InvalidArgumentException("Invalid log level.");
+        throw new InvalidArgumentException('Invalid log level.');
     }
 
     /**
@@ -269,7 +260,8 @@ class Logger implements PsrLoggerInterface {
      *
      * @return \Monolog\Logger
      */
-    public function getMonolog() {
+    public function getMonolog()
+    {
         return $this->monolog;
     }
 
@@ -278,7 +270,8 @@ class Logger implements PsrLoggerInterface {
      *
      * @return \Monolog\Formatter\LineFormatter
      */
-    protected function getDefaultFormatter() {
+    protected function getDefaultFormatter()
+    {
         return new LineFormatter(null, null, true, true);
     }
 }

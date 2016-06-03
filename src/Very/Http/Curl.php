@@ -4,19 +4,20 @@
  * Created by PhpStorm.
  * User: 蔡旭东 fifsky@gmail.com
  * Date: 14-7-21
- * Time: 下午2:18
+ * Time: 下午2:18.
  */
+
 namespace Very\Http;
 
 use Very\Library\FStat;
 
-class Curl {
-
+class Curl
+{
     private $ch;
     private $timeout = 5;
     private $is_ajax = false;
     private $is_stat = true; //是否监控统计
-    private $referer = NULL;
+    private $referer = null;
     private $curl_error;
     private $body;
     private $header;
@@ -28,9 +29,10 @@ class Curl {
 
     /**
      * Verify SSL Cert.
+     *
      * @ignore
      */
-    private $ssl_verifypeer = FALSE;
+    private $ssl_verifypeer = false;
     private $ssl_cert_file = '';
     private $ssl_key_file = '';
 
@@ -41,10 +43,10 @@ class Curl {
      *
      * @return $this
      */
-    private function exec($url, $method = 'GET', $post_data = '') {
-
+    private function exec($url, $method = 'GET', $post_data = '')
+    {
         if (!$url) {
-            throw new \RuntimeException('CURL url is null:' . __FILE__);
+            throw new \RuntimeException('CURL url is null:'.__FILE__);
         }
         $this->ch = curl_init();
         $this->defaultOptions($this->ch, $url);
@@ -54,42 +56,43 @@ class Curl {
             $post_data = is_array($post_data) ? http_build_query($post_data) : $post_data;
             curl_setopt($this->ch, CURLOPT_POSTFIELDS, $post_data);
 
-            if ($post_data{0} == "{") {
+            if ($post_data{0} == '{') {
                 curl_setopt($this->ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
             }
         }
 
         if ($this->http_header) {
-//            $this->http_header = array(
+            //            $this->http_header = array(
 //                'Content-Length: ' . strlen($post_data),
 //                'Content-Type: ' . $content_type,
 //                'Accept: ' . $accept_type
 //            );
             curl_setopt($this->ch, CURLOPT_HTTPHEADER, $this->http_header);
         }
-        $this->body       = curl_exec($this->ch);
+        $this->body = curl_exec($this->ch);
         $this->curl_error = curl_errno($this->ch);
-        $this->header     = curl_getinfo($this->ch);
+        $this->header = curl_getinfo($this->ch);
         $this->log($url);
         if (is_resource($this->ch)) {
             curl_close($this->ch);
         }
 
-        $this->url       = $url;
-        $this->method    = $method;
+        $this->url = $url;
+        $this->method = $method;
         $this->post_data = $post_data;
-        return $this;
 
+        return $this;
     }
 
     /**
-     * 重试次数 $this->get()->retry(2)
+     * 重试次数 $this->get()->retry(2).
      *
      * @param $num
      *
      * @return $this
      */
-    public function retry($num) {
+    public function retry($num)
+    {
         if ($this->getError()) {
             while (true) {
                 if (!$num) {
@@ -101,15 +104,15 @@ class Curl {
                 if (!$this->getError()) {
                     break;
                 }
-                $num--;
+                --$num;
             }
         }
 
         return $this;
     }
 
-    public function setSSLFile($cert_file, $key_file) {
-
+    public function setSSLFile($cert_file, $key_file)
+    {
         $this->ssl_verifypeer = true;
         if (is_file($cert_file)) {
             $this->ssl_cert_file = $cert_file;
@@ -121,12 +124,14 @@ class Curl {
     }
 
     //网页内容抓取
-    public function get($url) {
+    public function get($url)
+    {
         return $this->exec($url);
     }
 
     //监控统计
-    private function log($url) {
+    private function log($url)
+    {
         if ($this->is_stat) {
             $stat_url_arr = parse_url($url);
 
@@ -134,17 +139,17 @@ class Curl {
                 $stat_url_arr['path'] = '/mmopen';
             }
 
-            $stat_url = $stat_url_arr['host'] . $stat_url_arr['path'];
+            $stat_url = $stat_url_arr['host'].$stat_url_arr['path'];
 
             $_stat = FStat::getInstance();
 
             if ($error_no = curl_errno($this->ch)) {
                 $curl_error_info = array(
-                    '3'  => '网址格式不正确(3)',
-                    '6'  => 'DNS解析失败(6)',
+                    '3' => '网址格式不正确(3)',
+                    '6' => 'DNS解析失败(6)',
                     '28' => 'HTTP请求超时(28)',
                 );
-                $stat_name       = isset($curl_error_info[$error_no]) ? $curl_error_info[$error_no] : '错误(' . $error_no . ')';
+                $stat_name = isset($curl_error_info[$error_no]) ? $curl_error_info[$error_no] : '错误('.$error_no.')';
                 //$header = curl_getinfo($this->ch);
                 //$v4 = rand_sample(print_r($header,true),100);//百分之一的采样
                 $_stat->set(1, 'CURL请求', $stat_name, $stat_url_arr['host'], $url);
@@ -157,20 +162,20 @@ class Curl {
                 $_stat->set(1, 'CURL状态', $this->getStatusCode(), $stat_url_arr['host'], $url);
             }
 
-            $diff_time     = $this->getRequestTime();
+            $diff_time = $this->getRequestTime();
             $diff_time_str = $_stat->formatTime($diff_time);
 
-            $_stat->set(1, 'CURL接口效率', $diff_time_str, $stat_url . "($error_no)", $_SERVER['PHP_SELF']);
+            $_stat->set(1, 'CURL接口效率', $diff_time_str, $stat_url."($error_no)", $_SERVER['PHP_SELF']);
         }
 
         if ($this->is_log) {
             //记录LOG
-            $log     = logger();
+            $log = logger();
             $log_arr = array(
                 'URL' => $url,
-                'HC'  => $this->getStatusCode(), // http_code
-                'RT'  => $this->getRequestTime(), //request_time
-                'EN'  => $this->getError(), //errno
+                'HC' => $this->getStatusCode(), // http_code
+                'RT' => $this->getRequestTime(), //request_time
+                'EN' => $this->getError(), //errno
             );
 
             if ($this->getError()) {
@@ -181,41 +186,46 @@ class Curl {
         }
     }
 
-    public function debug() {
+    public function debug()
+    {
         return [
-            'URL'    => $this->url,
-            '状态'     => $this->getStatusCode(), // http_code
-            '请求耗时'   => $this->getRequestTime(), //request_time
-            '错误码'    => $this->getError(), //errno
+            'URL' => $this->url,
+            '状态' => $this->getStatusCode(), // http_code
+            '请求耗时' => $this->getRequestTime(), //request_time
+            '错误码' => $this->getError(), //errno
             'Header' => $this->getHeader(), //errno
         ];
     }
 
     //curl Post数据
-    public function post($url, $data) {
+    public function post($url, $data)
+    {
         return $this->exec($url, 'POST', $data);
     }
 
     //REST DELETE
-    public function delete($url) {
+    public function delete($url)
+    {
         return $this->exec($url, 'DELETE');
     }
 
     //REST PUT
-    public function put($url, $data) {
+    public function put($url, $data)
+    {
         return $this->exec($url, 'PUT', $data);
     }
 
-    public function multi($urls, $method = 'GET') {
+    public function multi($urls, $method = 'GET')
+    {
         $mh = curl_multi_init();
 
         $conn = $contents = [];
         foreach ($urls as $i => $val) {
             if (is_array($val)) {
-                $url       = $val['url'];
+                $url = $val['url'];
                 $post_data = isset($val['post_data']) ? $val['post_data'] : '';
             } else {
-                $url       = $val;
+                $url = $val;
                 $post_data = '';
             }
 
@@ -227,7 +237,7 @@ class Curl {
                 $post_data = is_array($post_data) ? http_build_query($post_data) : $post_data;
                 curl_setopt($conn[$i], CURLOPT_POSTFIELDS, $post_data);
 
-                if ($post_data{0} == "{") {
+                if ($post_data{0} == '{') {
                     curl_setopt($conn[$i], CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
                 }
             }
@@ -244,14 +254,15 @@ class Curl {
             curl_close($conn[$i]);
         } // 结束清理  
         curl_multi_close($mh);
+
         return $contents;
     }
 
-
-    private function defaultOptions(&$ch, $url) {
+    private function defaultOptions(&$ch, $url)
+    {
         $userAgent = 'Mozilla/4.0+(compatible;+MSIE+6.0;+Windows+NT+5.1;+SV1)';
 
-        if ($this->referer = NULL) {
+        if ($this->referer = null) {
             curl_setopt($ch, CURLOPT_REFERER, $this->referer); //设置 referer
         }
         curl_setopt($ch, CURLOPT_URL, $url); //设置访问的url地址
@@ -261,12 +272,12 @@ class Curl {
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 0); //跟踪301
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); //返回结果
         if (substr($url, 0, 5) == 'https') {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         }
 
         if ($this->is_ajax) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-Requested-With: XMLHttpRequest", "X-Prototype-Version:1.5.0"));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('X-Requested-With: XMLHttpRequest', 'X-Prototype-Version:1.5.0'));
         }
 
         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
@@ -285,27 +296,32 @@ class Curl {
         }
     }
 
-    public function getError() {
+    public function getError()
+    {
         return $this->curl_error;
     }
 
-    public function getBody() {
+    public function getBody()
+    {
         return $this->body;
     }
 
-    public function setHeader($headers) {
+    public function setHeader($headers)
+    {
         $this->http_header = $headers;
     }
 
-    public function getHeader($key = NULL) {
-        if ($key !== NULL) {
-            return isset($this->header[$key]) ? $this->header : NULL;
+    public function getHeader($key = null)
+    {
+        if ($key !== null) {
+            return isset($this->header[$key]) ? $this->header : null;
         } else {
             return $this->header;
         }
     }
 
-    public function getStatusCode() {
+    public function getStatusCode()
+    {
         return $this->header['http_code'];
     }
 
@@ -316,38 +332,49 @@ class Curl {
      * time_commect：client和server端建立TCP 连接的时间 里面包括DNS解析的时间
      * starttransfer_time：从client发出请求；到web的server 响应第一个字节的时间 包括前面的2个时间
      * redirect_time：重定向时间，包括到最后一次传输前的几次重定向的DNS解析，连接，预传输，传输时间。
-     * total_time：总时间
+     * total_time：总时间.
      *
      * @param $time_key
      *
      * @return mixed
      */
-    public function getRequestTime($time_key = 'total_time') {
+    public function getRequestTime($time_key = 'total_time')
+    {
         return $this->header[$time_key];
     }
 
-    public function setReferer($url) {
+    public function setReferer($url)
+    {
         $this->referer = $url;
+
         return $this;
     }
 
-    public function setAjax() {
+    public function setAjax()
+    {
         $this->is_ajax = true;
+
         return $this;
     }
 
-    public function setStat($is_stat) {
+    public function setStat($is_stat)
+    {
         $this->is_stat = $is_stat;
+
         return $this;
     }
 
-    public function setTimeout($second = 5) {
+    public function setTimeout($second = 5)
+    {
         $this->timeout = $second;
+
         return $this;
     }
 
-    public function setLog($is_log) {
+    public function setLog($is_log)
+    {
         $this->is_log = $is_log;
+
         return $this;
     }
 }

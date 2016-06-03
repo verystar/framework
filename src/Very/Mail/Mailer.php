@@ -2,7 +2,7 @@
 /**
  * Created by PhpStorm.
  * User: 蔡旭东 caixudong@verystar.cn
- * Date: 4/15/16 18:11
+ * Date: 4/15/16 18:11.
  */
 
 namespace Very\Mail;
@@ -12,8 +12,8 @@ use Swift_Mailer;
 use Swift_Message;
 use InvalidArgumentException;
 
-class Mailer {
-
+class Mailer
+{
     /**
      * The Swift Mailer instance.
      *
@@ -61,14 +61,15 @@ class Mailer {
     /**
      * Create a new Mailer instance.
      */
-    public function __construct() {
+    public function __construct()
+    {
         $config = config('mail');
 
         switch ($config['driver']) {
-            case "smtp":
+            case 'smtp':
                 $transport = TransportManager::createSmtpDriver();
                 break;
-            case "sendmail":
+            case 'sendmail':
                 $transport = TransportManager::createSendmailDriver();
                 break;
             default:
@@ -81,29 +82,28 @@ class Mailer {
     /**
      * Set the global from address and name.
      *
-     * @param  string $address
-     * @param  string $name
-     *
-     * @return void
+     * @param string $address
+     * @param string $name
      */
-    public function alwaysFrom($address, $name = null) {
+    public function alwaysFrom($address, $name = null)
+    {
         $this->from = compact('address', 'name');
     }
 
     /**
      * Send a new message using a view.
      *
-     * @param  \Closure|string $callback
+     * @param \Closure|string $callback
      *
      * @return mixed
      */
-    public function send($callback) {
-
+    public function send($callback)
+    {
         if ($callback instanceof Closure) {
             $message = $this->createMessage();
             call_user_func($callback, $message);
         } else {
-            throw new InvalidArgumentException("Callback is not valid.");
+            throw new InvalidArgumentException('Callback is not valid.');
         }
 
         return $this->sendSwiftMessage($message);
@@ -112,11 +112,12 @@ class Mailer {
     /**
      * Send a Swift Message instance.
      *
-     * @param  \Swift_Message $message
+     * @param \Swift_Message $message
      *
      * @return mixed
      */
-    protected function sendSwiftMessage($message) {
+    protected function sendSwiftMessage($message)
+    {
         if (!$this->pretending) {
             return $this->swift->send($message, $this->failedRecipients);
         } elseif (isset($this->logger)) {
@@ -127,12 +128,11 @@ class Mailer {
     /**
      * Log that a message was sent.
      *
-     * @param  \Swift_Message $message
-     *
-     * @return void
+     * @param \Swift_Message $message
      */
-    protected function logMessage($message) {
-        $emails = implode(', ', array_keys((array)$message->getTo()));
+    protected function logMessage($message)
+    {
+        $emails = implode(', ', array_keys((array) $message->getTo()));
         logger()->info("Pretending to mail message to: {$emails}");
     }
 
@@ -141,8 +141,9 @@ class Mailer {
      *
      * @return \Very\Mail\Message
      */
-    protected function createMessage() {
-        $message = new Message(new Swift_Message);
+    protected function createMessage()
+    {
+        $message = new Message(new Swift_Message());
 
         // If a global from address has been specified we will set it on every message
         // instances so the developer does not have to repeat themselves every time
@@ -157,11 +158,10 @@ class Mailer {
     /**
      * Tell the mailer to not really send messages.
      *
-     * @param  bool $value
-     *
-     * @return void
+     * @param bool $value
      */
-    public function pretend($value = true) {
+    public function pretend($value = true)
+    {
         $this->pretending = $value;
     }
 
@@ -170,7 +170,8 @@ class Mailer {
      *
      * @return bool
      */
-    public function isPretending() {
+    public function isPretending()
+    {
         return $this->pretending;
     }
 
@@ -179,7 +180,8 @@ class Mailer {
      *
      * @return \Swift_Mailer
      */
-    public function getSwiftMailer() {
+    public function getSwiftMailer()
+    {
         return $this->swift;
     }
 
@@ -188,18 +190,18 @@ class Mailer {
      *
      * @return array
      */
-    public function failures() {
+    public function failures()
+    {
         return $this->failedRecipients;
     }
 
     /**
      * Set the Swift Mailer instance.
      *
-     * @param  \Swift_Mailer $swift
-     *
-     * @return void
+     * @param \Swift_Mailer $swift
      */
-    public function setSwiftMailer($swift) {
+    public function setSwiftMailer($swift)
+    {
         $this->swift = $swift;
     }
 }

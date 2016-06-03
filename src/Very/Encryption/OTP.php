@@ -1,4 +1,7 @@
-<?php namespace Very\Encryption;
+<?php
+
+namespace Very\Encryption;
+
 /**
  * PHP Google two-factor authentication module.
  *
@@ -8,10 +11,10 @@
  * @author     Phil (Orginal author of this class)
  * @author     change for fifsky
  **/
-class OTP {
-
+class OTP
+{
     /**
-     * Interval between key regeneration
+     * Interval between key regeneration.
      */
     private $key_regen = 30;
 
@@ -20,7 +23,8 @@ class OTP {
      */
     private $length = 6;
 
-    public function setLength($length) {
+    public function setLength($length)
+    {
         $this->length = $length;
     }
 
@@ -31,17 +35,19 @@ class OTP {
      *
      * @return string
      */
-    public function generateSecretKey($prefix = '') {
-        return base32_encode(sha1(uniqid($prefix, TRUE), TRUE));
+    public function generateSecretKey($prefix = '')
+    {
+        return base32_encode(sha1(uniqid($prefix, true), true));
     }
 
     /**
      * Returns the current Unix Timestamp devided by the KEY_REGENERATION
      * period.
      *
-     * @return integer
+     * @return int
      **/
-    public function getTimestamp() {
+    public function getTimestamp()
+    {
         return floor(microtime(true) / $this->key_regen);
     }
 
@@ -49,12 +55,13 @@ class OTP {
      * Takes the secret key and the timestamp and returns the one time
      * password.
      *
-     * @param string  $key     - Secret key in binary form.
-     * @param integer $counter - Timestamp as returned by getTimestamp.
+     * @param string $key     - Secret key in binary form.
+     * @param int    $counter - Timestamp as returned by getTimestamp.
      *
      * @return string
      */
-    public function generateCode($key, $counter = null) {
+    public function generateCode($key, $counter = null)
+    {
         if ($counter === null) {
             $counter = $this->getTimestamp();
         }
@@ -62,11 +69,11 @@ class OTP {
         $key = base32_decode($key);
 
         // Counter must be 64-bit int
-        $bin_counter = pack('N*', 0) . pack('N*', $counter);
+        $bin_counter = pack('N*', 0).pack('N*', $counter);
         // 获取HASH值
         $hash = hash_hmac('sha1', $bin_counter, $key, true);
         // 进行混码计算
-        $offset      = ord($hash[19]) & 0xf;
+        $offset = ord($hash[19]) & 0xf;
         $secret_code = (
                 ((ord($hash[$offset + 0]) & 0x7f) << 24) |
                 ((ord($hash[$offset + 1]) & 0xff) << 16) |
@@ -81,21 +88,22 @@ class OTP {
      * Verifies a user inputted key against the current timestamp. Checks $window
      * keys either side of the timestamp.
      *
-     * @param string  $key
-     * @param string  $code          - User specified key
-     * @param integer $window        容错
-     * @param boolean $use_timestamp 自定义的时间戳
+     * @param string $key
+     * @param string $code          - User specified key
+     * @param int    $window        容错
+     * @param bool   $use_timestamp 自定义的时间戳
      *
-     * @return boolean
+     * @return bool
      **/
-    public function verify($key, $code, $window = 4, $use_timestamp = null) {
+    public function verify($key, $code, $window = 4, $use_timestamp = null)
+    {
         if ($use_timestamp === null) {
             $timeStamp = $this->getTimestamp();
         } else {
-            $timeStamp = (int)$use_timestamp;
+            $timeStamp = (int) $use_timestamp;
         }
 
-        for ($ts = $timeStamp - $window; $ts <= $timeStamp + $window; $ts++) {
+        for ($ts = $timeStamp - $window; $ts <= $timeStamp + $window; ++$ts) {
             if ($this->generateCode($key, $ts) == $code) {
                 return true;
             }
@@ -113,7 +121,8 @@ class OTP {
      *
      * @return string
      */
-    public function getQRCodeUrl($company, $holder, $secret) {
-        return 'otpauth://totp/' . urlencode($company . ':' . $holder) . '?secret=' . $secret . '&issuer=' . urlencode($company) . '';
+    public function getQRCodeUrl($company, $holder, $secret)
+    {
+        return 'otpauth://totp/'.urlencode($company.':'.$holder).'?secret='.$secret.'&issuer='.urlencode($company).'';
     }
 }

@@ -1,3 +1,7 @@
-<?php namespace Very\Container;
+<?php
 
-class BindingResolutionException extends \Exception {}
+namespace Very\Container;
+
+class BindingResolutionException extends \Exception
+{
+}

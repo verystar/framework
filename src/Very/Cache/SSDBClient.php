@@ -1,33 +1,44 @@
-<?php namespace Very\Cache;
+<?php
+
+namespace Very\Cache;
+
 use Exception;
 
 /**
  * Copyright (c) 2012, ideawu
  * All rights reserved.
+ *
  * @author: ideawu
+ *
  * @link  : http://www.ideawu.com/
  *
  * SSDB PHP client SDK.
  */
-class SSDBException extends Exception {
-    public function __construct($message = null, $code = 0) {
+class SSDBException extends Exception
+{
+    public function __construct($message = null, $code = 0)
+    {
         parent::__construct($message, $code);
     }
 }
 
-class SSDBTimeoutException extends SSDBException {
-    public function __construct($message = null, $code = 0) {
+class SSDBTimeoutException extends SSDBException
+{
+    public function __construct($message = null, $code = 0)
+    {
         parent::__construct($message, $code);
     }
 }
 
-class SSDB_Response {
+class SSDB_Response
+{
     public $cmd;
     public $code;
     public $data = null;
     public $message;
 
-    function __construct($code = 'ok', $data_or_message = null) {
+    public function __construct($code = 'ok', $data_or_message = null)
+    {
         $this->code = $code;
         if ($code == 'ok') {
             $this->data = $data_or_message;
@@ -36,25 +47,30 @@ class SSDB_Response {
         }
     }
 
-    function __toString() {
+    public function __toString()
+    {
         if ($this->code == 'ok') {
             $s = $this->data === null ? '' : json_encode($this->data);
         } else {
             $s = $this->message;
         }
+
         return sprintf('%-13s %12s %s', $this->cmd, $this->code, $s);
     }
 
-    function ok() {
+    public function ok()
+    {
         return $this->code == 'ok';
     }
 
-    function not_found() {
+    public function not_found()
+    {
         return $this->code == 'not_found';
     }
 }
 
-class SSDBClient {
+class SSDBClient
+{
     private $debug = false;
     public $sock = null;
     private $_closed = false;
@@ -62,13 +78,14 @@ class SSDBClient {
     private $_easy = true;
     public $last_resp = null;
 
-    function connect($host, $port, $timeout_ms = 2000) {
-        $timeout_f  = (float)$timeout_ms / 1000;
+    public function connect($host, $port, $timeout_ms = 2000)
+    {
+        $timeout_f = (float) $timeout_ms / 1000;
         $this->sock = @stream_socket_client("$host:$port", $errno, $errstr, $timeout_f);
         if (!$this->sock) {
             throw new SSDBException("$errno: $errstr");
         }
-        $timeout_sec  = intval($timeout_ms / 1000);
+        $timeout_sec = intval($timeout_ms / 1000);
         $timeout_usec = ($timeout_ms - $timeout_sec * 1000) * 1000;
         @stream_set_timeout($this->sock, $timeout_sec, $timeout_usec);
         if (function_exists('stream_set_chunk_size')) {
@@ -76,8 +93,9 @@ class SSDBClient {
         }
     }
 
-    function set_timeout($timeout_ms) {
-        $timeout_sec  = intval($timeout_ms / 1000);
+    public function set_timeout($timeout_ms)
+    {
+        $timeout_sec = intval($timeout_ms / 1000);
         $timeout_usec = ($timeout_ms - $timeout_sec * 1000) * 1000;
         @stream_set_timeout($this->sock, $timeout_sec, $timeout_usec);
     }
@@ -86,38 +104,45 @@ class SSDBClient {
      * After this method invoked with yesno=true, all requesting methods
      * will not return a SSDB_Response object.
      * And some certain methods like get/zget will return false
-     * when response is not ok(not_found, etc)
+     * when response is not ok(not_found, etc).
      */
-    function easy() {
+    public function easy()
+    {
         $this->_easy = true;
     }
 
-    function close() {
+    public function close()
+    {
         if (!$this->_closed) {
             @fclose($this->sock);
             $this->_closed = true;
-            $this->sock    = null;
+            $this->sock = null;
         }
     }
 
-    function closed() {
+    public function closed()
+    {
         return $this->_closed;
     }
 
     private $batch_mode = false;
     private $batch_cmds = array();
 
-    function batch() {
+    public function batch()
+    {
         $this->batch_mode = true;
         $this->batch_cmds = array();
+
         return $this;
     }
 
-    function multi() {
+    public function multi()
+    {
         return $this->batch();
     }
 
-    function exec() {
+    public function exec()
+    {
         $ret = array();
         foreach ($this->batch_cmds as $op) {
             list($cmd, $params) = $op;
@@ -125,41 +150,48 @@ class SSDBClient {
         }
         foreach ($this->batch_cmds as $op) {
             list($cmd, $params) = $op;
-            $resp  = $this->recv_resp($cmd, $params);
-            $resp  = $this->check_easy_resp($cmd, $resp);
+            $resp = $this->recv_resp($cmd, $params);
+            $resp = $this->check_easy_resp($cmd, $resp);
             $ret[] = $resp;
         }
         $this->batch_mode = false;
         $this->batch_cmds = array();
+
         return $ret;
     }
 
-    function request() {
+    public function request()
+    {
         $args = func_get_args();
-        $cmd  = array_shift($args);
+        $cmd = array_shift($args);
+
         return $this->__call($cmd, $args);
     }
 
     private $async_auth_password = null;
 
-    function auth($password) {
+    public function auth($password)
+    {
         $this->async_auth_password = $password;
-        return null;
+
+        return;
     }
 
-    function __call($cmd, $params = array()) {
+    public function __call($cmd, $params = array())
+    {
         $cmd = strtolower($cmd);
         if ($this->async_auth_password !== null) {
-            $pass                      = $this->async_auth_password;
+            $pass = $this->async_auth_password;
             $this->async_auth_password = null;
-            $auth                      = $this->__call('auth', array($pass));
+            $auth = $this->__call('auth', array($pass));
             if ($auth !== true) {
-                throw new Exception("Authentication failed");
+                throw new Exception('Authentication failed');
             }
         }
 
         if ($this->batch_mode) {
             $this->batch_cmds[] = array($cmd, $params);
+
             return $this;
         }
 
@@ -183,98 +215,126 @@ class SSDBClient {
         }
 
         $resp = $this->check_easy_resp($cmd, $resp);
+
         return $resp;
     }
 
-    private function check_easy_resp($cmd, $resp) {
+    private function check_easy_resp($cmd, $resp)
+    {
         $this->last_resp = $resp;
         if ($this->_easy) {
             if ($resp->not_found()) {
-                return NULL;
-            } else if (!$resp->ok() && !is_array($resp->data)) {
+                return;
+            } elseif (!$resp->ok() && !is_array($resp->data)) {
                 return false;
             } else {
                 return $resp->data;
             }
         } else {
             $resp->cmd = $cmd;
+
             return $resp;
         }
     }
 
-    function multi_set($kvs = array()) {
+    public function multi_set($kvs = array())
+    {
         $args = array();
         foreach ($kvs as $k => $v) {
             $args[] = $k;
             $args[] = $v;
         }
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function multi_hset($name, $kvs = array()) {
+    public function multi_hset($name, $kvs = array())
+    {
         $args = array($name);
         foreach ($kvs as $k => $v) {
             $args[] = $k;
             $args[] = $v;
         }
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function multi_zset($name, $kvs = array()) {
+    public function multi_zset($name, $kvs = array())
+    {
         $args = array($name);
         foreach ($kvs as $k => $v) {
             $args[] = $k;
             $args[] = $v;
         }
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function incr($key, $val = 1) {
+    public function incr($key, $val = 1)
+    {
         $args = func_get_args();
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function decr($key, $val = 1) {
+    public function decr($key, $val = 1)
+    {
         $args = func_get_args();
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function zincr($name, $key, $score = 1) {
+    public function zincr($name, $key, $score = 1)
+    {
         $args = func_get_args();
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function zdecr($name, $key, $score = 1) {
+    public function zdecr($name, $key, $score = 1)
+    {
         $args = func_get_args();
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function zadd($key, $score, $value) {
+    public function zadd($key, $score, $value)
+    {
         $args = array($key, $value, $score);
+
         return $this->__call('zset', $args);
     }
 
-    function zRevRank($name, $key) {
+    public function zRevRank($name, $key)
+    {
         $args = func_get_args();
-        return $this->__call("zrrank", $args);
+
+        return $this->__call('zrrank', $args);
     }
 
-    function zRevRange($name, $offset, $limit) {
+    public function zRevRange($name, $offset, $limit)
+    {
         $args = func_get_args();
-        return $this->__call("zrrange", $args);
+
+        return $this->__call('zrrange', $args);
     }
 
-    function hincr($name, $key, $val = 1) {
+    public function hincr($name, $key, $val = 1)
+    {
         $args = func_get_args();
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function hdecr($name, $key, $val = 1) {
+    public function hdecr($name, $key, $val = 1)
+    {
         $args = func_get_args();
+
         return $this->__call(__FUNCTION__, $args);
     }
 
-    private function send_req($cmd, $params) {
+    private function send_req($cmd, $params)
+    {
         $req = array($cmd);
         foreach ($params as $p) {
             if (is_array($p)) {
@@ -283,18 +343,21 @@ class SSDBClient {
                 $req[] = $p;
             }
         }
+
         return $this->send($req);
     }
 
-    private function recv_resp($cmd, $params) {
+    private function recv_resp($cmd, $params)
+    {
         $resp = $this->recv();
         if ($resp === false) {
             return new SSDB_Response('error', 'Unknown error');
-        } else if (!$resp) {
+        } elseif (!$resp) {
             return new SSDB_Response('disconnected', 'Connection closed');
         }
         if ($resp[0] == 'noauth') {
             $errmsg = isset($resp[1]) ? $resp[1] : '';
+
             return new SSDB_Response($resp[0], $errmsg);
         }
         switch ($cmd) {
@@ -347,17 +410,21 @@ class SSDBClient {
             case 'expire':
                 if ($resp[0] == 'ok') {
                     $val = isset($resp[1]) ? intval($resp[1]) : 0;
+
                     return new SSDB_Response($resp[0], $val);
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
             case 'zavg':
                 if ($resp[0] == 'ok') {
-                    $val = isset($resp[1]) ? floatval($resp[1]) : (float)0;
+                    $val = isset($resp[1]) ? floatval($resp[1]) : (float) 0;
+
                     return new SSDB_Response($resp[0], $val);
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
             case 'get':
@@ -375,6 +442,7 @@ class SSDBClient {
                     }
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
                 break;
@@ -394,10 +462,12 @@ class SSDBClient {
                         }
                     } else {
                         $data = array_slice($resp, 1);
+
                         return new SSDB_Response('ok', $data);
                     }
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
                 break;
@@ -412,9 +482,11 @@ class SSDBClient {
                     if ($resp[0] == 'ok') {
                         $data = array_slice($resp, 1);
                     }
+
                     return new SSDB_Response($resp[0], $data);
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
             case 'auth':
@@ -423,12 +495,13 @@ class SSDBClient {
             case 'zexists':
                 if ($resp[0] == 'ok') {
                     if (count($resp) == 2) {
-                        return new SSDB_Response('ok', (bool)$resp[1]);
+                        return new SSDB_Response('ok', (bool) $resp[1]);
                     } else {
                         return new SSDB_Response('server_error', 'Invalid response');
                     }
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
                 break;
@@ -439,14 +512,16 @@ class SSDBClient {
                     if (count($resp) % 2 == 1) {
                         $data = array();
                         for ($i = 1; $i < count($resp); $i += 2) {
-                            $data[$resp[$i]] = (bool)$resp[$i + 1];
+                            $data[$resp[$i]] = (bool) $resp[$i + 1];
                         }
+
                         return new SSDB_Response('ok', $data);
                     } else {
                         return new SSDB_Response('server_error', 'Invalid response');
                     }
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
                 break;
@@ -476,12 +551,14 @@ class SSDBClient {
                                 $data[$resp[$i]] = $resp[$i + 1];
                             }
                         }
+
                         return new SSDB_Response('ok', $data);
                     } else {
                         return new SSDB_Response('server_error', 'Invalid response');
                     }
                 } else {
                     $errmsg = isset($resp[1]) ? $resp[1] : '';
+
                     return new SSDB_Response($resp[0], $errmsg);
                 }
                 break;
@@ -490,15 +567,16 @@ class SSDBClient {
         }
     }
 
-    private function send($data) {
+    private function send($data)
+    {
         $ps = array();
         foreach ($data as $p) {
             $ps[] = strlen($p);
             $ps[] = $p;
         }
-        $s = join("\n", $ps) . "\n\n";
+        $s = implode("\n", $ps)."\n\n";
         if ($this->debug) {
-            echo '> ' . str_replace(array("\r", "\n"), array('\r', '\n'), $s) . "\n";
+            echo '> '.str_replace(array("\r", "\n"), array('\r', '\n'), $s)."\n";
         }
         try {
             while (true) {
@@ -517,10 +595,12 @@ class SSDBClient {
             $this->close();
             throw new SSDBException($e->getMessage());
         }
+
         return $ret;
     }
 
-    private function recv() {
+    private function recv()
+    {
         $this->step = self::STEP_SIZE;
         while (true) {
             $ret = $this->parse();
@@ -528,7 +608,7 @@ class SSDBClient {
                 try {
                     $data = @fread($this->sock, 1024 * 1024);
                     if ($this->debug) {
-                        echo '< ' . str_replace(array("\r", "\n"), array('\r', '\n'), $data) . "\n";
+                        echo '< '.str_replace(array("\r", "\n"), array('\r', '\n'), $data)."\n";
                     }
                 } catch (Exception $e) {
                     $data = '';
@@ -555,9 +635,10 @@ class SSDBClient {
     public $step;
     public $block_size;
 
-    private function parse() {
-        $spos     = 0;
-        $epos     = 0;
+    private function parse()
+    {
+        $spos = 0;
+        $epos = 0;
         $buf_size = strlen($this->recv_buf);
         // performance issue for large reponse
         //$this->recv_buf = ltrim($this->recv_buf);
@@ -575,22 +656,23 @@ class SSDBClient {
                 $line = trim($line);
                 if (strlen($line) == 0) { // head end
                     $this->recv_buf = substr($this->recv_buf, $spos);
-                    $ret            = $this->resp;
-                    $this->resp     = array();
+                    $ret = $this->resp;
+                    $this->resp = array();
+
                     return $ret;
                 }
                 $this->block_size = intval($line);
-                $this->step       = self::STEP_DATA;
+                $this->step = self::STEP_DATA;
             }
             if ($this->step === self::STEP_DATA) {
                 $epos = $spos + $this->block_size;
                 if ($epos <= $buf_size) {
                     $n = strpos($this->recv_buf, "\n", $epos);
                     if ($n !== false) {
-                        $data         = substr($this->recv_buf, $spos, $epos - $spos);
+                        $data = substr($this->recv_buf, $spos, $epos - $spos);
                         $this->resp[] = $data;
-                        $epos         = $n + 1;
-                        $this->step   = self::STEP_SIZE;
+                        $epos = $n + 1;
+                        $this->step = self::STEP_SIZE;
                         continue;
                     }
                 }
@@ -602,6 +684,7 @@ class SSDBClient {
         if ($spos > 0) {
             $this->recv_buf = substr($this->recv_buf, $spos);
         }
-        return null;
+
+        return;
     }
 }

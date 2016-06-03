@@ -1,6 +1,8 @@
-<?php namespace Very;
+<?php
 
-/**
+namespace Very;
+
+/*
  * Created by PhpStorm.
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/16 下午4:17
@@ -10,7 +12,8 @@ use Very\Database\Connection;
 use Very\Database\Pager;
 use Very\Cache\Redis;
 
-abstract class Model {
+abstract class Model
+{
     public $use_db = 'default';
     public $use_redis = 'default';
 
@@ -19,8 +22,10 @@ abstract class Model {
      *
      * @return \Very\Database\MysqlConnection
      */
-    public function db($db = '') {
+    public function db($db = '')
+    {
         $db = $db ? $db : $this->use_db;
+
         return Connection::getInstance($db);
     }
 
@@ -28,10 +33,13 @@ abstract class Model {
      * @param string $redis
      *
      * @return \Redis | \Very\Cache\Redis
+     *
      * @throws Exception
      */
-    public function redis($redis = '') {
+    public function redis($redis = '')
+    {
         $redis = $redis ? $redis : $this->use_redis;
+
         return Redis::getInstance($redis);
     }
 
@@ -42,9 +50,11 @@ abstract class Model {
      * @param string $select_db_name
      *
      * @return \Very\Database\Pager
+     *
      * @throws Exception
      */
-    public function pager($curr_page = 1, $per_page = 10, $ct_db_name = '', $select_db_name = '') {
+    public function pager($curr_page = 1, $per_page = 10, $ct_db_name = '', $select_db_name = '')
+    {
         $ct_db_name = $ct_db_name ? $ct_db_name : $this->use_db;
         if (!$select_db_name) {
             $select_db_name = $ct_db_name;
@@ -54,13 +64,16 @@ abstract class Model {
     }
 
     /**
-     * 使用单例模式调用一个model方法，eg model('user')->singleton()->getUser('1');
+     * 使用单例模式调用一个model方法，eg model('user')->singleton()->getUser('1');.
+     *
      * @return object
      */
-    public function singleton() {
+    public function singleton()
+    {
         $class_name = get_called_class();
         $model_instance = model($class_name);
-        $aa             = Singleton::getInstance($model_instance);
+        $aa = Singleton::getInstance($model_instance);
+
         return $aa;
     }
 }

@@ -1,36 +1,39 @@
-<?php namespace Very\Filesystem;
+<?php
 
-class File {
+namespace Very\Filesystem;
 
-
+class File
+{
     /**
-     * 分析目标目录的读写权限
+     * 分析目标目录的读写权限.
      *
-     * @access public
      *
      * @param string $dir_name 目标目录
      * @param int    $mode     权限值
      *
-     * @return boolean
+     * @return bool
      */
-    public function mkdir($dir_name, $mode = 0755) {
-
+    public function mkdir($dir_name, $mode = 0755)
+    {
         if (is_dir($dir_name)) {
             chmod($dir_name, $mode);
+
             return true;
         }
+
         return mkdir($dir_name, $mode, true);
     }
 
     /**
-     * 获取目录内文件
+     * 获取目录内文件.
      *
      * @param string $dir_name 所要读取内容的目录名
      * @param array  $filter   过滤的文件
      *
      * @return array
      */
-    public function readDir($dir_name, $filter = array('.cvs', '.svn', '.git')) {
+    public function readDir($dir_name, $filter = array('.cvs', '.svn', '.git'))
+    {
         if (!is_dir($dir_name)) {
             return false;
         }
@@ -50,21 +53,21 @@ class File {
         return $files;
     }
 
-
     /**
-     * 获取目录以及子目录内文件
+     * 获取目录以及子目录内文件.
      *
      * @param string $dir_name 所要读取内容的目录名
      * @param array  $filter   过滤的文件
      *
      * @return array
      */
-    public function scanDir($dir_name, $filter = array('.cvs', '.svn', '.git')) {
+    public function scanDir($dir_name, $filter = array('.cvs', '.svn', '.git'))
+    {
         if (!is_dir($dir_name)) {
             return false;
         }
 
-        $dir_name = rtrim($dir_name, '/') . '/';
+        $dir_name = rtrim($dir_name, '/').'/';
 
         $handle = opendir($dir_name);
 
@@ -73,10 +76,10 @@ class File {
             if ($file == '.' || $file == '..' || in_array($file, $filter)) {
                 continue;
             }
-            if (is_dir($dir_name . $file)) {
-                $this->scanDir($dir_name . $file, $filter);
+            if (is_dir($dir_name.$file)) {
+                $this->scanDir($dir_name.$file, $filter);
             } else {
-                $files[] = $dir_name . $file;
+                $files[] = $dir_name.$file;
             }
         }
 
@@ -86,24 +89,24 @@ class File {
     }
 
     /**
-     * 将一个文件夹内容复制到另一个文件夹
+     * 将一个文件夹内容复制到另一个文件夹.
      *
      * @param string $source 被复制的文件夹名
      * @param string $dest   所要复制文件的目标文件夹
      *
-     * @return boolean
+     * @return bool
      */
-    public function copy($source, $dest) {
-
+    public function copy($source, $dest)
+    {
         if (!is_dir($source)) {
-            $dest  = $this->mkdir($dest);
+            $dest = $this->mkdir($dest);
             $files = $this->readDir($source);
 
             foreach ($files as $file) {
-                if (is_dir($source . '/' . $file)) {
-                    $this->copy($source . '/' . $file, $dest . '/' . $file);
+                if (is_dir($source.'/'.$file)) {
+                    $this->copy($source.'/'.$file, $dest.'/'.$file);
                 } else {
-                    copy($source . '/' . $file, $dest . '/' . $file);
+                    copy($source.'/'.$file, $dest.'/'.$file);
                 }
             }
         } elseif (is_file($source)) {
@@ -113,18 +116,17 @@ class File {
         return true;
     }
 
-
     /**
-     * 文件或文件夹重命名或移动文件
+     * 文件或文件夹重命名或移动文件.
      *
-     * @access public
      *
      * @param string $source 源文件
      * @param string $new    新文件名或路径
      *
-     * @return boolean
+     * @return bool
      */
-    public function move($source, $new) {
+    public function move($source, $new)
+    {
         //文件及目录分析
         if (is_file($source)) {
             return rename($source, $new);
@@ -132,11 +134,11 @@ class File {
             $files = $this->readDir($source);
 
             foreach ($files as $file) {
-                if (is_dir($source . '/' . $file)) {
-                    $this->move($source . '/' . $file, $new . '/' . $file);
+                if (is_dir($source.'/'.$file)) {
+                    $this->move($source.'/'.$file, $new.'/'.$file);
                 } else {
-                    if (copy($source . '/' . $file, $new . '/' . $file)) {
-                        unlink($source . '/' . $file);
+                    if (copy($source.'/'.$file, $new.'/'.$file)) {
+                        unlink($source.'/'.$file);
                     }
                 }
             }
@@ -148,44 +150,44 @@ class File {
     }
 
     /**
-     * 删除文件夹或者文件
+     * 删除文件夹或者文件.
      *
-     * @param string  $source 所要删除文件的路径
-     * @param boolean $option 是否删除子目录
+     * @param string $source 所要删除文件的路径
+     * @param bool   $option 是否删除子目录
      *
-     * @return boolean
+     * @return bool
      */
-    public function delete($source, $option = false) {
-
+    public function delete($source, $option = false)
+    {
         if (is_file($source)) {
             return unlink($source);
         } elseif (is_dir($source)) {
             $files = $this->readDir($source);
 
             foreach ($files as $file) {
-                if (is_dir($source . '/' . $file) && $option == true) {
-                    $this->delete($source . '/' . $file, $option);
-                } elseif (is_file($source . '/' . $file)) {
-                    $this->delete($source . '/' . $file, $option);
+                if (is_dir($source.'/'.$file) && $option == true) {
+                    $this->delete($source.'/'.$file, $option);
+                } elseif (is_file($source.'/'.$file)) {
+                    $this->delete($source.'/'.$file, $option);
                 }
             }
             rmdir($source);
         }
+
         return true;
     }
 
     /**
-     * 文件写操作
+     * 文件写操作.
      *
-     * @access public
      *
      * @param string $file_name 文件路径
      * @param string $content   文件内容
      *
-     * @return boolean
+     * @return bool
      */
-    public function write($file_name, $content = '') {
-
+    public function write($file_name, $content = '')
+    {
         if (!is_file($file_name)) {
             return false;
         }
@@ -193,19 +195,17 @@ class File {
         return file_put_contents($file_name, $content, LOCK_EX);
     }
 
-
     /**
-     * 文件写操作
+     * 文件写操作.
      *
-     * @access public
      *
      * @param string $file_name 文件路径
      * @param string $content   文件内容
      *
-     * @return boolean
+     * @return bool
      */
-    public function read($file_name, $content = '') {
-
+    public function read($file_name, $content = '')
+    {
         if (!is_file($file_name)) {
             return false;
         }
@@ -214,24 +214,23 @@ class File {
     }
 
     /**
-     * 字节格式化 把字节数格式为 B K M G T 描述的大小
+     * 字节格式化 把字节数格式为 B K M G T 描述的大小.
      *
-     * @access public
      *
-     * @param integer $bytes 文件大小
-     * @param integer $dec   小数点后的位数
+     * @param int $bytes 文件大小
+     * @param int $dec   小数点后的位数
      *
      * @return string
      */
-    public function formatBytes($bytes, $dec = 2) {
-
+    public function formatBytes($bytes, $dec = 2)
+    {
         $unitpow = array('B', 'KB', 'MB', 'GB', 'TB', 'PB');
-        $pos     = 0;
+        $pos = 0;
         while ($bytes >= 1024) {
             $bytes /= 1024;
-            $pos++;
+            ++$pos;
         }
 
-        return round($bytes, $dec) . ' ' . $unitpow[$pos];
+        return round($bytes, $dec).' '.$unitpow[$pos];
     }
 }
