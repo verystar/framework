@@ -26,7 +26,7 @@
     }
   ],
   "require": {
-    "php": ">=5.4.0",
+    "php": ">=5.5.0",
     "fifsky/very": "1.*",
   }
 }
@@ -36,17 +36,14 @@
 执行`composer install`来安装，然后引入include PATH . '/vendor/autoload.php'
 
 ## 框架案例
-https://git.verystar.cn/fifsky/base-bg-admin
+https://git.verystar.cn/fifsky/admin
 
 ## 待完善功能
 
 - Logger支持多种记录，系统日志记录
-- Redis主从配置在twemproxy代理下的根据本地IP区分配置支持
 - Upload上传组件完善
 - Debug类完善
 - Sqlite数据库连接器完善
-- Email考虑采用swiftmailer替代
-- Process支持，直接采用symfony组件
 
 ## 待开发功能
 
