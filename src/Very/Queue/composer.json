@@ -1,0 +1,25 @@
+{
+    "name": "very/queue",
+    "description": "The Very Queue package.",
+    "license": "MIT",
+    "homepage": "http://verystar.cn",
+    "support": {
+        "issues": "http://git.verystar.cn/fifsky/very/issues",
+        "source": "http://git.verystar.cn/fifsky/very"
+    },
+    "authors": [
+        {
+            "name": "Xudong Cai",
+            "email": "caixudong@verystar.cn"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Very\\Queue\\": ""
+        }
+    },
+    "minimum-stability": "dev"
+}
