@@ -16,7 +16,7 @@
   "repositories": [
     {
       "type": "git",
-      "url": "git@git.verystar.cn:fifsky/very.git"
+      "url": "git@git.verystar.cn:very/framework.git"
     }
   ],
   "authors": [
