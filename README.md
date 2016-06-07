@@ -27,7 +27,7 @@
   ],
   "require": {
     "php": ">=5.5.0",
-    "fifsky/very": "1.*",
+    "fifsky/very": "~1.0"
   }
 }
 
