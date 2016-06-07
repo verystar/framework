@@ -36,7 +36,7 @@
 执行`composer install`来安装，然后引入include PATH . '/vendor/autoload.php'
 
 ## 框架案例
-https://git.verystar.cn/fifsky/admin
+https://git.verystar.cn/very/very
 
 ## 待完善功能
 

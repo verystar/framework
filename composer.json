@@ -23,7 +23,6 @@
     "swiftmailer/swiftmailer": "~5.4"
   },
   "replace": {
-    "very/queue": "self.version",
     "very/cache": "self.version"
   },
   "require-dev": {
