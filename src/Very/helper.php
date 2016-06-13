@@ -7,10 +7,10 @@ function module($__module_name__, $__params__ = array())
     }
 
     $__module_ret__ = null;
-    if (file_exists(app('path.modules').$__module_name__.'.php')) {
-        $__module_ret__ = include app('path.modules').$__module_name__.'.php';
+    if (file_exists(app('path.modules') . $__module_name__ . '.php')) {
+        $__module_ret__ = include app('path.modules') . $__module_name__ . '.php';
     } else {
-        throw new \RuntimeException('Not found Module file in: '.app('path.modules').$__module_name__.'.php');
+        throw new \RuntimeException('Not found Module file in: ' . app('path.modules') . $__module_name__ . '.php');
     }
 
     return $__module_ret__;
@@ -20,19 +20,19 @@ function site_url($var = null)
 {
     if (substr($var, 0, 4) === 'http') {
         if (defined('ENVIRON') && ENVIRON === 'dev') {
-            $var = str_replace('//', '//'.ENVIRON.'.', $var);
+            $var = str_replace('//', '//' . ENVIRON . '.', $var);
         }
 
         return $var;
     } else {
-        $site_root = 'http://'.$_SERVER['HTTP_HOST'].'/';
+        $site_root = ($_SERVER['HTTPS'] ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
 
         if ($var == null) {
             return $site_root;
         } else {
             $var = ltrim($var, '/');
 
-            return $site_root.$var;
+            return $site_root . $var;
         }
     }
 }
@@ -47,17 +47,17 @@ function resource_url($var = null, $url_type = 'resource_url')
         $ext = pathinfo($var, PATHINFO_EXTENSION);
         switch ($ext) {
             case 'js':
-                $v = '?v='.config('app', 'js_version', '20121024');
+                $v = '?v=' . config('app', 'js_version', '20121024');
                 break;
             case 'css':
-                $v = '?v='.config('app', 'css_version', '20121024');
+                $v = '?v=' . config('app', 'css_version', '20121024');
                 break;
             default:
                 $v = '';
                 break;
         }
 
-        return $site_root.$var.$v;
+        return $site_root . $var . $v;
     }
 }
 
@@ -68,9 +68,9 @@ function request_uri()
         $uri = $_SERVER['REQUEST_URI'];
     } else {
         if (isset($_SERVER['argv'])) {
-            $uri = $_SERVER['PHP_SELF'].'?'.$_SERVER['argv'][0];
+            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['argv'][0];
         } else {
-            $uri = $_SERVER['PHP_SELF'].'?'.$_SERVER['QUERY_STRING'];
+            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'];
         }
     }
 
@@ -87,8 +87,8 @@ function request_uri()
  */
 function make_url($add_params = [], $del_params = [])
 {
-    $uri = request_uri();
-    $de = strpos('?', $uri) === false ? '?' : '&';
+    $uri   = request_uri();
+    $de    = strpos('?', $uri) === false ? '?' : '&';
     $query = parse_url($uri, PHP_URL_QUERY);
 
     parse_str($query, $params);
@@ -98,7 +98,7 @@ function make_url($add_params = [], $del_params = [])
             unset($params[$k]);
         }
     }
-    $uri = parse_url($uri, PHP_URL_PATH).($params ? $de.http_build_query($params) : '');
+    $uri = parse_url($uri, PHP_URL_PATH) . ($params ? $de . http_build_query($params) : '');
 
     return site_url($uri);
 }
@@ -106,8 +106,8 @@ function make_url($add_params = [], $del_params = [])
 //判断是否为某个页面
 function is_page($controller, $action = null)
 {
-    $request = request();
-    $has = false;
+    $request    = request();
+    $has        = false;
     $controller = is_array($controller) ? $controller : [$controller];
 
     if (in_array($request->getControllerName(), $controller)) {
@@ -207,33 +207,33 @@ function p($info, $exit = true)
         return false;
     }
 
-    $debug = debug_backtrace();
+    $debug  = debug_backtrace();
     $output = '';
 
     if (is_cli()) {
         foreach ($debug as $v) {
-            $output .= 'File:'.$v['file'];
-            $output .= 'Line:'.$v['line'];
-            $output .= $v['class'].$v['type'].$v['function'].'(\'';
+            $output .= 'File:' . $v['file'];
+            $output .= 'Line:' . $v['line'];
+            $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
             foreach ($v['args'] as $k => $argv) {
                 if (is_object($argv)) {
-                    $v['args'][$k] = 'Object['.get_class($argv).']';
+                    $v['args'][$k] = 'Object[' . get_class($argv) . ']';
                 }
             }
             $output .= implode('\',\' ', $v['args']);
-            $output .= '\')'.PHP_EOL;
+            $output .= '\')' . PHP_EOL;
         }
-        $output .= '[Info]'.PHP_EOL;
-        $output .= var_export($info, true).PHP_EOL;
+        $output .= '[Info]' . PHP_EOL;
+        $output .= var_export($info, true) . PHP_EOL;
     } else {
         foreach ($debug as $v) {
-            $output .= '<b>File</b>:'.$v['file'].'&nbsp;';
-            $output .= '<b>Line</b>:'.$v['line'].'&nbsp;';
-            $output .= $v['class'].$v['type'].$v['function'].'(\'';
+            $output .= '<b>File</b>:' . $v['file'] . '&nbsp;';
+            $output .= '<b>Line</b>:' . $v['line'] . '&nbsp;';
+            $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
 
             foreach ($v['args'] as $k => $argv) {
                 if (is_object($argv)) {
-                    $v['args'][$k] = 'Object['.get_class($argv).']';
+                    $v['args'][$k] = 'Object[' . get_class($argv) . ']';
                 }
             }
             $output .= implode('\',\' ', $v['args']);
@@ -270,15 +270,15 @@ function msubstr($str, $start = 0, $length, $charset = 'utf-8', $suffix = '...')
     } elseif (function_exists('iconv_substr')) {
         $slice = iconv_substr($str, $start, $length, $charset);
     } else {
-        $re['utf-8'] = "/[\x01-\x7f]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xff][\x80-\xbf]{3}/";
+        $re['utf-8']  = "/[\x01-\x7f]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xff][\x80-\xbf]{3}/";
         $re['gb2312'] = "/[\x01-\x7f]|[\xb0-\xf7][\xa0-\xfe]/";
-        $re['gbk'] = "/[\x01-\x7f]|[\x81-\xfe][\x40-\xfe]/";
-        $re['big5'] = "/[\x01-\x7f]|[\x81-\xfe]([\x40-\x7e]|\xa1-\xfe])/";
+        $re['gbk']    = "/[\x01-\x7f]|[\x81-\xfe][\x40-\xfe]/";
+        $re['big5']   = "/[\x01-\x7f]|[\x81-\xfe]([\x40-\x7e]|\xa1-\xfe])/";
         preg_match_all($re[$charset], $str, $match);
         $slice = implode('', array_slice($match[0], $start, $length));
     }
 
-    return $slice.$suffix;
+    return $slice . $suffix;
 }
 
 //去除空格
@@ -301,7 +301,7 @@ function trim_space($s)
 function rand_sample($str, $prob = 100)
 {
     $prob = $prob < 10 ? 10 : $prob;
-    $rt = mt_rand(1, $prob);
+    $rt   = mt_rand(1, $prob);
 
     return $rt == 8 ? $str : null;
 }
@@ -319,10 +319,10 @@ function redirect($uri = '/', $method = 'location', $http_response_code = 302)
 {
     switch ($method) {
         case 'refresh'    :
-            header('Refresh:0;url='.$uri);
+            header('Refresh:0;url=' . $uri);
             break;
         default            :
-            header('Location: '.$uri, true, $http_response_code);
+            header('Location: ' . $uri, true, $http_response_code);
             break;
     }
     exit;
@@ -335,14 +335,14 @@ function redirect($uri = '/', $method = 'location', $http_response_code = 302)
  */
 function is_search_bot()
 {
-    $bots = array(
+    $bots       = array(
         'Google' => 'Googlebot',
-        'Baidu' => 'Baiduspider',
-        'Yahoo' => 'Yahoo! Slurp',
-        'Soso' => 'Sosospider',
-        'Msn' => 'msnbot',
-        'Sogou' => 'Sogou spider',
-        'Yodao' => 'YodaoBot',
+        'Baidu'  => 'Baiduspider',
+        'Yahoo'  => 'Yahoo! Slurp',
+        'Soso'   => 'Sosospider',
+        'Msn'    => 'msnbot',
+        'Sogou'  => 'Sogou spider',
+        'Yodao'  => 'YodaoBot',
     );
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
     foreach ($bots as $k => $v) {
@@ -353,16 +353,6 @@ function is_search_bot()
     }
 
     return false;
-
-//    if (in_array($_SERVER['HTTP_USER_AGENT'], array(
-//        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-//        'Sosospider+(+http://help.soso.com/webspider.htm)',
-//        'Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)',
-//        'Mozilla/5.0 (compatible;YodaoBot-Image/1.0;http://www.youdao.com/help/webmaster/spider/;)',
-//    ))){
-//        return true;
-//    }
-//    return false;
 }
 
 /**
@@ -373,7 +363,7 @@ function is_search_bot()
 function is_ios()
 {
     $agent = strtolower($_SERVER['HTTP_USER_AGENT']);
-    $type = false;
+    $type  = false;
     if (strpos($agent, 'iphone') || strpos($agent, 'ipad') || strpos($agent, 'android')) {
         $type = true;
     }
@@ -429,14 +419,12 @@ function set_status_header($code = 200, $text = '')
         204 => 'No Content',
         205 => 'Reset Content',
         206 => 'Partial Content',
-
         300 => 'Multiple Choices',
         301 => 'Moved Permanently',
         302 => 'Found',
         304 => 'Not Modified',
         305 => 'Use Proxy',
         307 => 'Temporary Redirect',
-
         400 => 'Bad Request',
         401 => 'Unauthorized',
         403 => 'Forbidden',
@@ -454,7 +442,6 @@ function set_status_header($code = 200, $text = '')
         415 => 'Unsupported Media Type',
         416 => 'Requested Range Not Satisfiable',
         417 => 'Expectation Failed',
-
         500 => 'Internal Server Error',
         501 => 'Not Implemented',
         502 => 'Bad Gateway',
@@ -471,7 +458,7 @@ function set_status_header($code = 200, $text = '')
         if (substr(php_sapi_name(), 0, 3) == 'cgi') {
             header("Status: {$code} {$text}", true);
         } elseif ($server_protocol == 'HTTP/1.1' || $server_protocol == 'HTTP/1.0') {
-            header($server_protocol." {$code} {$text}", true, $code);
+            header($server_protocol . " {$code} {$text}", true, $code);
         } else {
             header("HTTP/1.1 {$code} {$text}", true, $code);
         }
@@ -493,11 +480,11 @@ function rand_str($len = 5)
 function base32_encode($input)
 {
     $base32_alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    $output = '';
+    $output          = '';
     //$position         = 0;
-    $stored_data = 0;
+    $stored_data      = 0;
     $stored_bit_count = 0;
-    $index = 0;
+    $index            = 0;
 
     while ($index < strlen($input)) {
         $stored_data <<= 8;
@@ -537,11 +524,11 @@ function base32_decode($input)
 
     static $asc = array();
     $output = '';
-    $v = 0;
-    $vbits = 0;
-    $i = 0;
-    $input = strtolower($input);
-    $j = strlen($input);
+    $v      = 0;
+    $vbits  = 0;
+    $i      = 0;
+    $input  = strtolower($input);
+    $j      = strlen($input);
     while ($i < $j) {
         if (!isset($asc[$input[$i]])) {
             $asc[$input[$i]] = ord($input[$i]);
@@ -591,8 +578,8 @@ if (!function_exists('html_to_textarea')) {
 //加密解密
 function encrypt($string, $skey = '%f1f5kyL@<eYu9n$')
 {
-    $code = '';
-    $key = substr(md5($skey), 8, 18);
+    $code   = '';
+    $key    = substr(md5($skey), 8, 18);
     $keylen = strlen($key);
     $strlen = strlen($string);
     for ($i = 0; $i < $strlen; ++$i) {
@@ -606,8 +593,8 @@ function encrypt($string, $skey = '%f1f5kyL@<eYu9n$')
 function decrypt($string, $skey = '%f1f5kyL@<eYu9n$')
 {
     $string = base64_decode(str_replace(array('-', '_'), array('+', '/'), $string));
-    $code = '';
-    $key = substr(md5($skey), 8, 18);
+    $code   = '';
+    $key    = substr(md5($skey), 8, 18);
     $keylen = strlen($key);
     $strlen = strlen($string);
     for ($i = 0; $i < $strlen; ++$i) {
@@ -629,9 +616,9 @@ function show_human_time($timestamp, $format = 'Y-m-d H:i')
     $date_format = date('Y-m-d', $timestamp);
     list($year, $month, $day) = explode('-', $date_format);
     if ($time_offset <= 3600) {
-        return ($time_offset <= 0 ? '1' : ceil($time_offset / 60)).'分钟前';
+        return ($time_offset <= 0 ? '1' : ceil($time_offset / 60)) . '分钟前';
     } elseif ($date_format == date('Y-m-d')) {
-        return '今天 '.date('H:i', $timestamp);
+        return '今天 ' . date('H:i', $timestamp);
     } elseif ($year == date('Y')) {
         return date('m月d日 H:i', $timestamp);
     } else {
@@ -921,7 +908,7 @@ if (!function_exists('cookie')) {
     function cookie($name = null, $value = null, $time = 86400, $path = '/', $domain = null, $secure = false, $httpOnly = true)
     {
         /**
-         * @var \Very\Http\Cookie
+         * @var $cookie \Very\Http\Cookie
          */
         $cookie = app('cookie');
 
@@ -947,7 +934,7 @@ if (!function_exists('session')) {
     function session($key = null, $default = null)
     {
         /**
-         * @var \Very\Http\Session
+         * @var $session \Very\Http\Session
          */
         $session = app('session');
 
@@ -987,7 +974,7 @@ if (!function_exists('helper')) {
     function helper($file_name)
     {
         $path = app('path.helpers');
-        $file = $path.$file_name.'.php';
+        $file = $path . $file_name . '.php';
         static $import_files = [];
 
         if (!isset($import_files[$file])) {
@@ -1023,16 +1010,16 @@ if (!function_exists('model')) {
         if (isset($instances[$model]) || class_exists($model)) {
             $classname = $model;
         } else {
-            $namespace = app('namespace') ? '\\'.app('namespace') : '';
+            $namespace = app('namespace') ? '\\' . app('namespace') : '';
             $classname = implode('/', array_map('ucfirst', explode('/', strtolower($model))));
-            $classname = $namespace.'\\Models\\'.str_replace('/', '\\', $classname);
+            $classname = $namespace . '\\Models\\' . str_replace('/', '\\', $classname);
         }
 
         if (!isset($instances[$classname])) {
             if (class_exists($classname)) {
                 $instances[$classname] = app()->make($classname);
             } else {
-                throw new Exception('Model '.$classname.' not found.', \Very\Exception::ERR_NOTFOUND_MODEL);
+                throw new Exception('Model ' . $classname . ' not found.', \Very\Exception::ERR_NOTFOUND_MODEL);
             }
         }
 
@@ -1052,10 +1039,13 @@ function debug_start($s)
 function debug_end($s)
 {
     $GLOBALS[$s]['end_time'] = microtime(true);
-    $GLOBALS[$s]['end_mem'] = memory_get_usage();
+    $GLOBALS[$s]['end_mem']  = memory_get_usage();
 
     if (isset($GLOBALS[$s]['start_time'])) {
-        e($s.':---Time:'.number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'], 6).':---DTime:'.number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'], 6).'---Mem:'.number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024), 6).'M---PMem:'.number_format(memory_get_peak_usage() / (1024 * 1024), 2).'M');
+        e($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
+                6) . ':---DTime:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'],
+                6) . '---Mem:' . number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024),
+                6) . 'M---PMem:' . number_format(memory_get_peak_usage() / (1024 * 1024), 2) . 'M');
     } else {
         e('not start');
     }
