@@ -56,6 +56,29 @@ function resource_url($var = null, $url_type = 'resource_url')
                 $v = '';
                 break;
         }
+        $resource_path = config('app', $url_type . '_path');
+
+        if (is_dir($resource_path)) {
+            if (ENVIRON === 'dev') {
+                $file = rtrim($resource_path, '/') . '/' . $var;
+                if (file_exists($file)) {
+                    $v = '?v=' . substr(md5_file($file), 0, 10);
+                }
+            } else {
+                $v            = '';
+                $rev_mainfest = rtrim($resource_path, '/') . '/static/rev-manifest.json';
+                static $revs = [];
+
+                if (file_exists($rev_mainfest)) {
+                    if(!$revs) {
+                        $revs = json_decode(file_get_contents($rev_mainfest), true);
+                    }
+                    if ($revs[$var]) {
+                        $var = $revs[$var];
+                    }
+                }
+            }
+        }
 
         return $site_root . $var . $v;
     }
@@ -134,20 +157,19 @@ function xml_to_array($xml)
 }
 
 /**
- * 调试函数一律禁止在线上输出.
- *
+ * 调试函数一律禁止在线上输出
  * @return bool
  */
 function e()
 {
-    if (!defined('DEBUG') || !DEBUG) {
+    if (!$_ENV['DEBUG'] || !isCli()) {
         return false;
     }
 
     $params = func_get_args();
     foreach ($params as $value) {
         if (is_array($value) || is_object($value)) {
-            if (is_cli()) {
+            if (isCli()) {
                 print_r($value);
                 echo "\n";
             } else {
@@ -155,7 +177,7 @@ function e()
                 echo '<br/>';
             }
         } else {
-            if (is_cli()) {
+            if (isCli()) {
                 echo $value, "\n";
             } else {
                 echo $value, '<br/>';
