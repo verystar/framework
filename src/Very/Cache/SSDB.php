@@ -1,5 +1,5 @@
 <?php
-use Very\Cache;
+namespace Very\Cache;
 
 /**
  * Copyright (c) 2012, ideawu
