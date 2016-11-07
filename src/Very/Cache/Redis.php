@@ -154,6 +154,10 @@ class Redis
                 if ($this->is_stat) {
                     $_stat->set(1, 'BUG错误', 'Redis执行错误', "{$this->ip}:{$this->port}", $e->getMessage(), 0.1);
                 }
+
+                logger()->error('Redis exec error',
+                                  ["host" => "{$this->ip}:{$this->port}", "msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
+
                 if ($this->isConnectionLost($e)) {
                     $redis_server = $this->connect($func);
                     continue;
