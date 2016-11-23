@@ -17,15 +17,18 @@ use Very\Container\Container;
 class Application extends Container
 {
     /**
+     * The application namespace.
+     *
+     * @var string
+     */
+    protected $namespace = null;
+
+    /**
      * The Very framework version.
      *
      * @var string
      */
-    const VERSION = '1.0.2';
-
-    protected $basePath;
-
-    //保存Application实例
+    const VERSION = '2.0.0';
     protected static $instance;
 
     public function __construct($basePath = null)
@@ -88,17 +91,6 @@ class Application extends Container
             return $env;
         });
 
-        $this->singleton('mail', function ($app) {
-            $mailer = new Mailer();
-
-            $from = config('mail', 'from');
-            if (is_array($from) && isset($from['address'])) {
-                $mailer->alwaysFrom($from['address'], $from['name']);
-            }
-
-            return $mailer;
-        });
-
         $this->setInstance($this);
     }
 
@@ -115,17 +107,16 @@ class Application extends Container
     /**
      * Set the base path for the application.
      *
-     * @param string $app_path
+     * @param string $basePath
      *
      * @return $this
      */
-    public function setBasePath($app_path)
+    public function setBasePath($basePath)
     {
-        $this['path'] = dirname(__DIR__).DIRECTORY_SEPARATOR;
-        $this['path.app'] = $app_path;
+        $this['path.app'] = rtrim($basePath);
 
-        foreach (['config', 'views', 'modules', 'helpers', 'logs'] as $v) {
-            $this['path.'.$v] = realpath($app_path.'/'.$v).DIRECTORY_SEPARATOR;
+        foreach (['config', 'views', 'logs'] as $v) {
+            $this['path.' . $v] = realpath(rtrim($basePath) . '/' . $v) . DIRECTORY_SEPARATOR;
         }
 
         $this['namespace.controller'] = '';
@@ -135,10 +126,11 @@ class Application extends Container
 
     public function setPath($key, $path)
     {
-        $this['path.'.$key] = rtrim($path, '/').DIRECTORY_SEPARATOR;
+        $this['path.' . $key] = rtrim($path, '/') . DIRECTORY_SEPARATOR;
 
         return $this;
     }
+
 
     /**
      * Get the version number of the application.
@@ -171,5 +163,21 @@ class Application extends Container
     public function get($key)
     {
         return $this->__get($key);
+    }
+
+    /**
+     * Get the application namespace.
+     *
+     * @return string
+     *
+     * @throws \RuntimeException
+     */
+    public function getNamespace()
+    {
+        if (!is_null($this->namespace)) {
+            return $this->namespace;
+        }
+
+        throw new \RuntimeException('Unable to detect application namespace.');
     }
 }

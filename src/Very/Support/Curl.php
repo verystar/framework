@@ -7,9 +7,7 @@
  * Time: 下午2:18.
  */
 
-namespace Very\Http;
-
-use Very\Library\FStat;
+namespace Very\Support;
 
 /**
  * Created by PhpStorm.
@@ -159,8 +157,6 @@ class Curl {
 
             $stat_url = $stat_url_arr['host'].$stat_url_arr['path'];
 
-            $_stat = FStat::getInstance();
-
             if ($error_no = curl_errno($this->ch)) {
                 $curl_error_info = array(
                     '3' => '网址格式不正确(3)',
@@ -170,20 +166,20 @@ class Curl {
                 $stat_name = isset($curl_error_info[$error_no]) ? $curl_error_info[$error_no] : '错误('.$error_no.')';
                 //$header = curl_getinfo($this->ch);
                 //$v4 = rand_sample(print_r($header,true),100);//百分之一的采样
-                $_stat->set(1, 'CURL请求', $stat_name, $stat_url_arr['host'], $url);
+                mstat()->set(1, 'CURL请求', $stat_name, $stat_url_arr['host'], $url);
             } else {
-                $_stat->set(1, 'CURL请求', '成功', $stat_url_arr['host']);
+                mstat()->set(1, 'CURL请求', '成功', $stat_url_arr['host']);
             }
             if ($this->getStatusCode() == 200) {
-                $_stat->set(1, 'CURL状态', $this->getStatusCode(), $stat_url_arr['host']);
+                mstat()->set(1, 'CURL状态', $this->getStatusCode(), $stat_url_arr['host']);
             } else {
-                $_stat->set(1, 'CURL状态', $this->getStatusCode(), $stat_url_arr['host'], $url);
+                mstat()->set(1, 'CURL状态', $this->getStatusCode(), $stat_url_arr['host'], $url);
             }
 
             $diff_time = $this->getRequestTime();
-            $diff_time_str = $_stat->formatTime($diff_time);
+            $diff_time_str = mstat()->formatTime($diff_time);
 
-            $_stat->set(1, 'CURL接口效率', $diff_time_str, $stat_url."($error_no)", $_SERVER['PHP_SELF']);
+            mstat()->set(1, 'CURL接口效率', $diff_time_str, $stat_url."($error_no)", $_SERVER['PHP_SELF']);
         }
 
         if ($this->is_log) {

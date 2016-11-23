@@ -7,6 +7,9 @@ namespace Very;
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/13 下午11:29.
  */
+
+use Very\Http\Exception\HttpResponseException;
+
 class View
 {
     private static $temp_data = array();
@@ -41,6 +44,11 @@ class View
         return $this->view_path;
     }
 
+    public function exists($__path)
+    {
+        return file_exists($this->getPath() . $__path);
+    }
+
     /**
      * 获取模板的值，而不直接输出.
      *
@@ -50,7 +58,7 @@ class View
      *
      * @return string
      *
-     * @throws Exception
+     * @throws \Very\Http\Exception\HttpResponseException
      */
     public function get($__path, $__datas = array(), $__charset = null)
     {
@@ -80,7 +88,7 @@ class View
                 $this->handleViewException($e, $ob_level);
             }
         } else {
-            throw new Exception('Not found View file in: '.$this->getPath().$__path, Exception::ERR_NOTFOUND_VIEW);
+            throw new HttpResponseException('Not found View file in: '.$this->getPath().$__path, HttpResponseException::ERR_NOTFOUND_VIEW);
         }
 
         return ltrim(ob_get_clean());

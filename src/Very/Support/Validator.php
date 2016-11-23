@@ -1,6 +1,6 @@
 <?php
 
-namespace Very\Library;
+namespace Very\Support;
 
 /**
  * 验证操作库.

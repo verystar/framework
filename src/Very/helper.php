@@ -1,21 +1,4 @@
 <?php
-
-function module($__module_name__, $__params__ = array())
-{
-    if ($__params__) {
-        extract($__params__);
-    }
-
-    $__module_ret__ = null;
-    if (file_exists(app('path.modules') . $__module_name__ . '.php')) {
-        $__module_ret__ = include app('path.modules') . $__module_name__ . '.php';
-    } else {
-        throw new \RuntimeException('Not found Module file in: ' . app('path.modules') . $__module_name__ . '.php');
-    }
-
-    return $__module_ret__;
-}
-
 function site_url($var = null)
 {
     if (substr($var, 0, 4) === 'http') {
@@ -348,49 +331,6 @@ function redirect($uri = '/', $method = 'location', $http_response_code = 302)
             break;
     }
     exit;
-}
-
-/**
- * 判断是否为搜索引擎蜘蛛.
- *
- * @return bool
- */
-function is_search_bot()
-{
-    $bots       = array(
-        'Google' => 'Googlebot',
-        'Baidu'  => 'Baiduspider',
-        'Yahoo'  => 'Yahoo! Slurp',
-        'Soso'   => 'Sosospider',
-        'Msn'    => 'msnbot',
-        'Sogou'  => 'Sogou spider',
-        'Yodao'  => 'YodaoBot',
-    );
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    foreach ($bots as $k => $v) {
-        if (stristr($v, $user_agent)) {
-            return $k;
-            break;
-        }
-    }
-
-    return false;
-}
-
-/**
- * 判断是否为移动设备.
- *
- * @return bool
- */
-function is_ios()
-{
-    $agent = strtolower($_SERVER['HTTP_USER_AGENT']);
-    $type  = false;
-    if (strpos($agent, 'iphone') || strpos($agent, 'ipad') || strpos($agent, 'android')) {
-        $type = true;
-    }
-
-    return $type;
 }
 
 function _iconv(&$data, $key, $encodeing)
@@ -992,25 +932,13 @@ if (!function_exists('response')) {
     }
 }
 
-if (!function_exists('helper')) {
-    function helper($file_name)
+if (!function_exists('mstat')) {
+    /**
+     * @return \Very\Support\Stat
+     */
+    function mstat()
     {
-        $path = app('path.helpers');
-        $file = $path . $file_name . '.php';
-        static $import_files = [];
-
-        if (!isset($import_files[$file])) {
-            if (is_file($file)) {
-                require $file;
-                $import_files[$file] = 1;
-
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        return true;
+        return app()->make('mstat');
     }
 }
 
@@ -1041,7 +969,7 @@ if (!function_exists('model')) {
             if (class_exists($classname)) {
                 $instances[$classname] = app()->make($classname);
             } else {
-                throw new Exception('Model ' . $classname . ' not found.', \Very\Exception::ERR_NOTFOUND_MODEL);
+                throw new InvalidArgumentException('Model ' . $classname . ' not found.');
             }
         }
 

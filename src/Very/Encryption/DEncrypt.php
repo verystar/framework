@@ -14,7 +14,7 @@ namespace Very\Encryption;
  * e('EN'.$code);
  * e('DE'.$dn->decode($code));.
  */
-class Dencrypt
+class DEncrypt
 {
     /**
      * 密码盘.

@@ -6,7 +6,7 @@
  * Time: 14:03
  */
 
-namespace Very;
+namespace Very\Sentry;
 
 use InvalidArgumentException;
 
