@@ -962,7 +962,7 @@ if (!function_exists('model')) {
         } else {
             $namespace = app('namespace') ? '\\' . app('namespace') : '';
             $classname = implode('/', array_map('ucfirst', explode('/', strtolower($model))));
-            $classname = $namespace . '\\Models\\' . str_replace('/', '\\', $classname);
+            $classname = $namespace . '\\Models\\' . str_replace('/', '\\', $classname) . 'Model';
         }
 
         if (!isset($instances[$classname])) {
