@@ -1000,3 +1000,23 @@ function debug_end($s)
         e('not start');
     }
 }
+
+if (!function_exists('curl')) {
+    /**
+     * @return \Very\Support\Curl
+     */
+    function curl()
+    {
+        return new Very\Support\Curl();
+    }
+}
+
+if (!function_exists('mstat')) {
+    /**
+     * @return \Very\Support\Stat
+     */
+    function mstat()
+    {
+        return app()->make('mstat');
+    }
+}

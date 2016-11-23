@@ -11,7 +11,7 @@ use Very\Http\Request;
 use Very\Http\Response;
 use Very\Http\Session;
 use Very\Http\Cookie;
-use Very\Mail\Mailer;
+use Very\Support\Stat;
 use Very\Container\Container;
 
 class Application extends Container
@@ -75,19 +75,21 @@ class Application extends Container
 
         $this->singleton('session', function ($app) {
             $env = new Session();
-
             return $env;
         });
 
         $this->singleton('router', function ($app) {
             $env = new Router();
-
             return $env;
         });
 
         $this->singleton('logger', function ($app) {
             $env = new Logger();
+            return $env;
+        });
 
+        $this->singleton('mstat', function ($app) {
+            $env = new Stat(config('fstat'));
             return $env;
         });
 
