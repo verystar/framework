@@ -15,7 +15,7 @@
     }
   ],
   "require": {
-    "php": ">=5.4.45",
+    "php": ">=5.6.4",
     "ext-mbstring": "*",
     "ext-mcrypt": "*",
     "monolog/monolog": "~1.17"
