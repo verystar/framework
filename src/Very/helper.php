@@ -42,7 +42,7 @@ function resource_url($var = null, $url_type = 'resource_url')
         $resource_path = config('app', $url_type . '_path');
 
         if (is_dir($resource_path)) {
-            if (ENVIRON === 'dev') {
+            if (defined('ENVIRON') && ENVIRON === 'dev') {
                 $file = rtrim($resource_path, '/') . '/' . $var;
                 if (file_exists($file)) {
                     $v = '?v=' . substr(md5_file($file), 0, 10);
@@ -145,14 +145,14 @@ function xml_to_array($xml)
  */
 function e()
 {
-    if (!$_ENV['DEBUG'] || !isCli()) {
+    if (!$_ENV['DEBUG'] || !is_cli()) {
         return false;
     }
 
     $params = func_get_args();
     foreach ($params as $value) {
         if (is_array($value) || is_object($value)) {
-            if (isCli()) {
+            if (is_cli()) {
                 print_r($value);
                 echo "\n";
             } else {
@@ -160,7 +160,7 @@ function e()
                 echo '<br/>';
             }
         } else {
-            if (isCli()) {
+            if (is_cli()) {
                 echo $value, "\n";
             } else {
                 echo $value, '<br/>';
