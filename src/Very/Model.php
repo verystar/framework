@@ -33,8 +33,6 @@ abstract class Model
      * @param string $redis
      *
      * @return \Redis | \Very\Cache\Redis
-     *
-     * @throws Exception
      */
     public function redis($redis = '')
     {
@@ -50,8 +48,6 @@ abstract class Model
      * @param string $select_db_name
      *
      * @return \Very\Database\Pager
-     *
-     * @throws Exception
      */
     public function pager($curr_page = 1, $per_page = 10, $ct_db_name = '', $select_db_name = '')
     {

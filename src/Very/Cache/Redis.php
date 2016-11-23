@@ -9,8 +9,6 @@ namespace Very\Cache;
  * Time: 下午5:25
  */
 
-use Very\Library\FStat;
-
 class Redis
 {
     //twemproxy不支持multi 此处为了性能进列出了用户信息使用到的hash系列函数，如果需要其他函数，请参照官网添加，必须小写
@@ -90,10 +88,6 @@ class Redis
 
         static $redis_cache = array();
 
-        if ($this->is_stat) {
-            $_stat = FStat::getInstance();
-        }
-
         if (!isset($redis_cache[$server])) {
             try {
                 $_start_time = microtime(true);
@@ -106,11 +100,11 @@ class Redis
                 }
 
                 if ($this->is_stat) {
-                    $_stat->set(1, 'Redis连接效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), $ip.':'.$port);
+                    mstat()->set(1, 'Redis连接效率', mstat()->formatTime(number_format(microtime(true) - $_start_time, 6)), $ip.':'.$port);
                 }
             } catch (\RedisException $e) {
                 if ($this->is_stat) {
-                    $_stat->set(1, 'BUG错误', 'Redis连接错误', "{$ip}:{$port}");
+                    mstat()->set(1, 'BUG错误', 'Redis连接错误', "{$ip}:{$port}");
                 }
                 throw new \RedisException('redis connect error:'.$e->getMessage());
             }
@@ -138,21 +132,17 @@ class Redis
      */
     public function __call($func, $params)
     {
-        if ($this->is_stat) {
-            $_stat = FStat::getInstance();
-        }
-
         $redis_server = $this->connect($func);
         for ($i = 0; $i < 2; ++$i) {
             try {
                 $_start_time = microtime(true);
                 $ret = call_user_func_array(array($redis_server, $func), $params);
                 if ($this->is_stat) {
-                    $_stat->set(1, 'Redis执行效率', $_stat->formatTime(number_format(microtime(true) - $_start_time, 6)), "{$this->ip}:{$this->port}({$func})");
+                    mstat()->set(1, 'Redis执行效率', mstat()->formatTime(number_format(microtime(true) - $_start_time, 6)), "{$this->ip}:{$this->port}({$func})");
                 }
             } catch (\RedisException $e) {
                 if ($this->is_stat) {
-                    $_stat->set(1, 'BUG错误', 'Redis执行错误', "{$this->ip}:{$this->port}", $e->getMessage(), 0.1);
+                    mstat()->set(1, 'BUG错误', 'Redis执行错误', "{$this->ip}:{$this->port}", $e->getMessage(), 0.1);
                 }
 
                 logger()->error('Redis exec error',
