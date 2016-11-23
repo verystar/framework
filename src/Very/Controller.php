@@ -23,7 +23,7 @@ abstract class Controller
      * @param $controller
      * @param $action
      *
-     * @throws Exception
+     * @throws HttpResponseException
      */
     protected function forward($controller, $action)
     {

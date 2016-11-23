@@ -117,7 +117,7 @@ class Application extends Container
     {
         $this['path.app'] = rtrim($basePath);
 
-        foreach (['config', 'views', 'logs'] as $v) {
+        foreach (['config', 'views','helpers' , 'logs'] as $v) {
             $this['path.' . $v] = realpath(rtrim($basePath) . '/' . $v) . DIRECTORY_SEPARATOR;
         }
 

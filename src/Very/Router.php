@@ -7,6 +7,8 @@ namespace Very;
  *
  * @author caixudong
  */
+use Very\Http\Exception\HttpResponseException;
+
 class Router
 {
     public function init($rewrite = true)
@@ -83,7 +85,7 @@ class Router
 
         try {
             $this->run($controller, $action);
-        } catch (Exception $e) {
+        } catch (HttpResponseException $e) {
             $controllername = $this->getNamespace().'\\Exceptions\\Handler';
             app()->make($controllername)->render($e);
         }
@@ -94,7 +96,7 @@ class Router
         $controllername = $this->getControllerClassName($controller);
 
         if (!method_exists($controllername, $action.'Action')) {
-            throw new Exception($action.'Action method not found in '.$controllername, Exception::ERR_NOTFOUND_ACTION);
+            throw new HttpResponseException($action.'Action method not found in '.$controllername, HttpResponseException::ERR_NOTFOUND_ACTION);
         }
 
         $instance = app()->make($controllername, $params);

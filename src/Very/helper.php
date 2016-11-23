@@ -1020,3 +1020,25 @@ if (!function_exists('mstat')) {
         return app()->make('mstat');
     }
 }
+
+if (!function_exists('helper')) {
+    function helper($file_name)
+    {
+        $path = app('path.helpers');
+        $file = $path . $file_name . '.php';
+        static $import_files = [];
+
+        if (!isset($import_files[$file])) {
+            if (is_file($file)) {
+                require $file;
+                $import_files[$file] = 1;
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
