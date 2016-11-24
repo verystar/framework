@@ -125,29 +125,26 @@ function xml_to_array($xml)
 
 /**
  * 调试函数一律禁止在线上输出
- * @return bool
  */
 function e()
 {
-    if (!$_ENV['DEBUG'] || !is_cli()) {
-        return false;
-    }
-
-    $params = func_get_args();
-    foreach ($params as $value) {
-        if (is_array($value) || is_object($value)) {
-            if (is_cli()) {
-                print_r($value);
-                echo "\n";
+    if ((defined('DEBUG') && DEBUG) || is_cli()) {
+        $params = func_get_args();
+        foreach ($params as $value) {
+            if (is_array($value) || is_object($value)) {
+                if (is_cli()) {
+                    print_r($value);
+                    echo "\n";
+                } else {
+                    print_r($value);
+                    echo '<br/>';
+                }
             } else {
-                print_r($value);
-                echo '<br/>';
-            }
-        } else {
-            if (is_cli()) {
-                echo $value, "\n";
-            } else {
-                echo $value, '<br/>';
+                if (is_cli()) {
+                    echo $value, "\n";
+                } else {
+                    echo $value, '<br/>';
+                }
             }
         }
     }
