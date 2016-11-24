@@ -67,22 +67,6 @@ function resource_url($var = null, $url_type = 'resource_url')
     }
 }
 
-//获取request_uri
-function request_uri()
-{
-    if (isset($_SERVER['REQUEST_URI'])) {
-        $uri = $_SERVER['REQUEST_URI'];
-    } else {
-        if (isset($_SERVER['argv'])) {
-            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['argv'][0];
-        } else {
-            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'];
-        }
-    }
-
-    return $uri;
-}
-
 /**
  * 构建URL.
  *
@@ -93,7 +77,7 @@ function request_uri()
  */
 function make_url($add_params = [], $del_params = [])
 {
-    $uri   = request_uri();
+    $uri   = request()->uri();
     $de    = strpos('?', $uri) === false ? '?' : '&';
     $query = parse_url($uri, PHP_URL_QUERY);
 
