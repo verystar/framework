@@ -55,7 +55,7 @@ class Router
     {
         $controllername = $this->getControllerClassName($controller);
 
-        if (!class_exists($controllername, false)) {
+        if (!class_exists($controllername)) {
             throw new HttpResponseException("Unable to load class: " . $controllername, HttpResponseException::ERR_NOTFOUND_CONTROLLER);
         }
 
