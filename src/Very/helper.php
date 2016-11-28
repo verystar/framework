@@ -958,27 +958,32 @@ if (!function_exists('model')) {
     }
 }
 
-function debug_start($s)
-{
-    $GLOBALS[$s]['start_time'] = microtime(true);
-    if (!isset($GLOBALS[$s]['start_total_time'])) {
-        $GLOBALS[$s]['start_total_time'] = $GLOBALS[$s]['start_time'];
+if (!function_exists('debug_start')) {
+    function debug_start($s)
+    {
+        $GLOBALS[$s]['start_time'] = microtime(true);
+        if (!isset($GLOBALS[$s]['start_total_time'])) {
+            $GLOBALS[$s]['start_total_time'] = $GLOBALS[$s]['start_time'];
+        }
+        $GLOBALS[$s]['start_mem'] = memory_get_usage();
     }
-    $GLOBALS[$s]['start_mem'] = memory_get_usage();
 }
 
-function debug_end($s)
-{
-    $GLOBALS[$s]['end_time'] = microtime(true);
-    $GLOBALS[$s]['end_mem']  = memory_get_usage();
 
-    if (isset($GLOBALS[$s]['start_time'])) {
-        e($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
-                6) . ':---DTime:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'],
-                6) . '---Mem:' . number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024),
-                6) . 'M---PMem:' . number_format(memory_get_peak_usage() / (1024 * 1024), 2) . 'M');
-    } else {
-        e('not start');
+if (!function_exists('debug_end')) {
+    function debug_end($s)
+    {
+        $GLOBALS[$s]['end_time'] = microtime(true);
+        $GLOBALS[$s]['end_mem']  = memory_get_usage();
+
+        if (isset($GLOBALS[$s]['start_time'])) {
+            e($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
+                    6) . ':---DTime:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'],
+                    6) . '---Mem:' . number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024),
+                    6) . 'M---PMem:' . number_format(memory_get_peak_usage() / (1024 * 1024), 2) . 'M');
+        } else {
+            e('not start');
+        }
     }
 }
 
@@ -989,37 +994,5 @@ if (!function_exists('curl')) {
     function curl()
     {
         return new Very\Support\Curl();
-    }
-}
-
-if (!function_exists('mstat')) {
-    /**
-     * @return \Very\Support\Stat
-     */
-    function mstat()
-    {
-        return app()->make('mstat');
-    }
-}
-
-if (!function_exists('helper')) {
-    function helper($file_name)
-    {
-        $path = app('path.helpers');
-        $file = $path . $file_name . '.php';
-        static $import_files = [];
-
-        if (!isset($import_files[$file])) {
-            if (is_file($file)) {
-                require $file;
-                $import_files[$file] = 1;
-
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        return true;
     }
 }
