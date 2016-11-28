@@ -1,9 +1,6 @@
-<?php
-
-namespace Very\Encryption;
+<?php namespace Very\Encryption;
 
 /**
- * 纯数字加密算法
  * Created by PhpStorm.
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/9/30 下午2:31
@@ -12,13 +9,14 @@ namespace Very\Encryption;
  * $code = $dn->encode($user_id);
  * $code = '61204922299213336';//测试的时候保存一个code，然后修改后16位的任意数字都会导致校验失败
  * e('EN'.$code);
- * e('DE'.$dn->decode($code));.
+ * e('DE'.$dn->decode($code));
  */
+
 class DEncrypt
 {
+
     /**
-     * 密码盘.
-     *
+     * 密码盘
      * @var array
      */
     private $salt = [
@@ -42,9 +40,14 @@ class DEncrypt
         $this->length = $length;
     }
 
+    public function setFixedCode($code)
+    {
+        $this->fixed_code = $code;
+    }
+
     /**
      * 对纯数字生成固定位数的密钥
-     * 61 8 3609 9985947242 前两位固定，8校验码 3609是随机码 后面10位是用户ID，不足用0补充.
+     * 61 8 3609 9985947242 前两位固定，8校验码 3609是随机码 后面10位是用户ID，不足用0补充
      *
      * @param $user_id
      *
@@ -57,16 +60,16 @@ class DEncrypt
 //        $salt_rand = mt_rand(0, 9);
         //由MOD10算法生成校验码
         $salt_rand = $this->generateNumber($user_id);
-        $rand = substr(str_shuffle($this->salt[$salt_rand]), 0, 4);
+        $rand      = substr(str_shuffle($this->salt[$salt_rand]), 0, 4);
 
-        $str = $this->fixed_code.$salt_rand;
+        $str = $this->fixed_code . $salt_rand;
 
-        $len = strlen($user_id);
+        $len  = strlen($user_id);
         $rlen = strlen($rand);
         $slen = count($this->salt);
 
         //对用户ID加密
-        for ($i = 0; $i < $len; ++$i) {
+        for ($i = 0; $i < $len; $i++) {
             $k1 = $i % $rlen;
             $k2 = $i % $slen;
 
@@ -78,15 +81,16 @@ class DEncrypt
         //对随机码加密
         //    e('RAND:' . $rand);
         $sr = $salt_rand;
-        for ($j = 0; $j < $rlen; ++$j) {
+        for ($j = 0; $j < $rlen; $j++) {
             $rand[$j] = $sr = ($rand[$j] + $sr) % 10;
         }
 
-        return $str.$rand.$user_id;
+        return $str . $rand . $user_id;
     }
 
+
     /**
-     * 解码，如果返回0则表示校验不通过.
+     * 解码，如果返回0则表示校验不通过
      *
      * @param $str
      *
@@ -94,17 +98,18 @@ class DEncrypt
      */
     public function decode($str)
     {
-        $user_id = substr($str, -$this->length);
-        $salt_rand = (int) substr($str, 2, 1);
-        $rand = substr($str, 3, 4);
+        $fixlen    = strlen($this->fixed_code);
+        $user_id   = substr($str, -$this->length);
+        $salt_rand = (int)substr($str, $fixlen, 1);
+        $rand      = substr($str, $fixlen + 1, 4);
 
-        $len = strlen($user_id);
+        $len  = strlen($user_id);
         $rlen = strlen($rand);
         $slen = count($this->salt);
 
         //对随机码解密
         $sr = $salt_rand;
-        for ($j = 0; $j < $rlen; ++$j) {
+        for ($j = 0; $j < $rlen; $j++) {
             if ($rand[$j] >= $sr) {
                 $rand[$j] = $rand[$j] - $sr;
             } else {
@@ -115,7 +120,7 @@ class DEncrypt
         }
 
         //对用户ID加密
-        for ($i = 0; $i < $len; ++$i) {
+        for ($i = 0; $i < $len; $i++) {
             $k1 = $i % $rlen;
             $k2 = $i % $slen;
 
@@ -128,16 +133,16 @@ class DEncrypt
             }
         }
 
-        if ($this->validateNumber($user_id.$salt_rand)) {
+        if ($this->validateNumber($user_id . $salt_rand)) {
             return ltrim($user_id, '0');
         } else {
             return 0;
         }
     }
 
+
     /**
-     * Luhn check.
-     *
+     * Luhn check
      * @author WN
      *
      * @param int $number
@@ -146,7 +151,7 @@ class DEncrypt
      */
     public function validateNumber($number)
     {
-        return (bool) !$this->checksum($number, true);
+        return (bool)!$this->checksum($number, true);
     }
 
     /**
@@ -165,23 +170,23 @@ class DEncrypt
      * @author WN
      *
      * @param int  $number
-     * @param bool $check  Set to true if you are calculating checksum for validation
+     * @param bool $check Set to true if you are calculating checksum for validation
      *
      * @return int
      */
     private function checksum($number, $check = false)
     {
         $data = str_split(strrev($number));
-        $sum = 0;
+        $sum  = 0;
         foreach ($data as $k => $v) {
-            $tmp = $v + $v * (int) (($k % 2) xor !$check);
+            $tmp = $v + $v * (int)(($k % 2) xor !$check);
             if ($tmp > 9) {
                 $tmp -= 9;
             }
             $sum += $tmp;
         }
         $sum %= 10;
-
-        return (int) $sum == 0 ? 0 : 10 - $sum;
+        return (int)$sum == 0 ? 0 : 10 - $sum;
     }
+
 }
