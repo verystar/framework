@@ -29,7 +29,6 @@ class Application extends Container
      * @var string
      */
     const VERSION = '2.0.0';
-    protected static $instance;
 
     public function __construct($basePath = null)
     {
@@ -93,17 +92,8 @@ class Application extends Container
             return $env;
         });
 
-        $this->setInstance($this);
-    }
+        static::setInstance($this);
 
-    public static function getInstance()
-    {
-        return static::$instance;
-    }
-
-    public static function setInstance(Application $app)
-    {
-        static::$instance = $app;
     }
 
     /**
