@@ -923,41 +923,6 @@ if (!function_exists('mstat')) {
     }
 }
 
-if (!function_exists('model')) {
-    /**
-     * model加载辅助函数，如model('user')对应的就是加载Model\User.
-     *
-     * @param $model
-     *
-     * @return mixed
-     *
-     * @throws Exception
-     */
-    function model($model)
-    {
-        static $instances = array();
-
-        //如果传进来的已经是真是的类名则不处理
-        if (isset($instances[$model]) || class_exists($model)) {
-            $classname = $model;
-        } else {
-            $namespace = app('namespace') ? '\\' . app('namespace') : '';
-            $classname = implode('/', array_map('ucfirst', explode('/', strtolower($model))));
-            $classname = $namespace . '\\Models\\' . str_replace('/', '\\', $classname) . 'Model';
-        }
-
-        if (!isset($instances[$classname])) {
-            if (class_exists($classname)) {
-                $instances[$classname] = app()->make($classname);
-            } else {
-                throw new InvalidArgumentException('Model ' . $classname . ' not found.');
-            }
-        }
-
-        return $instances[$classname];
-    }
-}
-
 if (!function_exists('debug_start')) {
     function debug_start($s)
     {
