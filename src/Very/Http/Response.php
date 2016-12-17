@@ -32,7 +32,7 @@ class Response
 
     public function json($data = array())
     {
-        header('Content-type: '.self::JSON.'; charset='.config('app', 'charset'));
+        header('Content-type: '.self::JSON.'; charset='.config('app.charset'));
         if (!is_array($data)) {
             if (is_object($data)) {
                 $data = get_object_vars($data);
@@ -53,13 +53,13 @@ class Response
 
     public function string($data = '')
     {
-        header('Content-type: '.self::TEXT.'; charset='.config('app', 'charset'));
+        header('Content-type: '.self::TEXT.'; charset='.config('app.charset'));
         echo $data;
     }
 
     public function xml($data = '')
     {
-        header('Content-type: '.self::XML.'; charset='.config('app', 'charset'));
+        header('Content-type: '.self::XML.'; charset='.config('app.charset'));
         echo $data;
     }
 }

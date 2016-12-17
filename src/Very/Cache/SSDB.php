@@ -91,7 +91,7 @@ class SSDB
 
         if (!isset($cache[$db]) || !$singleton) {
             $obj    = new self();
-            $config = config('ssdb', $db);
+            $config = config('ssdb.' . $db);
             if (!$config) {
                 throw new \RuntimeException('ssdb config error.');
             }

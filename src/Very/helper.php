@@ -36,7 +36,7 @@ function site_url($var = null)
 
 function resource_url($var = null, $url_type = 'resource_url')
 {
-    $site_root = config('app', $url_type);
+    $site_root = config('app.' . $url_type);
     if ($var == null) {
         return $site_root;
     } else {
@@ -44,16 +44,16 @@ function resource_url($var = null, $url_type = 'resource_url')
         $ext = pathinfo($var, PATHINFO_EXTENSION);
         switch ($ext) {
             case 'js':
-                $v = '?v=' . config('app', 'js_version', '20121024');
+                $v = '?v=' . config('app.js_version', '20121024');
                 break;
             case 'css':
-                $v = '?v=' . config('app', 'css_version', '20121024');
+                $v = '?v=' . config('app.css_version', '20121024');
                 break;
             default:
                 $v = '';
                 break;
         }
-        $resource_path = config('app', $url_type . '_path');
+        $resource_path = config('app.' . $url_type . '_path');
 
         if (is_dir($resource_path)) {
             if (defined('ENVIRON') && ENVIRON === 'dev') {
@@ -583,11 +583,12 @@ function is_utf8($string)
        )*$%xs', $string);
 }
 
-if (! function_exists('value')) {
+if (!function_exists('value')) {
     /**
      * Return the default value of the given value.
      *
-     * @param  mixed  $value
+     * @param  mixed $value
+     *
      * @return mixed
      */
     function value($value)

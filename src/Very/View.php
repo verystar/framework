@@ -36,7 +36,7 @@ class View
 
     public function setPath($path)
     {
-        $this->view_path = realpath($path.'/').DIRECTORY_SEPARATOR;
+        $this->view_path = realpath($path . '/') . DIRECTORY_SEPARATOR;
     }
 
     public function getPath()
@@ -67,14 +67,14 @@ class View
         $this->datas = $__datas;
 
         if ($__charset == null) {
-            $__charset = config('app', 'charset');
+            $__charset = config('app.charset');
         }
         static $is_header = false;
         if (!$is_header) {
             $is_header = true;
-            header('Content-type: text/html; charset='.$__charset);
+            header('Content-type: text/html; charset=' . $__charset);
         }
-        if (file_exists($this->getPath().$__path)) {
+        if (file_exists($this->getPath() . $__path)) {
             $__datas = array_merge(self::$temp_data, $__datas);
             if ($__datas) {
                 extract($__datas);
@@ -83,12 +83,12 @@ class View
             // flush out any stray output that might get out before an error occurs or
             // an exception is thrown. This prevents any partial views from leaking.
             try {
-                include $this->getPath().$__path;
+                include $this->getPath() . $__path;
             } catch (\Exception $e) {
                 $this->handleViewException($e, $ob_level);
             }
         } else {
-            throw new HttpResponseException('Not found View file in: '.$this->getPath().$__path, HttpResponseException::ERR_NOTFOUND_VIEW);
+            throw new HttpResponseException('Not found View file in: ' . $this->getPath() . $__path, HttpResponseException::ERR_NOTFOUND_VIEW);
         }
 
         return ltrim(ob_get_clean());
@@ -213,7 +213,7 @@ class View
      */
     public function flush()
     {
-        $this->sections = [];
+        $this->sections     = [];
         $this->sectionStack = [];
     }
 
@@ -242,7 +242,7 @@ class View
     public function __destruct()
     {
         foreach ($this->extends as $file) {
-            $this->display($file.'.php', $this->datas);
+            $this->display($file . '.php', $this->datas);
         }
         $this->flush();
     }
