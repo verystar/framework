@@ -39,7 +39,9 @@ class Application extends Container
          * 注入基本类库到Application
          */
         $this->singleton('config', function ($app) {
-            return new Config($app['path.config']);
+            $config = new Config($app['path.config']);
+            date_default_timezone_set($config->get('app.timezone', 'Asia/Shanghai'));
+            return $config;
         });
 
         $this->singleton('logger', function ($app) {
@@ -86,7 +88,7 @@ class Application extends Container
 
     public function registerAppProviders()
     {
-        if($this['config']['app.providers']) {
+        if ($this['config']['app.providers']) {
             foreach ($this['config']['app.providers'] as $provider) {
                 $this->register($this->resolveProviderClass($provider));
             }
