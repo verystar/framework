@@ -65,7 +65,7 @@ class Request
     public function all($index = '', $default = null)
     {
         if (!$index) {
-            return $_REQUEST;
+            return $_GET + $_POST;
         }
 
         if (!isset($_POST[$index])) {
@@ -161,7 +161,8 @@ class Request
         return $this->_action = strtolower($action);
     }
 
-    public function uri(){
+    public function uri()
+    {
         if (isset($_SERVER['REQUEST_URI'])) {
             $uri = $_SERVER['REQUEST_URI'];
         } else {
