@@ -1,8 +1,8 @@
 <?php
 
-namespace Very\Http;
+namespace Very\Session;
 
-class Session
+class SessionManager
 {
     /**
      * 判断是否启用session_start的标志符.
@@ -13,22 +13,13 @@ class Session
 
     private $default_options = array(
         'session_save_path' => '',
-        'session_type' => 'file', //支持memcache,file,mysql
-        'session_lefttime' => 3600, //默认1小时
-        'session_name' => 'fifsky',
+        'session_type'      => 'file', //支持memcache,file,mysql
+        'session_lefttime'  => 3600, //默认1小时
+        'session_name'      => 'php_session',
     );
 
-    public function __construct()
+    public function __construct($options = array())
     {
-        $this->init();
-    }
-
-    public function init($options = array())
-    {
-        if (!$options) {
-            $options = config('app', 'session', []);
-        }
-
         $options = array_merge($this->default_options, $options);
 
         if ($options['session_name']) {
@@ -38,8 +29,7 @@ class Session
 
         if ($options['session_lefttime']) {
             //设置最大生存时间
-            ini_set('session.gc_maxlifetime', $options['session_lefttime']);
-            session_cache_expire($options['session_lefttime']);
+            $this->setLifeTime($options['session_lefttime']);
         }
 
         if ($options['session_type'] === 'file' && is_dir($options['session_save_path'])) {
@@ -49,14 +39,19 @@ class Session
 
         if ($options['session_type'] == 'memcache') {
             ini_set('session.save_handler', 'memcache');
-            ini_set('session.save_path', 'tcp://127.0.0.1:11211?timeout='.$options['session_lefttime']);
+            ini_set('session.save_path', 'tcp://127.0.0.1:11211?timeout=' . $options['session_lefttime']);
             //pecl libmemcached扩展使用
             //ini_set("session.save_handler", "memcache");
             //ini_set("session.save_path", "127.0.0.1:11211");
             //使用多个 memcached server 时用逗号","隔开，并且和 Memcache::addServer() 文档中说明的一样，可以带额外的参数"persistent"、"weight"、"timeout"、"retry_interval" 等等，类似这样的："tcp://host1:port1?persistent=1&weight=2,tcp://host2:port2"
         }
+    }
 
-        return $this;
+    public function setLifeTime($session_lefttime)
+    {
+        //设置最大生存时间
+        ini_set('session.gc_maxlifetime', $session_lefttime);
+        session_cache_expire($session_lefttime);
     }
 
     /**
@@ -126,17 +121,6 @@ class Session
     }
 
     /**
-     * 删除某Session值
-     *
-     * @param string $key 需要删除的Session名
-     */
-    public function del($key)
-    {
-        $this->session_start();
-        unset($_SESSION[$key]);
-    }
-
-    /**
      * 删除某Session值，del()方法的别名.
      *
      * @see del
@@ -144,7 +128,7 @@ class Session
     public function delete($key)
     {
         $this->session_start();
-        $this->del($key);
+        unset($_SESSION[$key]);
     }
 
     /**
@@ -154,7 +138,7 @@ class Session
     {
         $this->session_start();
         $this->is_start = false;
-        $_SESSION = array();
+        $_SESSION       = array();
         session_destroy();
     }
 

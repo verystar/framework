@@ -1,9 +1,9 @@
 <?php
 
-namespace Very;
+namespace Very\Routing;
 
 /**
- * 路由操作库，调用方法library('router').
+ * 路由操作库
  *
  * @author caixudong
  */

@@ -1,4 +1,18 @@
 <?php
+if (!function_exists('app_path')) {
+    /**
+     * Get the path to the application folder.
+     *
+     * @param  string $path
+     *
+     * @return string
+     */
+    function app_path($path = '')
+    {
+        return app('path.app') . ltrim($path, DIRECTORY_SEPARATOR);
+    }
+}
+
 function site_url($var = null)
 {
     if (substr($var, 0, 4) === 'http') {
@@ -53,7 +67,7 @@ function resource_url($var = null, $url_type = 'resource_url')
                 static $revs = [];
 
                 if (file_exists($rev_mainfest)) {
-                    if(!$revs) {
+                    if (!$revs) {
                         $revs = json_decode(file_get_contents($rev_mainfest), true);
                     }
                     if ($revs[$var]) {
@@ -553,22 +567,6 @@ function ifset($array, $key, $default = null)
     return isset($array[$key]) ? $array[$key] : $default;
 }
 
-function show_human_time($timestamp, $format = 'Y-m-d H:i')
-{
-    $time_offset = time() - $timestamp;
-    $date_format = date('Y-m-d', $timestamp);
-    list($year, $month, $day) = explode('-', $date_format);
-    if ($time_offset <= 3600) {
-        return ($time_offset <= 0 ? '1' : ceil($time_offset / 60)) . '分钟前';
-    } elseif ($date_format == date('Y-m-d')) {
-        return '今天 ' . date('H:i', $timestamp);
-    } elseif ($year == date('Y')) {
-        return date('m月d日 H:i', $timestamp);
-    } else {
-        return date($format, $timestamp);
-    }
-}
-
 function is_utf8($string)
 {
     //可以使用mb_detect_encoding($string,"UTF-8")替代
@@ -585,51 +583,17 @@ function is_utf8($string)
        )*$%xs', $string);
 }
 
-function array_get($array, $key, $default = null)
-{
-    if (is_null($key)) {
-        return $array;
+if (! function_exists('value')) {
+    /**
+     * Return the default value of the given value.
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */
+    function value($value)
+    {
+        return $value instanceof Closure ? $value() : $value;
     }
-
-    if (isset($array[$key])) {
-        return $array[$key];
-    }
-
-    foreach (explode('.', $key) as $segment) {
-        if (!is_array($array) || !array_key_exists($segment, $array)) {
-            return $default;
-        }
-
-        $array = $array[$segment];
-    }
-
-    return $array;
-}
-
-function array_set(&$array, $key, $value)
-{
-    if (is_null($key)) {
-        return $array = $value;
-    }
-
-    $keys = explode('.', $key);
-
-    while (count($keys) > 1) {
-        $key = array_shift($keys);
-
-        // If the key doesn't exist at this depth, we will just create an empty array
-        // to hold the next value, allowing us to create the arrays to hold final
-        // values at the correct depth. Then we'll keep digging into the array.
-        if (!isset($array[$key]) || !is_array($array[$key])) {
-            $array[$key] = array();
-        }
-
-        $array = &$array[$key];
-    }
-
-    $array[array_shift($keys)] = $value;
-
-    return $array;
 }
 
 /**
@@ -718,53 +682,22 @@ function emptystr_tonull($arr)
     }, $arr);
 }
 
-/**
- * 驼峰转下划线
- *
- * @param $str
- *
- * @return string
- */
-function hump_to_underline($str)
-{
-    if (!$str) {
-        return $str;
-    }
-
-    return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
-}
-
-/**
- * 下划线转驼峰.
- *
- * @param $str
- *
- * @return string
- */
-function underline_to_hump($str)
-{
-    if (!$str) {
-        return $str;
-    }
-
-    return implode('', array_map('ucfirst', explode('_', $str)));
-}
-
 if (!function_exists('app')) {
     /**
      * Get the available container instance.
      *
-     * @param string $make
+     * @param  string $make
+     * @param  array  $parameters
      *
-     * @return mixed | \Very\Application
+     * @return mixed|\Very\Application
      */
-    function app($make = null)
+    function app($make = null, $parameters = [])
     {
-        if (!is_null($make)) {
-            return app()->make($make);
+        if (is_null($make)) {
+            return \Very\Application::getInstance();
         }
 
-        return \Very\Application::getInstance();
+        return \Very\Application::getInstance()->make($make, $parameters);
     }
 }
 
@@ -795,23 +728,22 @@ if (!function_exists('config')) {
      *
      * If an array is passed as the key, we will assume you want to set an array of values.
      *
-     * @param string $config
-     * @param string $key
-     * @param mixed  $default
+     * @param  array|string $key
+     * @param mixed         $default
      *
      * @return mixed | \Very\Config
      */
-    function config($config = null, $key = null, $default = null)
+    function config($key = null, $default = null)
     {
-        if (is_null($config)) {
+        if (is_null($key)) {
             return app('config');
         }
 
         if (is_array($key)) {
-            return app('config')->set($config, $key);
+            return app('config')->set($key);
         }
 
-        return app('config')->get($config, $key, $default);
+        return app('config')->get($key, $default);
     }
 }
 
@@ -846,12 +778,12 @@ if (!function_exists('cookie')) {
      * @param bool   $secure
      * @param bool   $httpOnly
      *
-     * @return mixed | Very\Http\Cookie
+     * @return mixed | Very\Cookie\CookieJar
      */
     function cookie($name = null, $value = null, $time = 86400, $path = '/', $domain = null, $secure = false, $httpOnly = true)
     {
         /**
-         * @var $cookie \Very\Http\Cookie
+         * @var $cookie \Very\Cookie\CookieJar
          */
         $cookie = app('cookie');
 
@@ -872,12 +804,12 @@ if (!function_exists('session')) {
      * @param array|string $key
      * @param mixed        $default
      *
-     * @return mixed | Very\Http\Session
+     * @return mixed | Very\Session\SessionManager
      */
     function session($key = null, $default = null)
     {
         /**
-         * @var $session \Very\Http\Session
+         * @var $session \Very\Session\SessionManager
          */
         $session = app('session');
 
