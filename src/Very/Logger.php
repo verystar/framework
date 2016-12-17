@@ -46,13 +46,13 @@ class Logger implements PsrLoggerInterface
      * Create a new log writer instance.
      *
      * @param     $path
-     * @param int $log_max_level
+     * @param int $log_max_files
      */
-    public function __construct($path, $log_max_level = 7)
+    public function __construct($path, $log_max_files = 7)
     {
-        $log_max_level = $log_max_level ? $log_max_level : 7;
+        $log_max_files = $log_max_files ? $log_max_files : 7;
         $this->monolog = new MonologLogger('log');
-        $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'log.log', $log_max_level);
+        $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'log.log', $log_max_files);
     }
 
     /**
