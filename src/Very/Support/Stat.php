@@ -11,6 +11,7 @@
 
 use Redis;
 use RedisException;
+use Very\Database\Connection;
 
 class Stat
 {
@@ -204,7 +205,7 @@ class Stat
      */
     public function db()
     {
-        return library('db')->getInstance($this->use_db);
+        return Connection::getInstance($this->use_db);
     }
 
     public function isExist($md5, $type, $db_prefix)
