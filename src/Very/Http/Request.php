@@ -7,10 +7,10 @@ namespace Very\Http;
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/16 下午5:29.
  */
+use Very\Support\Str;
+
 class Request
 {
-    protected $_controller;
-    protected $_action;
     protected $params = [];
 
     public static function getInstance()
@@ -141,26 +141,6 @@ class Request
         return $this->fetchArray($_SERVER, $index, $default);
     }
 
-    public function getControllerName()
-    {
-        return $this->_controller;
-    }
-
-    public function setControllerName($controller)
-    {
-        return $this->_controller = strtolower($controller);
-    }
-
-    public function getActionName()
-    {
-        return $this->_action;
-    }
-
-    public function setActionName($action)
-    {
-        return $this->_action = strtolower($action);
-    }
-
     public function uri()
     {
         if (isset($_SERVER['REQUEST_URI'])) {
@@ -173,5 +153,42 @@ class Request
             }
         }
         return $uri;
+    }
+
+    /**
+     * Get the current path info for the request.
+     *
+     * @return string
+     */
+    public function path()
+    {
+        $pattern = trim(parse_url($this->uri(), PHP_URL_PATH), '/');
+
+        return $pattern == '' ? '/' : $pattern;
+    }
+
+    /**
+     * Get the current encoded path info for the request.
+     *
+     * @return string
+     */
+    public function decodedPath()
+    {
+        return rawurldecode($this->path());
+    }
+
+    /**
+     * Determine if the current request URI matches a pattern.
+     * @return bool
+     */
+    public function is()
+    {
+        foreach (func_get_args() as $pattern) {
+            if (Str::is($pattern, $this->decodedPath())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

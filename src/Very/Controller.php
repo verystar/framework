@@ -14,7 +14,7 @@ abstract class Controller
 {
     public function __call($fun, $arg)
     {
-        throw new HttpResponseException($fun . 'Action method not found file in: ' . request()->getControllerName() . 'Controller', HttpResponseException::ERR_NOTFOUND_ACTION);
+        throw new HttpResponseException($fun . 'Action method not found file in: ' . router()->getControllerName() . 'Controller', HttpResponseException::ERR_NOTFOUND_ACTION);
     }
 
     /**

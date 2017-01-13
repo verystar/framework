@@ -12,11 +12,33 @@ use RuntimeException;
 
 class Router
 {
+    protected $controllerName;
+    protected $actionName;
+
+    public function getControllerName()
+    {
+        return $this->controllerName;
+    }
+
+    public function setControllerName($controller)
+    {
+        return $this->controllerName = strtolower($controller);
+    }
+
+    public function getActionName()
+    {
+        return $this->actionName;
+    }
+
+    public function setActionName($action)
+    {
+        return $this->actionName = strtolower($action);
+    }
+
     public function init()
     {
-        $uri    = request()->uri();
-        $uri    = trim(parse_url($uri, PHP_URL_PATH), '/');
-        $params = isset($uri[0]) ? explode('/', $uri) : [];
+        $uri    = request()->path();
+        $params = $uri == '/' ? [] : explode('/', $uri);
 
         if ($params) {
             $last_params = array_pop($params);
@@ -40,8 +62,8 @@ class Router
 
         $controller = $params ? implode('/', $params) : 'index';
 
-        request()->setControllerName($controller);
-        request()->setActionName($action);
+        $this->setControllerName($controller);
+        $this->setActionName($action);
 
         try {
             $this->run($controller, $action);

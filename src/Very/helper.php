@@ -13,23 +13,26 @@ if (!function_exists('app_path')) {
     }
 }
 
-function site_url($var = null)
-{
-    if (substr($var, 0, 4) === 'http') {
-        if (defined('ENVIRON') && ENVIRON === 'dev') {
-            $var = str_replace('//', '//' . ENVIRON . '.', $var);
-        }
+if (! function_exists('url')) {
 
-        return $var;
-    } else {
-        $site_root = ($_SERVER['HTTPS'] ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
+    function url($var = null)
+    {
+        if (substr($var, 0, 4) === 'http') {
+            if (defined('ENVIRON') && ENVIRON === 'dev') {
+                $var = str_replace('//', '//' . ENVIRON . '.', $var);
+            }
 
-        if ($var == null) {
-            return $site_root;
+            return $var;
         } else {
-            $var = ltrim($var, '/');
+            $site_root = ($_SERVER['HTTPS'] ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
 
-            return $site_root . $var;
+            if ($var == null) {
+                return $site_root;
+            } else {
+                $var = ltrim($var, '/');
+
+                return $site_root . $var;
+            }
         }
     }
 }
@@ -104,31 +107,7 @@ function make_url($add_params = [], $del_params = [])
     }
     $uri = parse_url($uri, PHP_URL_PATH) . ($params ? $de . http_build_query($params) : '');
 
-    return site_url($uri);
-}
-
-//判断是否为某个页面
-function is_page($controller, $action = null)
-{
-    $request    = request();
-    $has        = false;
-    $controller = is_array($controller) ? $controller : [$controller];
-
-    if (in_array($request->getControllerName(), $controller)) {
-        $has = true;
-        if ($action !== null) {
-            $action = is_array($action) ? $action : [$action];
-            if (in_array($request->getActionName(), $action)) {
-                $has = true;
-            } else {
-                $has = false;
-            }
-        }
-    }
-
-    unset($request);
-
-    return $has;
+    return url($uri);
 }
 
 //xml转换为array
@@ -422,18 +401,6 @@ function set_status_header($code = 200, $text = '')
     }
 }
 
-/**
- * 生成字符串.
- *
- * @param int $len
- *
- * @return string
- */
-function rand_str($len = 5)
-{
-    return substr(str_shuffle('1234567890abcdefghijklmnopqrstuvwzxyABCDEFGHIJKLMNOPQRSTUVWZXY'), 0, $len);
-}
-
 function base32_encode($input)
 {
     $base32_alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -570,7 +537,6 @@ function ifset($array, $key, $default = null)
 function is_utf8($string)
 {
     //可以使用mb_detect_encoding($string,"UTF-8")替代
-
     return preg_match('%^(?:
        [\x09\x0A\x0D\x20-\x7E]              # ASCII
        | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte
@@ -833,6 +799,16 @@ if (!function_exists('request')) {
     function request()
     {
         return app('request');
+    }
+}
+
+if (!function_exists('router')) {
+    /**
+     * @return \Very\Routing\Router
+     */
+    function router()
+    {
+        return app('router');
     }
 }
 
