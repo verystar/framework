@@ -12,9 +12,9 @@ class Command
     {
         static $argv = null;
         if (is_null($argv)) {
-            list($shortopts, $longopts) = $this->parse();
-            $argv = getopt($shortopts, $longopts);
+            $argv = $this->parse();
         }
+
         if ('' == $name) {
             return $argv;
         }
@@ -26,12 +26,12 @@ class Command
         if (empty($_SERVER['argv'])) {
             return [];
         }
-        $opts = ['', []];
+        $opts = [];
         foreach ($_SERVER['argv'] as $argv) {
-            if (preg_match('/^\-\-([\w\-]+)/', $argv, $matches)) {
-                $opts[1][] = $matches[1] . '::';
-            } elseif (preg_match('/^\-([a-z])/', $argv, $matches)) {
-                $opts[0] .= $matches[1] . '::';
+            if (preg_match('/^\-\-([\w\-]+)=(.*)/', $argv, $matches)) {
+                $opts[$matches[1]] = isset($matches[2]) ? $matches[2] : null;
+            } elseif (preg_match('/^\-([a-z])(.*)/', $argv, $matches)) {
+                $opts[$matches[1]] = isset($matches[2]) ? $matches[2] : null;
             }
         }
         return $opts;
