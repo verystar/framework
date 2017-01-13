@@ -27,7 +27,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '2.0.0';
+    const VERSION = '2.3.6';
 
     public function __construct($basePath = null)
     {
@@ -218,6 +218,10 @@ class Application extends Container
     {
         if (!is_null($this->namespace)) {
             return $this->namespace;
+        }
+
+        if($this['namespace']) {
+            return $this->namespace = $this['namespace'];
         }
 
         throw new \RuntimeException('Unable to detect application namespace.');
