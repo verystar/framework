@@ -33,8 +33,6 @@ abstract class Model
      * @param string $redis
      *
      * @return \Redis | \Very\Cache\Redis
-     *
-     * @throws Exception
      */
     public function redis($redis = '')
     {
@@ -50,8 +48,6 @@ abstract class Model
      * @param string $select_db_name
      *
      * @return \Very\Database\Pager
-     *
-     * @throws Exception
      */
     public function pager($curr_page = 1, $per_page = 10, $ct_db_name = '', $select_db_name = '')
     {
@@ -61,19 +57,5 @@ abstract class Model
         }
 
         return new Pager(array('ct' => $this->db($ct_db_name), 'select' => $this->db($select_db_name)), $curr_page, $per_page);
-    }
-
-    /**
-     * 使用单例模式调用一个model方法，eg model('user')->singleton()->getUser('1');.
-     *
-     * @return object
-     */
-    public function singleton()
-    {
-        $class_name = get_called_class();
-        $model_instance = model($class_name);
-        $aa = Singleton::getInstance($model_instance);
-
-        return $aa;
     }
 }

@@ -9,7 +9,6 @@ namespace Very\Database;
 
 use PDO;
 use PDOException;
-use Very\Library\FStat;
 
 class PDOConnection extends PDO
 {
@@ -34,20 +33,20 @@ class PDOConnection extends PDO
             $this->driver_options = $driver_options;
             parent::__construct($dsn, $username, $password, array(
                     PDO::ATTR_CASE    => PDO::CASE_LOWER,
+                    PDO::ATTR_AUTOCOMMIT => 1,
                     PDO::ATTR_TIMEOUT => 1,
                 ) + $driver_options);
             $this->connect_time = number_format(microtime(true) - $start_time, 6);
 
             if ($this->is_stat) {
-                $_stat = FStat::getInstance();
                 //监控SQL连接效率
                 if ($this->getConnTime()) {
-                    $_stat->set(1, 'SQL连接效率', $_stat->formatTime($this->getConnTime()), $this->dsn);
+                    mstat()->set(1, 'SQL连接效率', mstat()->formatTime($this->getConnTime()), $this->dsn);
                 }
             }
         } catch (PDOException $e) {
             //监控SQL连接错误
-            FStat::getInstance()->set(1, 'BUG错误', 'SQL连接错误', $dsn, $e->getMessage());
+            mstat()->set(1, 'BUG错误', 'SQL连接错误', $dsn, $e->getMessage());
             throw new \PDOException("DB connect error for dns $dsn:" . $e->getMessage());
         }
     }
@@ -134,19 +133,17 @@ class PDOConnection extends PDO
             }
 
             if ($this->is_stat) {
-                $_stat = FStat::getInstance();
-
                 //监控SQL错误
                 if ($this->isError()) {
                     $debug       = $this->debug();
                     $debug['参数'] = $params;
                     logger()->error('SQL Error', $debug);
-                    $_stat->set(1, 'BUG错误', 'SQL执行错误', $sql, json_encode($this->getErrorInfo()), 100);
+                    mstat()->set(1, 'BUG错误', 'SQL执行错误', $sql, json_encode($this->getErrorInfo()), 100);
                 }
 
                 //监控SQL执行效率
                 if ($this->getExecTime()) {
-                    $_stat->set(1, 'SQL执行效率', $_stat->formatTime($this->getExecTime()), $this->sql);
+                    mstat()->set(1, 'SQL执行效率', mstat()->formatTime($this->getExecTime()), $this->sql);
                 }
             }
             break;

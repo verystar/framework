@@ -1,13 +1,13 @@
 <?php
 
-namespace Very\Http;
+namespace Very\Cookie;
 
 /**
  * Created by PhpStorm.
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/16 下午4:18.
  */
-class Cookie
+class CookieJar
 {
     /**
      * 存储Cookie的命名前缀
@@ -102,29 +102,12 @@ class Cookie
      * @param string $path   路径
      * @param string $domain 域
      */
-    public function del($key, $time = 86400, $path = '/', $domain = null)
+    public function remove($key, $time = 86400, $path = '/', $domain = null)
     {
         if ($domain === null) {
             $domain = $this->domain;
         }
         $key = $this->prefix.$key;
         setcookie($key, null, time() - $time, $path, $domain);
-    }
-
-    /**
-     * @param        $key
-     * @param int    $time
-     * @param string $path
-     * @param null   $domain
-     *
-     * @see del
-     */
-    public function delete($key, $time = 86400, $path = '/', $domain = null)
-    {
-        if ($domain === null) {
-            $domain = $this->domain;
-        }
-        $key = $this->prefix.$key;
-        $this->del($key, $time, $path, $domain);
     }
 }

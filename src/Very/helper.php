@@ -1,45 +1,45 @@
 <?php
-
-function module($__module_name__, $__params__ = array())
-{
-    if ($__params__) {
-        extract($__params__);
+if (!function_exists('app_path')) {
+    /**
+     * Get the path to the application folder.
+     *
+     * @param  string $path
+     *
+     * @return string
+     */
+    function app_path($path = '')
+    {
+        return app('path.app') . ltrim($path, DIRECTORY_SEPARATOR);
     }
-
-    $__module_ret__ = null;
-    if (file_exists(app('path.modules') . $__module_name__ . '.php')) {
-        $__module_ret__ = include app('path.modules') . $__module_name__ . '.php';
-    } else {
-        throw new \RuntimeException('Not found Module file in: ' . app('path.modules') . $__module_name__ . '.php');
-    }
-
-    return $__module_ret__;
 }
 
-function site_url($var = null)
-{
-    if (substr($var, 0, 4) === 'http') {
-        if (defined('ENVIRON') && ENVIRON === 'dev') {
-            $var = str_replace('//', '//' . ENVIRON . '.', $var);
-        }
+if (! function_exists('url')) {
 
-        return $var;
-    } else {
-        $site_root = ($_SERVER['HTTPS'] ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
+    function url($var = null)
+    {
+        if (substr($var, 0, 4) === 'http') {
+            if (defined('ENVIRON') && ENVIRON === 'dev') {
+                $var = str_replace('//', '//' . ENVIRON . '.', $var);
+            }
 
-        if ($var == null) {
-            return $site_root;
+            return $var;
         } else {
-            $var = ltrim($var, '/');
+            $site_root = ($_SERVER['HTTPS'] ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
 
-            return $site_root . $var;
+            if ($var == null) {
+                return $site_root;
+            } else {
+                $var = ltrim($var, '/');
+
+                return $site_root . $var;
+            }
         }
     }
 }
 
 function resource_url($var = null, $url_type = 'resource_url')
 {
-    $site_root = config('app', $url_type);
+    $site_root = config('app.' . $url_type);
     if ($var == null) {
         return $site_root;
     } else {
@@ -47,19 +47,19 @@ function resource_url($var = null, $url_type = 'resource_url')
         $ext = pathinfo($var, PATHINFO_EXTENSION);
         switch ($ext) {
             case 'js':
-                $v = '?v=' . config('app', 'js_version', '20121024');
+                $v = '?v=' . config('app.js_version', '20121024');
                 break;
             case 'css':
-                $v = '?v=' . config('app', 'css_version', '20121024');
+                $v = '?v=' . config('app.css_version', '20121024');
                 break;
             default:
                 $v = '';
                 break;
         }
-        $resource_path = config('app', $url_type . '_path');
+        $resource_path = config('app.' . $url_type . '_path');
 
         if (is_dir($resource_path)) {
-            if (ENVIRON === 'dev') {
+            if (defined('ENVIRON') && ENVIRON === 'dev') {
                 $file = rtrim($resource_path, '/') . '/' . $var;
                 if (file_exists($file)) {
                     $v = '?v=' . substr(md5_file($file), 0, 10);
@@ -70,7 +70,7 @@ function resource_url($var = null, $url_type = 'resource_url')
                 static $revs = [];
 
                 if (file_exists($rev_mainfest)) {
-                    if(!$revs) {
+                    if (!$revs) {
                         $revs = json_decode(file_get_contents($rev_mainfest), true);
                     }
                     if ($revs[$var]) {
@@ -84,22 +84,6 @@ function resource_url($var = null, $url_type = 'resource_url')
     }
 }
 
-//获取request_uri
-function request_uri()
-{
-    if (isset($_SERVER['REQUEST_URI'])) {
-        $uri = $_SERVER['REQUEST_URI'];
-    } else {
-        if (isset($_SERVER['argv'])) {
-            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['argv'][0];
-        } else {
-            $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'];
-        }
-    }
-
-    return $uri;
-}
-
 /**
  * 构建URL.
  *
@@ -110,7 +94,7 @@ function request_uri()
  */
 function make_url($add_params = [], $del_params = [])
 {
-    $uri   = request_uri();
+    $uri   = request()->uri();
     $de    = strpos('?', $uri) === false ? '?' : '&';
     $query = parse_url($uri, PHP_URL_QUERY);
 
@@ -123,31 +107,7 @@ function make_url($add_params = [], $del_params = [])
     }
     $uri = parse_url($uri, PHP_URL_PATH) . ($params ? $de . http_build_query($params) : '');
 
-    return site_url($uri);
-}
-
-//判断是否为某个页面
-function is_page($controller, $action = null)
-{
-    $request    = request();
-    $has        = false;
-    $controller = is_array($controller) ? $controller : [$controller];
-
-    if (in_array($request->getControllerName(), $controller)) {
-        $has = true;
-        if ($action !== null) {
-            $action = is_array($action) ? $action : [$action];
-            if (in_array($request->getActionName(), $action)) {
-                $has = true;
-            } else {
-                $has = false;
-            }
-        }
-    }
-
-    unset($request);
-
-    return $has;
+    return url($uri);
 }
 
 //xml转换为array
@@ -158,29 +118,26 @@ function xml_to_array($xml)
 
 /**
  * 调试函数一律禁止在线上输出
- * @return bool
  */
 function e()
 {
-    if (!$_ENV['DEBUG'] || !isCli()) {
-        return false;
-    }
-
-    $params = func_get_args();
-    foreach ($params as $value) {
-        if (is_array($value) || is_object($value)) {
-            if (isCli()) {
-                print_r($value);
-                echo "\n";
+    if ((defined('DEBUG') && DEBUG) || is_cli()) {
+        $params = func_get_args();
+        foreach ($params as $value) {
+            if (is_array($value) || is_object($value)) {
+                if (is_cli()) {
+                    print_r($value);
+                    echo "\n";
+                } else {
+                    print_r($value);
+                    echo '<br/>';
+                }
             } else {
-                print_r($value);
-                echo '<br/>';
-            }
-        } else {
-            if (isCli()) {
-                echo $value, "\n";
-            } else {
-                echo $value, '<br/>';
+                if (is_cli()) {
+                    echo $value, "\n";
+                } else {
+                    echo $value, '<br/>';
+                }
             }
         }
     }
@@ -350,49 +307,6 @@ function redirect($uri = '/', $method = 'location', $http_response_code = 302)
     exit;
 }
 
-/**
- * 判断是否为搜索引擎蜘蛛.
- *
- * @return bool
- */
-function is_search_bot()
-{
-    $bots       = array(
-        'Google' => 'Googlebot',
-        'Baidu'  => 'Baiduspider',
-        'Yahoo'  => 'Yahoo! Slurp',
-        'Soso'   => 'Sosospider',
-        'Msn'    => 'msnbot',
-        'Sogou'  => 'Sogou spider',
-        'Yodao'  => 'YodaoBot',
-    );
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-    foreach ($bots as $k => $v) {
-        if (stristr($v, $user_agent)) {
-            return $k;
-            break;
-        }
-    }
-
-    return false;
-}
-
-/**
- * 判断是否为移动设备.
- *
- * @return bool
- */
-function is_ios()
-{
-    $agent = strtolower($_SERVER['HTTP_USER_AGENT']);
-    $type  = false;
-    if (strpos($agent, 'iphone') || strpos($agent, 'ipad') || strpos($agent, 'android')) {
-        $type = true;
-    }
-
-    return $type;
-}
-
 function _iconv(&$data, $key, $encodeing)
 {
     $data = mb_convert_encoding($data, $encodeing[1], $encodeing[0]);
@@ -485,18 +399,6 @@ function set_status_header($code = 200, $text = '')
             header("HTTP/1.1 {$code} {$text}", true, $code);
         }
     }
-}
-
-/**
- * 生成字符串.
- *
- * @param int $len
- *
- * @return string
- */
-function rand_str($len = 5)
-{
-    return substr(str_shuffle('1234567890abcdefghijklmnopqrstuvwzxyABCDEFGHIJKLMNOPQRSTUVWZXY'), 0, $len);
 }
 
 function base32_encode($input)
@@ -632,26 +534,9 @@ function ifset($array, $key, $default = null)
     return isset($array[$key]) ? $array[$key] : $default;
 }
 
-function show_human_time($timestamp, $format = 'Y-m-d H:i')
-{
-    $time_offset = time() - $timestamp;
-    $date_format = date('Y-m-d', $timestamp);
-    list($year, $month, $day) = explode('-', $date_format);
-    if ($time_offset <= 3600) {
-        return ($time_offset <= 0 ? '1' : ceil($time_offset / 60)) . '分钟前';
-    } elseif ($date_format == date('Y-m-d')) {
-        return '今天 ' . date('H:i', $timestamp);
-    } elseif ($year == date('Y')) {
-        return date('m月d日 H:i', $timestamp);
-    } else {
-        return date($format, $timestamp);
-    }
-}
-
 function is_utf8($string)
 {
     //可以使用mb_detect_encoding($string,"UTF-8")替代
-
     return preg_match('%^(?:
        [\x09\x0A\x0D\x20-\x7E]              # ASCII
        | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte
@@ -664,51 +549,18 @@ function is_utf8($string)
        )*$%xs', $string);
 }
 
-function array_get($array, $key, $default = null)
-{
-    if (is_null($key)) {
-        return $array;
+if (!function_exists('value')) {
+    /**
+     * Return the default value of the given value.
+     *
+     * @param  mixed $value
+     *
+     * @return mixed
+     */
+    function value($value)
+    {
+        return $value instanceof Closure ? $value() : $value;
     }
-
-    if (isset($array[$key])) {
-        return $array[$key];
-    }
-
-    foreach (explode('.', $key) as $segment) {
-        if (!is_array($array) || !array_key_exists($segment, $array)) {
-            return $default;
-        }
-
-        $array = $array[$segment];
-    }
-
-    return $array;
-}
-
-function array_set(&$array, $key, $value)
-{
-    if (is_null($key)) {
-        return $array = $value;
-    }
-
-    $keys = explode('.', $key);
-
-    while (count($keys) > 1) {
-        $key = array_shift($keys);
-
-        // If the key doesn't exist at this depth, we will just create an empty array
-        // to hold the next value, allowing us to create the arrays to hold final
-        // values at the correct depth. Then we'll keep digging into the array.
-        if (!isset($array[$key]) || !is_array($array[$key])) {
-            $array[$key] = array();
-        }
-
-        $array = &$array[$key];
-    }
-
-    $array[array_shift($keys)] = $value;
-
-    return $array;
 }
 
 /**
@@ -797,53 +649,22 @@ function emptystr_tonull($arr)
     }, $arr);
 }
 
-/**
- * 驼峰转下划线
- *
- * @param $str
- *
- * @return string
- */
-function hump_to_underline($str)
-{
-    if (!$str) {
-        return $str;
-    }
-
-    return strtolower(preg_replace('/((?<=[a-z])(?=[A-Z]))/', '_', $str));
-}
-
-/**
- * 下划线转驼峰.
- *
- * @param $str
- *
- * @return string
- */
-function underline_to_hump($str)
-{
-    if (!$str) {
-        return $str;
-    }
-
-    return implode('', array_map('ucfirst', explode('_', $str)));
-}
-
 if (!function_exists('app')) {
     /**
      * Get the available container instance.
      *
-     * @param string $make
+     * @param  string $make
+     * @param  array  $parameters
      *
-     * @return mixed | \Very\Application
+     * @return mixed|\Very\Application
      */
-    function app($make = null)
+    function app($make = null, $parameters = [])
     {
-        if (!is_null($make)) {
-            return app()->make($make);
+        if (is_null($make)) {
+            return \Very\Application::getInstance();
         }
 
-        return \Very\Application::getInstance();
+        return \Very\Application::getInstance()->make($make, $parameters);
     }
 }
 
@@ -874,23 +695,22 @@ if (!function_exists('config')) {
      *
      * If an array is passed as the key, we will assume you want to set an array of values.
      *
-     * @param string $config
-     * @param string $key
-     * @param mixed  $default
+     * @param  array|string $key
+     * @param mixed         $default
      *
      * @return mixed | \Very\Config
      */
-    function config($config = null, $key = null, $default = null)
+    function config($key = null, $default = null)
     {
-        if (is_null($config)) {
+        if (is_null($key)) {
             return app('config');
         }
 
         if (is_array($key)) {
-            return app('config')->set($config, $key);
+            return app('config')->set($key);
         }
 
-        return app('config')->get($config, $key, $default);
+        return app('config')->get($key, $default);
     }
 }
 
@@ -925,12 +745,12 @@ if (!function_exists('cookie')) {
      * @param bool   $secure
      * @param bool   $httpOnly
      *
-     * @return mixed | Very\Http\Cookie
+     * @return mixed | Very\Cookie\CookieJar
      */
     function cookie($name = null, $value = null, $time = 86400, $path = '/', $domain = null, $secure = false, $httpOnly = true)
     {
         /**
-         * @var $cookie \Very\Http\Cookie
+         * @var $cookie \Very\Cookie\CookieJar
          */
         $cookie = app('cookie');
 
@@ -951,12 +771,12 @@ if (!function_exists('session')) {
      * @param array|string $key
      * @param mixed        $default
      *
-     * @return mixed | Very\Http\Session
+     * @return mixed | Very\Session\SessionManager
      */
     function session($key = null, $default = null)
     {
         /**
-         * @var $session \Very\Http\Session
+         * @var $session \Very\Session\SessionManager
          */
         $session = app('session');
 
@@ -982,6 +802,16 @@ if (!function_exists('request')) {
     }
 }
 
+if (!function_exists('router')) {
+    /**
+     * @return \Very\Routing\Router
+     */
+    function router()
+    {
+        return app('router');
+    }
+}
+
 if (!function_exists('response')) {
     /**
      * @return \Very\Http\Response
@@ -992,83 +822,80 @@ if (!function_exists('response')) {
     }
 }
 
-if (!function_exists('helper')) {
-    function helper($file_name)
+if (!function_exists('mstat')) {
+    /**
+     * @return \Very\Support\Stat
+     */
+    function mstat()
     {
-        $path = app('path.helpers');
-        $file = $path . $file_name . '.php';
-        static $import_files = [];
-
-        if (!isset($import_files[$file])) {
-            if (is_file($file)) {
-                require $file;
-                $import_files[$file] = 1;
-
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        return true;
+        return app()->make('mstat');
     }
 }
 
-if (!function_exists('model')) {
+if (!function_exists('debug_start')) {
+    function debug_start($s)
+    {
+        $GLOBALS[$s]['start_time'] = microtime(true);
+        if (!isset($GLOBALS[$s]['start_total_time'])) {
+            $GLOBALS[$s]['start_total_time'] = $GLOBALS[$s]['start_time'];
+        }
+        $GLOBALS[$s]['start_mem'] = memory_get_usage();
+    }
+}
+
+
+if (!function_exists('debug_end')) {
+    function debug_end($s)
+    {
+        $GLOBALS[$s]['end_time'] = microtime(true);
+        $GLOBALS[$s]['end_mem']  = memory_get_usage();
+
+        if (isset($GLOBALS[$s]['start_time'])) {
+            e($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
+                    6) . ':---DTime:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'],
+                    6) . '---Mem:' . number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024),
+                    6) . 'M---PMem:' . number_format(memory_get_peak_usage() / (1024 * 1024), 2) . 'M');
+        } else {
+            e('not start');
+        }
+    }
+}
+
+if (!function_exists('curl')) {
     /**
-     * model加载辅助函数，如model('user')对应的就是加载Model\User.
-     *
-     * @param $model
+     * @return \Very\Support\Curl
+     */
+    function curl()
+    {
+        return new Very\Support\Curl();
+    }
+}
+
+if (! function_exists('retry')) {
+    /**
+     * Retry an operation a given number of times.
+     * @param          $times
+     * @param callable $callback
+     * @param int      $sleep
      *
      * @return mixed
-     *
      * @throws Exception
      */
-    function model($model)
+    function retry($times, callable $callback, $sleep = 0)
     {
-        static $instances = array();
-
-        //如果传进来的已经是真是的类名则不处理
-        if (isset($instances[$model]) || class_exists($model)) {
-            $classname = $model;
-        } else {
-            $namespace = app('namespace') ? '\\' . app('namespace') : '';
-            $classname = implode('/', array_map('ucfirst', explode('/', strtolower($model))));
-            $classname = $namespace . '\\Models\\' . str_replace('/', '\\', $classname);
-        }
-
-        if (!isset($instances[$classname])) {
-            if (class_exists($classname)) {
-                $instances[$classname] = app()->make($classname);
-            } else {
-                throw new Exception('Model ' . $classname . ' not found.', \Very\Exception::ERR_NOTFOUND_MODEL);
+        $times--;
+        beginning:
+        try {
+            return $callback();
+        } catch (Exception $e) {
+            if (! $times) {
+                throw $e;
             }
+            $times--;
+            if ($sleep) {
+                usleep($sleep * 1000);
+            }
+            goto beginning;
         }
-
-        return $instances[$classname];
-    }
-}
-
-function debug_start($s)
-{
-    $GLOBALS[$s]['start_time'] = microtime(true);
-    if (!isset($GLOBALS[$s]['start_total_time'])) {
-        $GLOBALS[$s]['start_total_time'] = $GLOBALS[$s]['start_time'];
-    }
-    $GLOBALS[$s]['start_mem'] = memory_get_usage();
-}
-
-function debug_end($s)
-{
-    $GLOBALS[$s]['end_time'] = microtime(true);
-    $GLOBALS[$s]['end_mem']  = memory_get_usage();
-
-    if (isset($GLOBALS[$s]['start_time'])) {
-        e($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
-                6) . ':---DTime:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'],
-                6) . '---Mem:' . number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024),
-                6) . 'M---PMem:' . number_format(memory_get_peak_usage() / (1024 * 1024), 2) . 'M');
-    } else {
-        e('not start');
     }
 }

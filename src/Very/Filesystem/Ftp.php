@@ -9,8 +9,7 @@ class Ftp
 
     /**
      * FTP-ftp链接.
-     *
-     * @param array $string 字符串
+     * @param array $config
      *
      * @return bool
      */
@@ -219,8 +218,6 @@ class Ftp
 
     /**
      * FTP-关闭链接.
-     *
-     * @return bool
      */
     public function close()
     {
