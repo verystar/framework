@@ -7,10 +7,10 @@ namespace Very\Http;
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/16 下午5:29.
  */
+use Very\Support\Str;
+
 class Request
 {
-    protected $_controller;
-    protected $_action;
     protected $params = [];
 
     public static function getInstance()
@@ -65,7 +65,7 @@ class Request
     public function all($index = '', $default = null)
     {
         if (!$index) {
-            return $_REQUEST;
+            return $_GET + $_POST;
         }
 
         if (!isset($_POST[$index])) {
@@ -141,23 +141,54 @@ class Request
         return $this->fetchArray($_SERVER, $index, $default);
     }
 
-    public function getControllerName()
+    public function uri()
     {
-        return $this->_controller;
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $uri = $_SERVER['REQUEST_URI'];
+        } else {
+            if (isset($_SERVER['argv'])) {
+                $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['argv'][0];
+            } else {
+                $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'];
+            }
+        }
+        return $uri;
     }
 
-    public function setControllerName($controller)
+    /**
+     * Get the current path info for the request.
+     *
+     * @return string
+     */
+    public function path()
     {
-        return $this->_controller = strtolower($controller);
+        $pattern = trim(parse_url($this->uri(), PHP_URL_PATH), '/');
+
+        return $pattern == '' ? '/' : $pattern;
     }
 
-    public function getActionName()
+    /**
+     * Get the current encoded path info for the request.
+     *
+     * @return string
+     */
+    public function decodedPath()
     {
-        return $this->_action;
+        return rawurldecode($this->path());
     }
 
-    public function setActionName($action)
+    /**
+     * Determine if the current request URI matches a pattern.
+     * @return bool
+     */
+    public function is()
     {
-        return $this->_action = strtolower($action);
+        foreach (func_get_args() as $pattern) {
+            if (Str::is($pattern, $this->decodedPath())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

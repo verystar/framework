@@ -9,25 +9,32 @@ namespace Very\Cache;
  *
  * SSDB PHP client SDK.
  */
-class SSDBException extends \Exception {
-    public function __construct($message = null, $code = 0) {
+class SSDBException extends \Exception
+{
+    public function __construct($message = null, $code = 0)
+    {
         parent::__construct($message, $code);
     }
 }
 
-class SSDBTimeoutException extends SSDBException {
-    public function __construct($message = null, $code = 0) {
+class SSDBTimeoutException extends SSDBException
+{
+    public function __construct($message = null, $code = 0)
+    {
         parent::__construct($message, $code);
     }
 }
 
-class SSDB_Response {
+
+class SSDB_Response
+{
     public $cmd;
     public $code;
     public $data = null;
     public $message;
 
-    function __construct($code = 'ok', $data_or_message = null) {
+    public function __construct($code = 'ok', $data_or_message = null)
+    {
         $this->code = $code;
         if ($code == 'ok') {
             $this->data = $data_or_message;
@@ -36,7 +43,8 @@ class SSDB_Response {
         }
     }
 
-    function __toString() {
+    public function __toString()
+    {
         if ($this->code == 'ok') {
             $s = $this->data === null ? '' : json_encode($this->data);
         } else {
@@ -45,24 +53,30 @@ class SSDB_Response {
         return sprintf('%-13s %12s %s', $this->cmd, $this->code, $s);
     }
 
-    function ok() {
+    public function ok()
+    {
         return $this->code == 'ok';
     }
 
-    function not_found() {
+    public function not_found()
+    {
         return $this->code == 'not_found';
     }
 }
 
-class SSDB {
-    private $debug = false;
-    public $sock = null;
-    private $_closed = false;
-    private $recv_buf = '';
-    private $_easy = false;
-    public $last_resp = null;
+use Exception;
 
-    private $config;
+class SSDB
+{
+    private $debug     = false;
+    public  $sock      = null;
+    private $_closed   = false;
+    private $recv_buf  = '';
+    private $_easy     = false;
+    public  $last_resp = null;
+
+    private $host;
+    private $port;
 
     /**
      * @param $db
@@ -71,30 +85,29 @@ class SSDB {
      * @return $this
      * @author 蔡旭东
      */
-    static public function getInstance($db, $singleton = true) {
+    static public function getInstance($db, $singleton = true)
+    {
         static $cache = array();
 
         if (!isset($cache[$db]) || !$singleton) {
-            $cache[$db]         = new self();
-            $cache[$db]->config = config('ssdb', $db);
-
-            $cache[$db]->connect();
-            $cache[$db]->easy();
+            $obj    = new self();
+            $config = config('ssdb.' . $db);
+            if (!$config) {
+                throw new \RuntimeException('ssdb config error.');
+            }
+            $obj->host = $config['host'];
+            $obj->port = $config['port'];
+            $obj->connect($obj->host, $obj->port);
+            $cache[$db] = $obj;
         }
 
         return $cache[$db];
     }
 
-    function connect($timeout_ms = 500) {
-        $config = $this->config[array_rand($this->config)];
-        //暂时只支持master
-        $server = $config['master'];
-        list($host, $port) = explode(':', $server);
-
-        if (!$config) {
-            throw new \RuntimeException('ssdb config error.');
-        }
-
+    public function connect($host, $port, $timeout_ms = 500)
+    {
+        $this->host = $host;
+        $this->port = $port;
         $timeout_f  = (float)$timeout_ms / 1000;
         $this->sock = @stream_socket_client("$host:$port", $errno, $errstr, $timeout_f);
         if (!$this->sock) {
@@ -106,6 +119,7 @@ class SSDB {
         if (function_exists('stream_set_chunk_size')) {
             @stream_set_chunk_size($this->sock, 1024 * 1024);
         }
+        $this->easy();
     }
 
     /**
@@ -114,11 +128,13 @@ class SSDB {
      * And some certain methods like get/zget will return false
      * when response is not ok(not_found, etc)
      */
-    function easy() {
+    public function easy()
+    {
         $this->_easy = true;
     }
 
-    function close() {
+    public function close()
+    {
         if (!$this->_closed) {
             @fclose($this->sock);
             $this->_closed = true;
@@ -126,24 +142,28 @@ class SSDB {
         }
     }
 
-    function closed() {
+    public function closed()
+    {
         return $this->_closed;
     }
 
     private $batch_mode = false;
     private $batch_cmds = array();
 
-    function batch() {
+    public function batch()
+    {
         $this->batch_mode = true;
         $this->batch_cmds = array();
         return $this;
     }
 
-    function multi() {
+    public function multi()
+    {
         return $this->batch();
     }
 
-    function exec() {
+    public function exec()
+    {
         $ret = array();
         foreach ($this->batch_cmds as $op) {
             list($cmd, $params) = $op;
@@ -160,7 +180,8 @@ class SSDB {
         return $ret;
     }
 
-    function request() {
+    public function request()
+    {
         $args = func_get_args();
         $cmd  = array_shift($args);
         return $this->__call($cmd, $args);
@@ -168,20 +189,23 @@ class SSDB {
 
     private $async_auth_password = null;
 
-    function auth($password) {
+    public function auth($password)
+    {
         $this->async_auth_password = $password;
         return null;
     }
 
 
-    private function isConnectionLost(SSDBException $e) {
+    private function isConnectionLost(SSDBException $e)
+    {
         if (strpos($e->getMessage(), 'Connection lost') !== false || strpos($e->getMessage(), 'Connection refused') !== false) {
             return true;
         }
         return false;
     }
 
-    function __call($cmd, $params = array()) {
+    public function __call($cmd, $params = array())
+    {
         $cmd = strtolower($cmd);
         if ($this->async_auth_password !== null) {
             $pass                      = $this->async_auth_password;
@@ -206,7 +230,7 @@ class SSDB {
                 }
             } catch (SSDBException $e) {
                 if ($this->isConnectionLost($e)) {
-                    $this->connect();
+                    $this->connect($this->host, $this->port);
                     if ($i < 1) {
                         continue;
                     } else {
@@ -230,19 +254,22 @@ class SSDB {
         return $resp;
     }
 
-    private function check_easy_resp($cmd, $resp) {
+    private function check_easy_resp($cmd, $resp)
+    {
         $this->last_resp = $resp;
         if ($this->_easy) {
-            if(!is_object($resp)){
-                return NULL;
+            if (!is_object($resp)) {
+                return null;
             }
 
             if ($resp->not_found()) {
-                return NULL;
-            } else if (!$resp->ok() && !is_array($resp->data)) {
-                return false;
+                return null;
             } else {
-                return $resp->data;
+                if (!$resp->ok() && !is_array($resp->data)) {
+                    return false;
+                } else {
+                    return $resp->data;
+                }
             }
         } else {
             $resp->cmd = $cmd;
@@ -250,7 +277,8 @@ class SSDB {
         }
     }
 
-    function multi_set($kvs = array()) {
+    public function multi_set($kvs = array())
+    {
         $args = array();
         foreach ($kvs as $k => $v) {
             $args[] = $k;
@@ -259,7 +287,8 @@ class SSDB {
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function multi_hset($name, $kvs = array()) {
+    public function multi_hset($name, $kvs = array())
+    {
         $args = array($name);
         foreach ($kvs as $k => $v) {
             $args[] = $k;
@@ -268,7 +297,8 @@ class SSDB {
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function multi_zset($name, $kvs = array()) {
+    public function multi_zset($name, $kvs = array())
+    {
         $args = array($name);
         foreach ($kvs as $k => $v) {
             $args[] = $k;
@@ -277,52 +307,62 @@ class SSDB {
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function incr($key, $val = 1) {
+    public function incr($key, $val = 1)
+    {
         $args = func_get_args();
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function decr($key, $val = 1) {
+    public function decr($key, $val = 1)
+    {
         $args = func_get_args();
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function zincr($name, $key, $score = 1) {
+    public function zincr($name, $key, $score = 1)
+    {
         $args = func_get_args();
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function zdecr($name, $key, $score = 1) {
+    public function zdecr($name, $key, $score = 1)
+    {
         $args = func_get_args();
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function zadd($key, $score, $value) {
+    public function zadd($key, $score, $value)
+    {
         $args = array($key, $value, $score);
         return $this->__call('zset', $args);
     }
 
-    function zRevRank($name, $key) {
+    public function zRevRank($name, $key)
+    {
         $args = func_get_args();
         return $this->__call("zrrank", $args);
     }
 
-    function zRevRange($name, $offset, $limit) {
+    public function zRevRange($name, $offset, $limit)
+    {
         $args = func_get_args();
         return $this->__call("zrrange", $args);
     }
 
-    function hincr($name, $key, $val = 1) {
+    public function hincr($name, $key, $val = 1)
+    {
         $args = func_get_args();
         return $this->__call(__FUNCTION__, $args);
     }
 
-    function hdecr($name, $key, $val = 1) {
+    public function hdecr($name, $key, $val = 1)
+    {
         $args = func_get_args();
         return $this->__call(__FUNCTION__, $args);
     }
 
-    private function send_req($cmd, $params) {
+    private function send_req($cmd, $params)
+    {
         $req = array($cmd);
         foreach ($params as $p) {
             if (is_array($p)) {
@@ -334,12 +374,15 @@ class SSDB {
         return $this->send($req);
     }
 
-    private function recv_resp($cmd, $params) {
+    private function recv_resp($cmd, $params)
+    {
         $resp = $this->recv();
         if ($resp === false) {
             return new SSDB_Response('error', 'Unknown error');
-        } else if (!$resp) {
-            return new SSDB_Response('disconnected', 'Connection closed');
+        } else {
+            if (!$resp) {
+                return new SSDB_Response('disconnected', 'Connection closed');
+            }
         }
         if ($resp[0] == 'noauth') {
             $errmsg = isset($resp[1]) ? $resp[1] : '';
@@ -534,7 +577,8 @@ class SSDB {
         }
     }
 
-    private function send($data) {
+    private function send($data)
+    {
         $ps = array();
         foreach ($data as $p) {
             $ps[] = strlen($p);
@@ -564,7 +608,8 @@ class SSDB {
         return $ret;
     }
 
-    private function recv() {
+    private function recv()
+    {
         $this->step = self::STEP_SIZE;
         while (true) {
             $ret = $this->parse();
@@ -599,7 +644,8 @@ class SSDB {
     public $step;
     public $block_size;
 
-    private function parse() {
+    private function parse()
+    {
         $spos     = 0;
         $epos     = 0;
         $buf_size = strlen($this->recv_buf);

@@ -32,24 +32,27 @@ class Logger implements PsrLoggerInterface
      * @var array
      */
     protected $levels = [
-        'debug' => MonologLogger::DEBUG,
-        'info' => MonologLogger::INFO,
-        'notice' => MonologLogger::NOTICE,
-        'warning' => MonologLogger::WARNING,
-        'error' => MonologLogger::ERROR,
-        'critical' => MonologLogger::CRITICAL,
-        'alert' => MonologLogger::ALERT,
+        'debug'     => MonologLogger::DEBUG,
+        'info'      => MonologLogger::INFO,
+        'notice'    => MonologLogger::NOTICE,
+        'warning'   => MonologLogger::WARNING,
+        'error'     => MonologLogger::ERROR,
+        'critical'  => MonologLogger::CRITICAL,
+        'alert'     => MonologLogger::ALERT,
         'emergency' => MonologLogger::EMERGENCY,
     ];
 
     /**
      * Create a new log writer instance.
+     *
+     * @param     $path
+     * @param int $log_max_files
      */
-    public function __construct()
+    public function __construct($path, $log_max_files = 7)
     {
+        $log_max_files = $log_max_files ? $log_max_files : 7;
         $this->monolog = new MonologLogger('log');
-        $path = config('app', 'log_base_path');
-        $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'log.log', 7);
+        $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'log.log', $log_max_files);
     }
 
     /**

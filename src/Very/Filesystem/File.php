@@ -2,6 +2,7 @@
 
 namespace Very\Filesystem;
 
+use InvalidArgumentException;
 class File
 {
     /**
@@ -35,7 +36,7 @@ class File
     public function readDir($dir_name, $filter = array('.cvs', '.svn', '.git'))
     {
         if (!is_dir($dir_name)) {
-            return false;
+            throw  new InvalidArgumentException("Dir [{$dir_name}] is not found.");
         }
 
         $handle = opendir($dir_name);
@@ -64,7 +65,7 @@ class File
     public function scanDir($dir_name, $filter = array('.cvs', '.svn', '.git'))
     {
         if (!is_dir($dir_name)) {
-            return false;
+            throw  new InvalidArgumentException("Dir [{$dir_name}] is not found.");
         }
 
         $dir_name = rtrim($dir_name, '/').'/';

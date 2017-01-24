@@ -7,26 +7,27 @@ namespace Very;
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/13 下午11:32
  */
-use Very\Http\Request;
-use Very\Http\Response;
-use Very\Http\Session;
-use Very\Http\Cookie;
-use Very\Mail\Mailer;
 use Very\Container\Container;
+use Very\Support\Arr;
 
 class Application extends Container
 {
+    /**
+     * The application namespace.
+     *
+     * @var string
+     */
+    protected $namespace = null;
+
+    protected $serviceProviders = [];
+    protected $loadedProviders  = [];
+
     /**
      * The Very framework version.
      *
      * @var string
      */
-    const VERSION = '1.0.2';
-
-    protected $basePath;
-
-    //保存Application实例
-    protected static $instance;
+    const VERSION = '2.3.6';
 
     public function __construct($basePath = null)
     {
@@ -37,95 +38,40 @@ class Application extends Container
         /*
          * 注入基本类库到Application
          */
-
         $this->singleton('config', function ($app) {
-            $env = new Config();
-            $env->setPath($app['path.config']);
+            $config = new Config($app['path.config']);
+            date_default_timezone_set($config->get('app.timezone', 'Asia/Shanghai'));
+            return $config;
+        });
 
-            return $env;
+        $this->singleton('logger', function ($app) {
+            return new Logger($app['path.logs'], $app['config']['app.log_max_files']);
         });
 
         $this->singleton('view', function ($app) {
             $env = new View();
             $env->setPath($app['path.views']);
-
             return $env;
         });
 
-        $this->singleton('request', function ($app) {
-            $env = new Request();
+        $this->registerAppProviders();
 
-            return $env;
-        });
-
-        $this->singleton('response', function ($app) {
-            $env = new Response();
-
-            return $env;
-        });
-
-        $this->singleton('cookie', function ($app) {
-            $env = new Cookie();
-
-            return $env;
-        });
-
-        $this->singleton('session', function ($app) {
-            $env = new Session();
-
-            return $env;
-        });
-
-        $this->singleton('router', function ($app) {
-            $env = new Router();
-
-            return $env;
-        });
-
-        $this->singleton('logger', function ($app) {
-            $env = new Logger();
-
-            return $env;
-        });
-
-        $this->singleton('mail', function ($app) {
-            $mailer = new Mailer();
-
-            $from = config('mail', 'from');
-            if (is_array($from) && isset($from['address'])) {
-                $mailer->alwaysFrom($from['address'], $from['name']);
-            }
-
-            return $mailer;
-        });
-
-        $this->setInstance($this);
-    }
-
-    public static function getInstance()
-    {
-        return static::$instance;
-    }
-
-    public static function setInstance(Application $app)
-    {
-        static::$instance = $app;
+        static::setInstance($this);
     }
 
     /**
      * Set the base path for the application.
      *
-     * @param string $app_path
+     * @param string $basePath
      *
      * @return $this
      */
-    public function setBasePath($app_path)
+    public function setBasePath($basePath)
     {
-        $this['path'] = dirname(__DIR__).DIRECTORY_SEPARATOR;
-        $this['path.app'] = $app_path;
+        $this['path.app'] = rtrim($basePath);
 
-        foreach (['config', 'views', 'modules', 'helpers', 'logs'] as $v) {
-            $this['path.'.$v] = realpath($app_path.'/'.$v).DIRECTORY_SEPARATOR;
+        foreach (['config', 'views', 'logs'] as $v) {
+            $this['path.' . $v] = realpath(rtrim($basePath) . '/' . $v) . DIRECTORY_SEPARATOR;
         }
 
         $this['namespace.controller'] = '';
@@ -135,9 +81,97 @@ class Application extends Container
 
     public function setPath($key, $path)
     {
-        $this['path.'.$key] = rtrim($path, '/').DIRECTORY_SEPARATOR;
+        $this['path.' . $key] = rtrim($path, '/') . DIRECTORY_SEPARATOR;
 
         return $this;
+    }
+
+    public function registerAppProviders()
+    {
+        if ($this['config']['app.providers']) {
+            foreach ($this['config']['app.providers'] as $provider) {
+                $this->register($this->resolveProviderClass($provider));
+            }
+        }
+    }
+
+    /**
+     * Get the registered service provider instance if it exists.
+     *
+     * @param  \Very\Support\ServiceProvider|string $provider
+     *
+     * @return \Very\Support\ServiceProvider|null
+     */
+    public function getProvider($provider)
+    {
+        $name = is_string($provider) ? $provider : get_class($provider);
+        return Arr::first($this->serviceProviders, function ($value) use ($name) {
+            return $value instanceof $name;
+        });
+    }
+
+    /**
+     * Resolve a service provider instance from the class name.
+     *
+     * @param  string $provider
+     *
+     * @return \Very\Support\ServiceProvider
+     */
+    public function resolveProviderClass($provider)
+    {
+        return new $provider($this);
+    }
+
+    /**
+     * Mark the given provider as registered.
+     *
+     * @param  \Very\Support\ServiceProvider $provider
+     *
+     * @return void
+     */
+    protected function markAsRegistered($provider)
+    {
+        $class                         = get_class($provider);
+        $this->serviceProviders[]      = $provider;
+        $this->loadedProviders[$class] = true;
+    }
+
+    /**
+     * Register a service provider with the application.
+     *
+     * @param  \Very\Support\ServiceProvider|string $provider
+     * @param  array                                $options
+     * @param  bool                                 $force
+     *
+     * @return \Very\Support\ServiceProvider
+     */
+    public function register($provider, $options = [], $force = false)
+    {
+        if (($registered = $this->getProvider($provider)) && !$force) {
+            return $registered;
+        }
+
+        // If the given "provider" is a string, we will resolve it, passing in the
+        // application instance automatically for the developer. This is simply
+        // a more convenient way of specifying your service provider classes.
+        if (is_string($provider)) {
+            $provider = $this->resolveProviderClass($provider);
+        }
+
+        if (method_exists($provider, 'register')) {
+            $provider->register();
+        }
+
+        // Once we have registered the service we will iterate through the options
+        // and set each of them on the application so they will be available on
+        // the actual loading of the service objects and for developer usage.
+        foreach ($options as $key => $value) {
+            $this[$key] = $value;
+        }
+
+        $this->markAsRegistered($provider);
+
+        return $provider;
     }
 
     /**
@@ -171,5 +205,25 @@ class Application extends Container
     public function get($key)
     {
         return $this->__get($key);
+    }
+
+    /**
+     * Get the application namespace.
+     *
+     * @return string
+     *
+     * @throws \RuntimeException
+     */
+    public function getNamespace()
+    {
+        if (!is_null($this->namespace)) {
+            return $this->namespace;
+        }
+
+        if($this['namespace']) {
+            return $this->namespace = $this['namespace'];
+        }
+
+        throw new \RuntimeException('Unable to detect application namespace.');
     }
 }

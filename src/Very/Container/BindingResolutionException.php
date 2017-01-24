@@ -2,6 +2,8 @@
 
 namespace Very\Container;
 
-class BindingResolutionException extends \Exception
+use Exception;
+class BindingResolutionException extends Exception
 {
+    //
 }
