@@ -18,7 +18,7 @@ if (! function_exists('url')) {
     function url($var = null)
     {
         if (substr($var, 0, 4) === 'http') {
-            if (defined('ENVIRON') && ENVIRON === 'dev') {
+            if (defined('ENVIRON') && ENVIRON === 'local') {
                 $var = str_replace('//', '//' . ENVIRON . '.', $var);
             }
 
@@ -59,7 +59,7 @@ function resource_url($var = null, $url_type = 'resource_url')
         $resource_path = config('app.' . $url_type . '_path');
 
         if (is_dir($resource_path)) {
-            if (defined('ENVIRON') && ENVIRON === 'dev') {
+            if (defined('ENVIRON') && ENVIRON === 'local') {
                 $file = rtrim($resource_path, '/') . '/' . $var;
                 if (file_exists($file)) {
                     $v = '?v=' . substr(md5_file($file), 0, 10);
