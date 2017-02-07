@@ -97,7 +97,7 @@ class Redis
         return $this;
     }
 
-    private function connect($func)
+    private function connect($func, $reconnect = false)
     {
         $func   = strtolower($func);
         $config = $this->config[array_rand($this->config)];
@@ -128,7 +128,7 @@ class Redis
 
         static $redis_cache = array();
 
-        if (!isset($redis_cache[$server])) {
+        if (!isset($redis_cache[$server]) || $reconnect) {
             try {
                 $_start_time = microtime(true);
 
@@ -191,7 +191,7 @@ class Redis
                     ["host" => "{$this->ip}:{$this->port}", "msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
 
                 if ($this->isConnectionLost($e)) {
-                    $redis_server = $this->connect($func);
+                    $redis_server = $this->connect($func, true);
                     continue;
                 } else {
                     throw new \RedisException('redis execute error:' . $e->getMessage());
