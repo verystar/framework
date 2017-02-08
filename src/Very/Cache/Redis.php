@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Support;
+namespace Very\Cache;
 
 /*
  * Created by JetBrains PhpStorm
