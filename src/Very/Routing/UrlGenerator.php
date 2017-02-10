@@ -28,7 +28,7 @@ class UrlGenerator
         $this->secure = $secure;
         $params_index = strpos($path, '?');
         $query        = $params_index === false ? '' : parse_url($path, PHP_URL_QUERY);
-        $path   = $params_index === false ? $path : substr($path, 0, $params_index);
+        $path         = $params_index === false ? $path : substr($path, 0, $params_index);
         $path_params  = [];
         if ($query) {
             parse_str($query, $path_params);
@@ -39,9 +39,8 @@ class UrlGenerator
         if (substr($path, 0, 4) === 'http') {
             $this->url = $path;
         } else {
-            $site_root = isset($_SERVER['HTTPS']) || $this->secure ? 'https' : 'http';
-            $site_root = isset($_SERVER['HTTP_HOST']) ? $site_root . '://' . $_SERVER['HTTP_HOST'] . '/' : '/';
-
+            $scheme    = $this->secure ? 'https' : request()->getScheme();
+            $site_root = request()->getHost() ? $scheme . '://' . request()->getHost() . '/' : '/';
             $this->url = $site_root . ltrim($path, '/');
         }
 
