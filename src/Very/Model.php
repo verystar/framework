@@ -61,18 +61,6 @@ abstract class Model
     }
 
     /**
-     * Filter user data for the model column
-     *
-     * @param $data
-     *
-     * @return array
-     */
-    protected function filterField($data)
-    {
-        return filter_field($data, $this->columns);
-    }
-
-    /**
      * @param string $db
      *
      * @return \Very\Database\MysqlConnection
@@ -120,7 +108,7 @@ abstract class Model
         $where    = [];
         $bind_arr = [];
         if (is_array($id)) {
-            $bind_arr = $this->filterField($id);
+            $bind_arr = filter_field($id, $this->columns);
             foreach ($bind_arr as $key => $value) {
                 $where[] = "{$key} = :{$key}";
             }
@@ -138,7 +126,7 @@ abstract class Model
     {
         $this->checkModelConfiguration();
 
-        $data = $this->filterField($data);
+        $data = filter_field($data, $this->columns);
         if (!$data) {
             return false;
         }
@@ -163,7 +151,7 @@ abstract class Model
             return false;
         }
 
-        $data = $this->filterField($data);
+        $data = filter_field($data, $this->columns);
         if (!$data) {
             return false;
         }
@@ -179,7 +167,7 @@ abstract class Model
     {
         $this->checkModelConfiguration();
 
-        $data = $this->filterField($data);
+        $data = filter_field($data, $this->columns);
         if (!$data) {
             return false;
         }
