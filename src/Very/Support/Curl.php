@@ -35,7 +35,7 @@ class Curl {
      * Verify SSL Cert.
      * @ignore
      */
-    private $ssl_verifypeer = FALSE;
+    private $ssl_verifypeer = false;
     private $ssl_cert_file = '';
     private $ssl_key_file = '';
 

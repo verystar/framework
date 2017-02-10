@@ -823,12 +823,12 @@ if (!function_exists('debug_end')) {
         $GLOBALS[$s]['end_mem']  = memory_get_usage();
 
         if (isset($GLOBALS[$s]['start_time'])) {
-            e($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
+            p($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
                     6) . ':---DTime:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'],
                     6) . '---Mem:' . number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024),
                     6) . 'M---PMem:' . number_format(memory_get_peak_usage() / (1024 * 1024), 2) . 'M');
         } else {
-            e('not start');
+            p('not start');
         }
     }
 }
