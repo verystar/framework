@@ -73,7 +73,7 @@ class Router
         }
     }
 
-    private function run($controller, $action, $params = [])
+    private function run($controller, $action)
     {
         $controllername = $this->getControllerClassName($controller);
 
@@ -85,7 +85,7 @@ class Router
             throw new HttpResponseException($action . 'Action method not found in ' . $controllername, HttpResponseException::ERR_NOTFOUND_ACTION);
         }
 
-        $instance  = app()->make($controllername, $params);
+        $instance  = app()->make($controllername);
         $action    = $action . 'Action';
         $reflector = new \ReflectionMethod($instance, $action);
 
