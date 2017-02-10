@@ -1,4 +1,8 @@
 # Release Notes
+## v2.5.0 (2017-02-10)
+
+### Added
+- Added model method get update insert and delete for rapid development
 
 ## v2.4.0 (2017-02-06)
 
