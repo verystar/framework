@@ -8,21 +8,76 @@ namespace Very;
  * Date: 15/2/16 下午4:17
  */
 
+use RuntimeException;
 use Very\Database\Connection;
 use Very\Database\Pager;
 use Very\Cache\Redis;
 
 abstract class Model
 {
-    public $use_db = 'default';
+    public $use_db    = 'default';
     public $use_redis = 'default';
+
+    /**
+     * The name of the "created at" column.
+     *
+     * @var string
+     */
+    const CREATED_AT = 'created_at';
+
+    /**
+     * The name of the "updated at" column.
+     *
+     * @var string
+     */
+    const UPDATED_AT = 'updated_at';
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table;
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey;
+
+    /**
+     * The colum key for the model.
+     *
+     * @var string
+     */
+    protected $columns = [];
+
+    private function checkModelConfiguration()
+    {
+        if (!$this->primaryKey || !$this->table || !$this->columns) {
+            throw new RuntimeException('invalid model configuration');
+        }
+    }
+
+    /**
+     * Filter user data for the model column
+     *
+     * @param $data
+     *
+     * @return array
+     */
+    protected function filterField($data)
+    {
+        return filter_field($data, $this->columns);
+    }
 
     /**
      * @param string $db
      *
      * @return \Very\Database\MysqlConnection
      */
-    public function db($db = '')
+    protected function db($db = '')
     {
         $db = $db ? $db : $this->use_db;
 
@@ -34,7 +89,7 @@ abstract class Model
      *
      * @return \Redis | \Very\Cache\Redis
      */
-    public function redis($redis = '')
+    protected function redis($redis = '')
     {
         $redis = $redis ? $redis : $this->use_redis;
 
@@ -49,7 +104,7 @@ abstract class Model
      *
      * @return \Very\Database\Pager
      */
-    public function pager($curr_page = 1, $per_page = 10, $ct_db_name = '', $select_db_name = '')
+    protected function pager($curr_page = 1, $per_page = 10, $ct_db_name = '', $select_db_name = '')
     {
         $ct_db_name = $ct_db_name ? $ct_db_name : $this->use_db;
         if (!$select_db_name) {
@@ -57,5 +112,77 @@ abstract class Model
         }
 
         return new Pager(array('ct' => $this->db($ct_db_name), 'select' => $this->db($select_db_name)), $curr_page, $per_page);
+    }
+
+    public function get($id)
+    {
+        $this->checkModelConfiguration();
+        $where    = [];
+        $bind_arr = [];
+        if (is_array($id)) {
+            $bind_arr = $this->filterField($id);
+            foreach ($bind_arr as $key => $value) {
+                $where[] = "{$key} = :{$key}";
+            }
+            $where = implode(' and ', $where);
+        } else {
+            $where                       = "{$this->primaryKey} = :{$this->primaryKey} limit 1";
+            $bind_arr[$this->primaryKey] = $id;
+        }
+
+        $sql = "select * from {$this->table} where {$where} limit 1";
+        return $this->db()->getRow($sql, $bind_arr);
+    }
+
+    public function insert($data)
+    {
+        $this->checkModelConfiguration();
+
+        $data = $this->filterField($data);
+        if (!$data) {
+            return false;
+        }
+
+        if(in_array(static::CREATED_AT,$this->columns)){
+            $data[static::CREATED_AT] = date('Y-m-d H:i:s');
+        }
+
+        if(in_array(static::UPDATED_AT,$this->columns)){
+            $data[static::UPDATED_AT] = $data[static::CREATED_AT];
+        }
+
+        unset($data[$this->primaryKey]);
+        return $this->db()->insert($this->table, $data);
+    }
+
+    public function update($data)
+    {
+        $this->checkModelConfiguration();
+
+        if (!is_array($data) || !isset($data[$this->primaryKey])) {
+            return false;
+        }
+
+        $data = $this->filterField($data);
+        if (!$data) {
+            return false;
+        }
+
+        if(in_array(static::UPDATED_AT,$this->columns)){
+            $data[static::UPDATED_AT] = date('Y-m-d H:i:s');
+        }
+
+        return $this->db()->update($this->table, "{$this->primaryKey} = :{$this->primaryKey}", $data, [$this->primaryKey]);
+    }
+
+    public function delete($data)
+    {
+        $this->checkModelConfiguration();
+
+        $data = $this->filterField($data);
+        if (!$data) {
+            return false;
+        }
+        return $this->db()->delete($this->table, "{$this->primaryKey} = :{$this->primaryKey}", $data);
     }
 }
