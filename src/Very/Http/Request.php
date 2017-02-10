@@ -141,16 +141,63 @@ class Request
         return $this->fetchArray($_SERVER, $index, $default);
     }
 
+    public function getQueryString()
+    {
+        return $this->server('QUERY_STRING');
+    }
+
+    /**
+     * Checks whether the request is secure or not.
+     *
+     * X-Forwarded-Proto proxy not support
+     *
+     * @return bool
+     */
+    public function isSecure()
+    {
+        $https = $this->server('HTTPS');
+        return !empty($https) && 'off' !== strtolower($https);
+    }
+
+    /**
+     * Gets the request's scheme.
+     *
+     * @return string
+     */
+    public function getScheme()
+    {
+        return $this->isSecure() ? 'https' : 'http';
+    }
+
+    /**
+     * Returns the HTTP host being requested.
+     *
+     * not support custom port
+     *
+     * @return string
+     */
+    public function getHost()
+    {
+        if (!$host = $this->server('SERVER_NAME')) {
+            $host = $this->server('SERVER_ADDR');
+        }
+
+        return $host;
+    }
+
+    public function url()
+    {
+        return $this->getScheme() . '://' . $this->getHost() . $this->uri();
+    }
+
     public function uri()
     {
-        if (isset($_SERVER['REQUEST_URI'])) {
-            $uri = $_SERVER['REQUEST_URI'];
-        } else {
-            if (isset($_SERVER['argv'])) {
-                $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['argv'][0];
-            } else {
-                $uri = $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING'];
+        if (!($uri = $this->server('REQUEST_URI'))) {
+            if (null !== $qs = $this->getQueryString()) {
+                $qs = '?' . $qs;
             }
+
+            $uri = $this->server('PHP_SELF') . $qs;
         }
         return $uri;
     }

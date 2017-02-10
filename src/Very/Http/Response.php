@@ -133,23 +133,10 @@ class Response
 
         if (null === $text) {
             $this->statusText = isset(self::$statusTexts[$code]) ? self::$statusTexts[$code] : 'unknown status';
-
-            return $this;
         }
 
-        if (false === $text) {
-            $this->statusText = '';
-
-            return $this;
-        }
-
-        $this->statusText = $text;
-
-        if (substr(php_sapi_name(), 0, 3) == 'cgi') {
-            header("Status: {$code} {$text}", true);
-            header(sprintf('HTTP/%s %s %s', $this->version, $this->statusCode, $this->statusText), true, $this->statusCode);
-        }
-
+        header("Status: {$code} {$text}", true);
+        header(sprintf('HTTP/%s %s %s', $this->version, $this->statusCode, $this->statusText), true, $this->statusCode);
         return $this;
     }
 
