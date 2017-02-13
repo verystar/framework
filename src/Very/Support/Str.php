@@ -53,7 +53,7 @@ class Str
      *
      * @return array|string
      */
-    public function encodeConvert($data, $from = 'gbk', $to = 'utf-8')
+    public static function encodeConvert($data, $from = 'gbk', $to = 'utf-8')
     {
         if (is_array($data)) {
             array_walk_recursive($data, function (&$data, $key) use ($from, $to) {
@@ -76,9 +76,9 @@ class Str
      *
      * @return array|string
      */
-    public function toGBK($data)
+    public static function toGBK($data)
     {
-        return $this->encodeConvert($data, 'utf-8', 'gbk');
+        return static::encodeConvert($data, 'utf-8', 'gbk');
     }
 
     /**
@@ -87,9 +87,9 @@ class Str
      *
      * @return array|string
      */
-    public function toUTF8($data)
+    public static function toUTF8($data)
     {
-        return $this->encodeConvert($data, 'gbk', 'utf-8');
+        return static::encodeConvert($data, 'gbk', 'utf-8');
     }
 
     /**
