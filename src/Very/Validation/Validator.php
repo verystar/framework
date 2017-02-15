@@ -24,6 +24,13 @@ class Validator
     //form data
     protected $data;
 
+    /**
+     * The size related validation rules.
+     *
+     * @var array
+     */
+    protected $sizeRules = ['size', 'between', 'min', 'max'];
+
     protected $replaceRules = [
         'after'                => [
             ':date'
@@ -140,7 +147,7 @@ class Validator
                 $ret  = call_user_func_array([$this, $vali[0]], [$data[$attribute], $vali[1]]);
                 if (!$ret) {
                     $replace = [
-                        'attribute' => config("lang.".trans()->getLocale().".validation.attributes.{$attribute}", $attribute)
+                        'attribute' => config("lang." . trans()->getLocale() . ".validation.attributes.{$attribute}", $attribute)
                     ];
 
                     $message = $this->getMessage($attribute, $vali[2], $replace);
@@ -178,9 +185,55 @@ class Validator
         $custemMessage = __($custemKey, $replace);
         if ($custemMessage != $custemKey) {
             return $custemMessage;
+        } elseif (in_array($rule, $this->sizeRules)) {
+            $type = $this->getAttributeType($attribute);
+            $key = "validation.{$rule}.{$type}";
+            return __($key, $replace);
         }
 
         return __("validation.{$rule}", $replace);
+    }
+
+
+    /**
+     * Get the data type of the given attribute.
+     *
+     * @param  string $attribute
+     *
+     * @return string
+     */
+    protected function getAttributeType($attribute)
+    {
+        $value = $this->data[$attribute];
+        if (is_numeric($value)) {
+            return 'numeric';
+        } elseif (is_array($value)) {
+            return 'array';
+        } elseif ($value instanceof \SplFileObject) {
+            return 'file';
+        }
+
+        return 'string';
+    }
+
+    /**
+     * Get the size of an attribute.
+     *
+     * @param  mixed $value
+     *
+     * @return mixed
+     */
+    protected function getSize($value)
+    {
+        if (is_numeric($value)) {
+            return $value;
+        } elseif (is_array($value)) {
+            return count($value);
+        } elseif ($value instanceof \SplFileObject) {
+            return $value->getSize() / 1024;
+        }
+
+        return mb_strlen($value);
     }
 
 
@@ -275,14 +328,33 @@ class Validator
         return json_last_error() === JSON_ERROR_NONE;
     }
 
-    public function isMin($value, $parameter)
+    public function isMin($value, $parameters)
     {
-        return $value >= $parameter[0];
+        $this->requireParameterCount(1, $parameters, 'min');
+
+        return $this->getSize($value) >= $parameters[0];
     }
 
-    public function isMax($value, $parameter)
+    public function isMax($value, $parameters)
     {
-        return $value <= $parameter[0];
+        $this->requireParameterCount(1, $parameters, 'max');
+
+        return $this->getSize($value) <= $parameters[0];
+    }
+
+    /**
+     * Validate the size of an attribute.
+     *
+     * @param  mixed $value
+     * @param  array $parameters
+     *
+     * @return bool
+     */
+    public function isSize($value, $parameters)
+    {
+        $this->requireParameterCount(1, $parameters, 'size');
+
+        return $this->getSize($value) == $parameters[0];
     }
 
     /**
@@ -364,7 +436,10 @@ class Validator
      */
     public function validateBetween($value, $parameters)
     {
-        return $value >= $parameters[0] && $value <= $parameters[1];
+        $this->requireParameterCount(2, $parameters, 'between');
+        $size = $this->getSize($value);
+
+        return $size >= $parameters[0] && $size <= $parameters[1];
     }
 
     /**
