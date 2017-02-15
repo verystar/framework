@@ -359,7 +359,7 @@ if (!function_exists('base32_encode')) {
     }
 }
 
-if (!function_exists('base32_encode')) {
+if (!function_exists('base32_decode')) {
 
     /**
      * base32 decode
@@ -585,7 +585,7 @@ if (!function_exists('restore_empty')) {
     }
 }
 
-if (!function_exists('restore_empty')) {
+if (!function_exists('filter_field')) {
 
     /**
      * Data filter through the keys.
