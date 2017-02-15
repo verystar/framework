@@ -99,7 +99,7 @@ class CookieJar
      * @param string $path   路径
      * @param string $domain 域
      */
-    public function remove($key, $time = 86400, $path = '/', $domain = null)
+    public function delete($key, $time = 86400, $path = '/', $domain = null)
     {
         if ($domain === null) {
             $domain = $this->domain;
