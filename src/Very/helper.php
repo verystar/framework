@@ -359,7 +359,7 @@ if (!function_exists('base32_encode')) {
     }
 }
 
-if (!function_exists('base32_decode')) {
+if (!function_exists('base32_encode')) {
 
     /**
      * base32 decode
@@ -585,7 +585,7 @@ if (!function_exists('restore_empty')) {
     }
 }
 
-if (!function_exists('filter_field')) {
+if (!function_exists('restore_empty')) {
 
     /**
      * Data filter through the keys.
@@ -791,6 +791,40 @@ if (!function_exists('response')) {
     function response()
     {
         return app('response');
+    }
+}
+
+if (! function_exists('trans')) {
+    /**
+     * Translate the given message.
+     *
+     * @param  string  $key
+     * @param  array   $replace
+     * @param  string  $locale
+     * @return \Very\Translation\Translator|string
+     */
+    function trans($key = null, $replace = [], $locale = null)
+    {
+        if (is_null($key)) {
+            return app('translator');
+        }
+
+        return app('translator')->trans($key, $replace, $locale);
+    }
+}
+
+if (! function_exists('__')) {
+    /**
+     * Translate the given message.
+     *
+     * @param  string  $key
+     * @param  array  $replace
+     * @param  string  $locale
+     * @return \Very\Translation\Translator|string
+     */
+    function __($key = null, $replace = [], $locale = null)
+    {
+        return trans($key, $replace, $locale);
     }
 }
 

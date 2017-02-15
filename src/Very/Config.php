@@ -37,17 +37,32 @@ class Config implements ArrayAccess
      */
     private function load($key)
     {
-        $file_name = explode('.', strtolower($key))[0];
+        $keys = explode('.', strtolower($key));
+        static $dirs = [];
+
+        //多级目录支持
+        $file_name = $this->getPath();
+        $arr_keys  = [];
+        foreach ($keys as $k => $value) {
+            $file_name .= $value;
+            if (isset($dirs[$file_name]) || is_dir($file_name)) {
+                $dirs[$file_name] = 1;
+                $file_name .= DIRECTORY_SEPARATOR;
+            } else {
+                $arr_keys = array_slice($keys, $k + 1);
+                break;
+            }
+        }
 
         if (!isset(static::$configs[$file_name])) {
-            if (file_exists($this->getPath() . $file_name . '.php')) {
-                static::$configs[$file_name] = include $this->getPath() . $file_name . '.php';
+            if (file_exists($file_name . '.php')) {
+                static::$configs[$file_name] = include $file_name . '.php';
             } else {
                 static::$configs[$file_name] = [];
             }
         }
 
-        return static::$configs[$file_name];
+        return [$file_name, $arr_keys ? implode('.', $arr_keys) : null];
     }
 
     /**
@@ -60,32 +75,34 @@ class Config implements ArrayAccess
      */
     public function get($key, $default = null)
     {
-        $this->load($key);
-        return Arr::get(static::$configs, $key, $default);
+        $result = $this->load($key);
+        return Arr::get(static::$configs[$result[0]], $result[1], $default);
     }
 
     public function set($key, $value = null)
     {
         if (is_array($key)) {
             foreach ($key as $k => $v) {
-                $this->load($k);
-                Arr::set(static::$configs, $k, $v);
+                $result = $this->load($k);
+                Arr::set(static::$configs[$result[0]], $result[1], $v);
             }
         } else {
-            $this->load($key);
-            Arr::set(static::$configs, $key, $value);
+            $result = $this->load($key);
+            Arr::set(static::$configs[$result[0]], $result[1], $value);
         }
     }
 
     /**
      * 判断是否存在key.
+     *
      * @param string $key
      *
      * @return bool
      */
     public function has($key)
     {
-        return Arr::has(static::$configs, $key);
+        $result = $this->load($key);
+        return Arr::has(static::$configs[$result[0]], $result[1]);
     }
 
 
@@ -141,8 +158,9 @@ class Config implements ArrayAccess
     /**
      * Prepend a value onto an array configuration value.
      *
-     * @param  string  $key
+     * @param  string $key
      * @param  mixed  $value
+     *
      * @return void
      */
     public function prepend($key, $value)
@@ -167,13 +185,14 @@ class Config implements ArrayAccess
     /**
      * Push a value onto an array configuration value.
      *
-     * @param  string  $key
+     * @param  string $key
      * @param  mixed  $value
+     *
      * @return void
      */
     public function push($key, $value)
     {
-        $array = $this->get($key);
+        $array   = $this->get($key);
         $array[] = $value;
         $this->set($key, $array);
     }
