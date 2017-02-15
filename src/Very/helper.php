@@ -813,21 +813,6 @@ if (! function_exists('trans')) {
     }
 }
 
-if (! function_exists('__')) {
-    /**
-     * Translate the given message.
-     *
-     * @param  string  $key
-     * @param  array  $replace
-     * @param  string  $locale
-     * @return \Very\Translation\Translator|string
-     */
-    function __($key = null, $replace = [], $locale = null)
-    {
-        return trans($key, $replace, $locale);
-    }
-}
-
 if (!function_exists('mstat')) {
     /**
      * @return \Very\Support\Stat
