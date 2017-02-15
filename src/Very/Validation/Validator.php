@@ -180,16 +180,16 @@ class Validator
 
         $custemKey = "validation.custom.{$attribute}.{$rule}";
 
-        $custemMessage = __($custemKey, $replace);
+        $custemMessage = trans($custemKey, $replace);
         if ($custemMessage != $custemKey) {
             return $custemMessage;
         } elseif (in_array($rule, $this->sizeRules)) {
             $type = $this->getAttributeType($attribute);
             $key = "validation.{$rule}.{$type}";
-            return __($key, $replace);
+            return trans($key, $replace);
         }
 
-        return __("validation.{$rule}", $replace);
+        return trans("validation.{$rule}", $replace);
     }
 
 
