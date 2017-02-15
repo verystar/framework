@@ -2,6 +2,8 @@
 
 namespace Very\Session;
 
+use Very\Support\Arr;
+
 class SessionManager
 {
     /**
@@ -67,11 +69,7 @@ class SessionManager
         $this->session_start();
 
         if ($key) {
-            if (isset($_SESSION[$key])) {
-                return $_SESSION[$key];
-            } else {
-                return $default;
-            }
+            return Arr::get($_SESSION, $key, $default);
         } else {
             return $this->getAll();
         }
@@ -90,22 +88,20 @@ class SessionManager
     /**
      * Put a key / value pair or array of key / value pairs in the session.
      *
-     * @param string|array $key
-     * @param mixed|null   $value
+     * @param  string|array $key
+     * @param  mixed        $value
      *
-     * @return $this;
+     * @return void
      */
     public function put($key, $value = null)
     {
         if (!is_array($key)) {
-            $key = array($key => $value);
+            $key = [$key => $value];
         }
 
         foreach ($key as $arrayKey => $arrayValue) {
-            $this->set($arrayKey, $arrayValue);
+            Arr::set($_SESSION, $arrayKey, $arrayValue);
         }
-
-        return $this;
     }
 
     /**
