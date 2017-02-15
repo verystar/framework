@@ -3,7 +3,6 @@
 namespace Very\Translation;
 
 use Very\Support\ServiceProvider;
-use Very\Config;
 
 class TranslationServiceProvider extends ServiceProvider
 {
