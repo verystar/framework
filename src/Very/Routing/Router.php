@@ -130,20 +130,13 @@ class Router
 
     private function getNamespace()
     {
-        $controller_namespace = app('namespace.controller') ? '\\' . app('namespace.controller') : '';
-        if (!$controller_namespace) {
-            $controller_namespace = app('namespace') ? '\\' . app('namespace') : '';
-        }
-
-        return $controller_namespace;
+        return app('namespace') ? '\\' . app('namespace') : '';
     }
 
     private function getControllerClassName($controller)
     {
-        $controller_namespace = $this->getNamespace();
         $controllername       = implode('\\', array_map('ucfirst', explode('/', strtolower($controller))));
-        $controllername       = $controller_namespace . '\\Http\\Controllers\\' . $controllername . 'Controller';
-
+        $controllername       = $this->getNamespace() . '\\Http\\Controllers\\' . $controllername . 'Controller';
         return $controllername;
     }
 }
