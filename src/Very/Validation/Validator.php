@@ -20,8 +20,6 @@ use InvalidArgumentException;
 class Validator
 {
     use Macroable;
-
-    //form data
     protected $data;
 
     /**
@@ -434,7 +432,7 @@ class Validator
      *
      * @return bool
      */
-    public function validateBetween($value, $parameters)
+    public function isBetween($value, $parameters)
     {
         $this->requireParameterCount(2, $parameters, 'between');
         $size = $this->getSize($value);
