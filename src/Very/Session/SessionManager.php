@@ -66,7 +66,7 @@ class SessionManager
      */
     public function get($key = null, $default = null)
     {
-        $this->sessionStart();
+        $this->start();
 
         if ($key) {
             return Arr::get($_SESSION, $key, $default);
@@ -112,7 +112,7 @@ class SessionManager
      */
     public function set($key, $value)
     {
-        $this->sessionStart();
+        $this->start();
         $_SESSION[$key] = $value;
     }
 
@@ -123,7 +123,7 @@ class SessionManager
      */
     public function delete($key)
     {
-        $this->sessionStart();
+        $this->start();
         unset($_SESSION[$key]);
     }
 
@@ -132,7 +132,7 @@ class SessionManager
      */
     public function destroy()
     {
-        $this->sessionStart();
+        $this->start();
         $this->is_start = false;
         $_SESSION       = array();
         session_destroy();
@@ -146,7 +146,7 @@ class SessionManager
     public function session_id($id = null)
     {
         if ($id === null) {
-            $this->sessionStart();
+            $this->start();
 
             return session_id();
         } else {
@@ -158,7 +158,7 @@ class SessionManager
     /**
      * 启动Session.
      */
-    public function sessionStart()
+    public function start()
     {
         if (!$this->is_start) {
             session_start();
