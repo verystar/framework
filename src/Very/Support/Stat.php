@@ -5,20 +5,16 @@
  * User: 蔡旭东 fifsky@gmail.com
  * Date: 14-6-24
  * Time: 下午2:38
- *
- * 统计插件，必须安装redis，本功能为了确保可以独立运行，因此配置和DB操作都独立包含进来
  */
 
-use Redis;
 use RedisException;
 use Very\Database\Connection;
+use Very\Cache\Redis;
 
 class Stat
 {
-    public $use_db  = 'stat';
-
-    public $redis;
-    public $redis_config = [];
+    private $use_db = 'stat';
+    private $redis;
 
     //暂存数据
     public $data = [];
@@ -28,21 +24,9 @@ class Stat
         $this->is_stat = $config['is_stat'];
 
         if ($this->is_stat) {
-            $this->use_db       = $config['use_db'];
-            $this->db_prefix    = $config['db_prefix'];
-            $this->redis_config = $config['redis_config'];
-            $this->connect();
-        }
-    }
-
-    private function connect()
-    {
-        try {
-            $this->redis  = new Redis();
-            $redis_config = $this->redis_config;
-            $this->redis->connect($redis_config['host'], $redis_config['port'], $redis_config['timeout']);
-        } catch (RedisException $e) {
-            logger()->error('Fstat redis connect error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
+            $this->use_db    = $config['use_db'];
+            $this->db_prefix = $config['db_prefix'];
+            $this->redis     = Redis::getInstance($config['use_redis']);
         }
     }
 
@@ -104,16 +88,6 @@ class Stat
         }
     }
 
-    private function isConnectionLost(RedisException $e)
-    {
-        if (strpos($e->getMessage(), 'Redis server went away') !== false || strpos($e->getMessage(), 'Connection lost') !== false || strpos($e->getMessage(),
-                'read error on connection') !== false
-        ) {
-            return true;
-        }
-        return false;
-    }
-
     public function lpushLog($data)
     {
         for ($i = 0; $i < 2; $i++) {
@@ -121,11 +95,7 @@ class Stat
                 $data = json_encode($data);
                 $this->redis->lPush('__stat__', $data);
             } catch (RedisException $e) {
-                //如果redis断开了连接则需要重新连接执行
-                if ($this->isConnectionLost($e)) {
-                    $this->connect();
-                    continue;
-                }
+                logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
             }
             break;
         }
@@ -142,7 +112,7 @@ class Stat
         for ($i = 0; $i < 2; $i++) {
 
             try {
-                $redis = $this->redis->multi(Redis::PIPELINE);
+                $redis = $this->redis->multi(\Redis::PIPELINE);
 
                 foreach ($this->data as $data) {
                     $data = json_encode($data);
@@ -152,11 +122,6 @@ class Stat
                 $this->data = [];
             } catch (RedisException $e) {
                 logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
-                //如果redis断开了连接则需要重新连接执行
-                if ($this->isConnectionLost($e)) {
-                    $this->connect();
-                    continue;
-                }
             }
 
             break;
