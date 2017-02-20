@@ -7,8 +7,6 @@
 
 namespace Very\Http;
 
-use Very\Validation\Validator;
-
 abstract class FormRequest
 {
 
@@ -23,8 +21,7 @@ abstract class FormRequest
 
     public function validate()
     {
-        $vali  = new Validator();
-        $error = $vali->validate($this->rules(), request()->all());
+        $error = app('validation')->validate($this->rules(), request()->all());
         if ($error) {
             $this->response($error);
         }

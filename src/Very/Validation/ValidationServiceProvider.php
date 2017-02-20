@@ -12,7 +12,7 @@ class ValidationServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton('validation', function ($app) {
-            return new Validator($app['config']['fstat']);
+            return new Validator();
         });
     }
 }
