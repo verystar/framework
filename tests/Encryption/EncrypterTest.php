@@ -3,11 +3,12 @@ use Very\Encryption\ThirdDES;
 use Very\Encryption\AES;
 use Very\Encryption\OTP;
 use Very\Encryption\DEncrypt;
+use PHPUnit\Framework\TestCase;
 
 /**
  * 3DES加密
  */
-class EncrypterTest extends PHPUnit_Framework_TestCase {
+class EncrypterTest extends TestCase {
 
     public function testDES() {
         $e         = new ThirdDES(str_repeat('a', 16));
