@@ -92,6 +92,11 @@ class Request
         return $this->fetchArray($_DEL, $key);
     }
 
+    public function file($key)
+    {
+        return $_FILES[$key];
+    }
+
     public function isRequest($method)
     {
         $request_method = $_SERVER['REQUEST_METHOD'];
