@@ -28,7 +28,7 @@ class Redis
 
         if (!isset($cache[$node]) || !$singleton) {
             $cache[$node]         = new self();
-            $cache[$node]->config = config('redis.' . $node);
+            $cache[$node]->config = config('redis', $node);
             $cache[$node]->node   = $node;
         }
 
