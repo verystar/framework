@@ -9,7 +9,7 @@
 
 ```
 "require": {
-    "very/framework": "2.5.*"
+    "very/framework": "2.6.*"
 }
 ```
 
