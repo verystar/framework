@@ -37,7 +37,7 @@ class Config implements ArrayAccess
      */
     private function load($key)
     {
-        $keys = explode('.', strtolower($key));
+        $keys = explode('.', $key);
         static $dirs = [];
 
         //多级目录支持
