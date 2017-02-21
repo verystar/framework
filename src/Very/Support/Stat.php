@@ -188,7 +188,7 @@ class Stat
     //保存到数据库
     public function statSave($num = 100, $projects = [])
     {
-        $redis = $this->redis->multi(Redis::PIPELINE);
+        $redis = $this->redis->multi(\Redis::PIPELINE);
         for ($i = 0; $i < $num; $i++) {
             $redis->lPop('__stat__');
         }
