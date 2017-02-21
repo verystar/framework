@@ -12,9 +12,8 @@ use Very\Http\Exception\HttpResponseException;
 
 class View
 {
-    private static $temp_data = array();
 
-    protected $view_path = '';
+    protected $path = '';
 
     /**
      * All of the finished, captured sections.
@@ -25,7 +24,15 @@ class View
 
     protected $extends = [];
 
-    protected $datas = [];
+    /**
+     * The array of view global data.
+     *
+     * @var array
+     */
+    protected $global_data = [];
+    protected $data        = [];
+
+    protected $composers = [];
 
     /**
      * The stack of in-progress sections.
@@ -36,12 +43,22 @@ class View
 
     public function setPath($path)
     {
-        $this->view_path = realpath($path . '/') . DIRECTORY_SEPARATOR;
+        $this->path = realpath($path . '/') . DIRECTORY_SEPARATOR;
     }
 
     public function getPath()
     {
-        return $this->view_path;
+        return $this->path;
+    }
+
+    /**
+     * Get the array of view data.
+     *
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->data;
     }
 
     public function exists($__path)
@@ -49,22 +66,64 @@ class View
         return file_exists($this->getPath() . $__path);
     }
 
+    public function composer($paths, $composer)
+    {
+        if (!is_array($paths)) {
+            $paths = [$paths];
+        }
+        foreach ($paths as $path) {
+            if (!isset($this->composers[$path]) || !in_array($composer, $this->composers[$path])) {
+                $this->composers[$path][] = $composer;
+            }
+        }
+    }
+
+
+    /**
+     * 添加全局数据
+     *
+     * @param  string|array $key
+     * @param  mixed        $value
+     *
+     * @return $this
+     */
+    public function set($key, $value = null)
+    {
+        if (is_array($key)) {
+            $this->global_data = array_merge($this->global_data, $key);
+        } else {
+            $this->global_data[$key] = $value;
+        }
+
+        return $this;
+    }
+
     /**
      * 获取模板的值，而不直接输出.
      *
      * @param string $__path    路径
-     * @param array  $__datas   数据
+     * @param array  $__data    数据
      * @param string $__charset 编码
      *
      * @return string
      *
      * @throws \Very\Http\Exception\HttpResponseException
      */
-    public function get($__path, $__datas = array(), $__charset = null)
+    public function get($__path, $__data = array(), $__charset = null)
     {
+        //TODO 这里是传递给extends的模板,此处由于是单例并且extends最后执行,如果在view里面再次使用view()->display()则会覆盖上次的data,因此View需要使用工厂模式产生新的实例,未实现
+        $this->data = $__data;
+        //composer
+        if (isset($this->composers[$__path]) && $this->composers[$__path]) {
+            foreach ($this->composers[$__path] as $composer) {
+                $__composer_data = app()->make($composer)->compose($__data);
+                $__data          = array_merge($__data, (array)$__composer_data);
+            }
+        }
+
         $ob_level = ob_get_level();
         ob_start();
-        $this->datas = $__datas;
+        $__data = array_merge($this->global_data, $__data);
 
         if ($__charset == null) {
             $__charset = config('app.charset');
@@ -75,9 +134,8 @@ class View
             header('Content-type: text/html; charset=' . $__charset);
         }
         if (file_exists($this->getPath() . $__path)) {
-            $__datas = array_merge(self::$temp_data, $__datas);
-            if ($__datas) {
-                extract($__datas);
+            if ($__data) {
+                extract($__data);
             }
             // We'll evaluate the contents of the view inside a try/catch block so we can
             // flush out any stray output that might get out before an error occurs or
@@ -106,16 +164,6 @@ class View
     public function display($view, $data = array(), $charset = null)
     {
         echo $this->get($view, $data, $charset);
-    }
-
-    /**
-     * 设置模板全局变量.
-     *
-     * @param $data
-     */
-    public function set($data)
-    {
-        self::$temp_data = array_merge(self::$temp_data, $data);
     }
 
     /**
@@ -242,7 +290,7 @@ class View
     public function __destruct()
     {
         foreach ($this->extends as $file) {
-            $this->display($file . '.php', $this->datas);
+            $this->display($file . '.php', $this->data);
         }
         $this->flush();
     }

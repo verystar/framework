@@ -114,7 +114,7 @@ abstract class Model
             }
             $where = implode(' and ', $where);
         } else {
-            $where                       = "{$this->primaryKey} = :{$this->primaryKey} limit 1";
+            $where                       = "{$this->primaryKey} = :{$this->primaryKey}";
             $bind_arr[$this->primaryKey] = $id;
         }
 
