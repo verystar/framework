@@ -1,4 +1,16 @@
 # Release Notes
+## v2.6.* (2017-02-20)
+
+- Support Middleware
+- Support Request validation & translation
+- Config support Multi-level directory 
+- Mysql connection set names change to execute
+- Stat redis change to Cache/Redis
+- View support Composer
+- Session method startSession change to start
+- Remove namespace.controler, Through the automatic identification of Http/Kernel
+- Application register core container aliases
+
 ## v2.5.0 (2017-02-10)
 
 ### Added
