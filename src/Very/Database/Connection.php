@@ -2,7 +2,6 @@
 
 namespace Very\Database;
 
-use PDO;
 use PDOException;
 use RuntimeException;
 
