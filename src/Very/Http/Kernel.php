@@ -46,10 +46,7 @@ abstract class Kernel
         foreach ($this->routeMiddleware as $key => $middlewares) {
             if (request()->is($key)) {
                 $middlewares = is_array($middlewares) ? $middlewares : [$middlewares];
-                foreach ($middlewares as $middleware) {
-                    $instance = app()->make($middleware);
-                    $instance->handle();
-                }
+                $router->pushMiddleware($middlewares);
                 break;
             }
         }

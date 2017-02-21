@@ -12,22 +12,25 @@ use Very\Http\Exception\HttpResponseException;
 
 abstract class Controller
 {
+    /**
+     * The middleware registered on the controller.
+     *
+     * @var array
+     */
+    protected $middleware = [];
+
     public function __call($fun, $arg)
     {
         throw new HttpResponseException($fun . 'Action method not found file in: ' . router()->getControllerName() . 'Controller', HttpResponseException::ERR_NOTFOUND_ACTION);
     }
 
     /**
-     * 请求转发.
+     * Get the middleware assigned to the controller.
      *
-     * @param $controller
-     * @param $action
-     *
-     * @throws HttpResponseException
+     * @return array
      */
-    protected function forward($controller, $action)
+    public function getMiddleware()
     {
-        $params = func_get_args();
-        app('router')->run($controller, $action, array_splice($params, 2));
+        return $this->middleware;
     }
 }

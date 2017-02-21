@@ -15,6 +15,7 @@ class Router
 {
     protected $controllerName;
     protected $actionName;
+    protected $middleware = [];
 
     public function getControllerName()
     {
@@ -86,12 +87,42 @@ class Router
             throw new HttpResponseException($action . 'Action method not found in ' . $controllername, HttpResponseException::ERR_NOTFOUND_ACTION);
         }
 
-        $instance   = app()->make($controllername);
+        $instance = app()->make($controllername);
+        $this->pushMiddleware($instance->getMiddleware())->resoleMiddleware();
         $action     = $action . 'Action';
         $reflector  = new \ReflectionMethod($instance, $action);
         $parameters = $this->resolveMethodDependencies($reflector);
 
         call_user_func_array([$instance, $action], $parameters);
+    }
+
+    /**
+     * Get all of the defined middleware short-hand names.
+     *
+     * @return array
+     */
+    public function getMiddleware()
+    {
+        return $this->middleware;
+    }
+
+    public function pushMiddleware($middlewares)
+    {
+        $middlewares = is_array($middlewares) ? $middlewares : [$middlewares];
+        foreach ($middlewares as $middleware) {
+            if (!in_array($middleware, $this->middleware)) {
+                $this->middleware[] = $middleware;
+            }
+        }
+        return $this;
+    }
+
+    private function resoleMiddleware()
+    {
+        foreach ($this->middleware as $middleware) {
+            $instance = app()->make($middleware);
+            $instance->handle();
+        }
     }
 
 
@@ -106,15 +137,15 @@ class Router
     {
         $parameters = [];
         foreach ($reflector->getParameters() as $key => $parameter) {
-            $class     = $parameter->getClass();
+            $class = $parameter->getClass();
             if ($class) {
                 //Request
                 $instance = app()->make($class->name);
 
-                if($instance instanceof FormRequest){
-                    if($instance->authorize()) {
+                if ($instance instanceof FormRequest) {
+                    if ($instance->authorize()) {
                         $instance->validate();
-                    }else{
+                    } else {
                         $instance->forbiddenResponse();
                     }
                 }
@@ -135,8 +166,8 @@ class Router
 
     private function getControllerClassName($controller)
     {
-        $controllername       = implode('\\', array_map('ucfirst', explode('/', strtolower($controller))));
-        $controllername       = $this->getNamespace() . '\\Http\\Controllers\\' . $controllername . 'Controller';
+        $controllername = implode('\\', array_map('ucfirst', explode('/', strtolower($controller))));
+        $controllername = $this->getNamespace() . '\\Http\\Controllers\\' . $controllername . 'Controller';
         return $controllername;
     }
 }
