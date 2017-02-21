@@ -31,6 +31,8 @@ class Application extends Container
 
     public function __construct($basePath = null)
     {
+        static::setInstance($this);
+
         if ($basePath) {
             $this->setBasePath($basePath);
         }
@@ -56,7 +58,6 @@ class Application extends Container
 
         $this->registerAppProviders();
         $this->registerCoreContainerAliases();
-        static::setInstance($this);
     }
 
     /**
