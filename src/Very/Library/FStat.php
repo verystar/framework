@@ -11,9 +11,9 @@ namespace Very\Library;
  * 统计插件，必须安装redis，本功能为了确保可以独立运行，因此配置和DB操作都独立包含进来
  */
 
-use Redis;
 use RedisException;
 use Very\Database\Connection;
+use Very\Cache\Redis;
 
 class FStat
 {
@@ -33,21 +33,7 @@ class FStat
         if ($this->is_stat) {
             $this->use_db = config('fstat', 'use_db');
             $this->db_prefix = config('fstat', 'db_prefix');
-            $this->redis_config = config('fstat', 'redis_config');
-            $this->environ = config('fstat', 'environ');
-
-            $this->connect();
-        }
-    }
-
-    private function connect()
-    {
-        try {
-            $this->redis = new Redis();
-            $redis_config = $this->redis_config[$this->environ];
-            $this->redis->connect($redis_config['host'], $redis_config['port'], $redis_config['timeout']);
-        } catch (RedisException $e) {
-            //die($e->getMessage());
+            $this->redis     = Redis::getInstance(config('fstat', 'use_redis'));
         }
     }
 
@@ -115,15 +101,6 @@ class FStat
         }
     }
 
-    private function isConnectionLost(\RedisException $e)
-    {
-        if (strpos($e->getMessage(), 'Redis server went away') !== false || strpos($e->getMessage(), 'Connection lost') !== false) {
-            return true;
-        }
-
-        return false;
-    }
-
     public function lpushLog($data)
     {
         for ($i = 0; $i < 2; ++$i) {
@@ -131,11 +108,7 @@ class FStat
                 $data = json_encode($data);
                 $this->redis->lPush('__stat__', $data);
             } catch (RedisException $e) {
-                //如果redis断开了连接则需要重新连接执行
-                if ($this->isConnectionLost($e)) {
-                    $this->connect();
-                    continue;
-                }
+                logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
             }
 
             break;
@@ -151,7 +124,7 @@ class FStat
 
         for ($i = 0; $i < 2; ++$i) {
             try {
-                $redis = $this->redis->multi(Redis::PIPELINE);
+                $redis = $this->redis->multi(\Redis::PIPELINE);
 
                 foreach ($this->data as $data) {
                     $data = json_encode($data);
@@ -160,11 +133,7 @@ class FStat
                 $redis->exec();
                 $this->data = [];
             } catch (RedisException $e) {
-                //如果redis断开了连接则需要重新连接执行
-                if ($this->isConnectionLost($e)) {
-                    $this->connect();
-                    continue;
-                }
+                logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
             }
 
             break;
@@ -234,7 +203,7 @@ class FStat
     //保存到数据库
     public function statSave($num = 100)
     {
-        $redis = $this->redis->multi(Redis::PIPELINE);
+        $redis = $this->redis->multi(\Redis::PIPELINE);
         for ($i = 0; $i < $num; ++$i) {
             $redis->lPop('__stat__');
         }

@@ -1014,6 +1014,17 @@ if (!function_exists('helper')) {
     }
 }
 
+
+if (!function_exists('mstat')) {
+    /**
+     * @return \Very\Library\FStat
+     */
+    function mstat()
+    {
+        return \Very\Library\FStat::getInstance();
+    }
+}
+
 if (!function_exists('model')) {
     /**
      * model加载辅助函数，如model('user')对应的就是加载Model\User.
