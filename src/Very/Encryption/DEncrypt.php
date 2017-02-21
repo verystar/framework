@@ -8,8 +8,7 @@
  * $user_id = 56;
  * $code = $dn->encode($user_id);
  * $code = '61204922299213336';//测试的时候保存一个code，然后修改后16位的任意数字都会导致校验失败
- * e('EN'.$code);
- * e('DE'.$dn->decode($code));
+ * $dn->decode($code)
  */
 
 class DEncrypt
@@ -79,7 +78,6 @@ class DEncrypt
         }
 
         //对随机码加密
-        //    e('RAND:' . $rand);
         $sr = $salt_rand;
         for ($j = 0; $j < $rlen; $j++) {
             $rand[$j] = $sr = ($rand[$j] + $sr) % 10;

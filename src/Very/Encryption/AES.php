@@ -5,7 +5,7 @@ namespace Very\Encryption;
 /**
  * AES 256加密.
  */
-class AES extends ThirdDes
+class AES extends ThirdDES
 {
     protected $ivLength = 32;
     protected $keyLength = 32;

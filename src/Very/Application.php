@@ -27,10 +27,12 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '2.3.6';
+    const VERSION = '2.6.7';
 
     public function __construct($basePath = null)
     {
+        static::setInstance($this);
+
         if ($basePath) {
             $this->setBasePath($basePath);
         }
@@ -55,8 +57,7 @@ class Application extends Container
         });
 
         $this->registerAppProviders();
-
-        static::setInstance($this);
+        $this->registerCoreContainerAliases();
     }
 
     /**
@@ -91,6 +92,45 @@ class Application extends Container
         if ($this['config']['app.providers']) {
             foreach ($this['config']['app.providers'] as $provider) {
                 $this->register($this->resolveProviderClass($provider));
+            }
+        }
+    }
+
+    /**
+     * Alias a type to a different name.
+     *
+     * @param  string $abstract
+     * @param  string $alias
+     *
+     * @return void
+     */
+    public function alias($abstract, $alias)
+    {
+        $this->aliases[$alias] = $abstract;
+
+        $this->abstractAliases[$abstract][] = $alias;
+    }
+
+    /**
+     * Register the core class aliases in the container.
+     *
+     * @return void
+     */
+    public function registerCoreContainerAliases()
+    {
+        $aliases = [
+            'app'     => [\Very\Application::class, \Very\Container\Container::class],
+            'config'  => [\Very\Config::class],
+            'cookie'  => [\Very\Cookie\CookieJar::class],
+            'logger'  => [\Very\Logger::class],
+            'router'  => [\Very\Routing\Router::class],
+            'session' => [\Very\Session\SessionManager::class],
+            'view'    => [\Very\View::class],
+        ];
+
+        foreach ($aliases as $key => $aliase) {
+            foreach ($aliase as $alias) {
+                $this->alias($key, $alias);
             }
         }
     }
@@ -220,7 +260,7 @@ class Application extends Container
             return $this->namespace;
         }
 
-        if($this['namespace']) {
+        if ($this['namespace']) {
             return $this->namespace = $this['namespace'];
         }
 

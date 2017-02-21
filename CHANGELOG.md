@@ -1,4 +1,24 @@
 # Release Notes
+## v2.5.0 (2017-02-10)
+
+### Added
+- Added model method get update insert and delete for rapid development
+
+## v2.4.0 (2017-02-06)
+
+### Added
+- Support console parmas parsing
+
+### Updated
+- Updated container to laravel 5.4
+
+## v2.3 (2016-12-03)
+
+### Removed
+- Removed email support
+
+### Updated
+- Updated container to laravel 5.3
 
 ## v1.1.2 (2016-06-03)
 
@@ -8,4 +28,4 @@
 - Added Controller construct and method dependency injection
 
 ### Fixed
-- Fixed SSBD and Redis connection lost retry逻辑导致的命令重复执行错误
+- Fixed SSBD and Redis connection lost retry

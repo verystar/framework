@@ -9,6 +9,7 @@ namespace Very\Routing;
  */
 use Very\Http\Exception\HttpResponseException;
 use RuntimeException;
+use Very\Http\FormRequest;
 
 class Router
 {
@@ -35,7 +36,7 @@ class Router
         return $this->actionName = strtolower($action);
     }
 
-    public function init()
+    public function dispatch()
     {
         $uri    = request()->path();
         $params = $uri == '/' ? [] : explode('/', $uri);
@@ -66,14 +67,14 @@ class Router
         $this->setActionName($action);
 
         try {
-            $this->run($controller, $action);
+            $this->handle($controller, $action);
         } catch (HttpResponseException $e) {
             $controllername = $this->getNamespace() . '\\Exceptions\\Handler';
             app()->make($controllername)->render($e);
         }
     }
 
-    private function run($controller, $action, $params = [])
+    private function handle($controller, $action)
     {
         $controllername = $this->getControllerClassName($controller);
 
@@ -85,42 +86,57 @@ class Router
             throw new HttpResponseException($action . 'Action method not found in ' . $controllername, HttpResponseException::ERR_NOTFOUND_ACTION);
         }
 
-        $instance  = app()->make($controllername, $params);
-        $action    = $action . 'Action';
-        $reflector = new \ReflectionMethod($instance, $action);
-
-        /*
-         * action 自动注入
-         */
-        $parameters = [];
-        foreach ($reflector->getParameters() as $key => $parameter) {
-            $class = $parameter->getClass();
-            if ($class) {
-                array_splice(
-                    $parameters, $key, 0, [app()->make($class->name)]
-                );
-            }
-        }
+        $instance   = app()->make($controllername);
+        $action     = $action . 'Action';
+        $reflector  = new \ReflectionMethod($instance, $action);
+        $parameters = $this->resolveMethodDependencies($reflector);
 
         call_user_func_array([$instance, $action], $parameters);
     }
 
-    private function getNamespace()
+
+    /**
+     * Resolve the given method's type-hinted dependencies.
+     *
+     * @param  \ReflectionFunctionAbstract $reflector
+     *
+     * @return array
+     */
+    private function resolveMethodDependencies(\ReflectionFunctionAbstract $reflector)
     {
-        $controller_namespace = app('namespace.controller') ? '\\' . app('namespace.controller') : '';
-        if (!$controller_namespace) {
-            $controller_namespace = app('namespace') ? '\\' . app('namespace') : '';
+        $parameters = [];
+        foreach ($reflector->getParameters() as $key => $parameter) {
+            $class     = $parameter->getClass();
+            if ($class) {
+                //Request
+                $instance = app()->make($class->name);
+
+                if($instance instanceof FormRequest){
+                    if($instance->authorize()) {
+                        $instance->validate();
+                    }else{
+                        $instance->forbiddenResponse();
+                    }
+                }
+
+                array_splice(
+                    $parameters, $key, 0, [$instance]
+                );
+            }
         }
 
-        return $controller_namespace;
+        return $parameters;
+    }
+
+    private function getNamespace()
+    {
+        return app('namespace') ? '\\' . app('namespace') : '';
     }
 
     private function getControllerClassName($controller)
     {
-        $controller_namespace = $this->getNamespace();
         $controllername       = implode('\\', array_map('ucfirst', explode('/', strtolower($controller))));
-        $controllername       = $controller_namespace . '\\Controllers\\' . $controllername . 'Controller';
-
+        $controllername       = $this->getNamespace() . '\\Http\\Controllers\\' . $controllername . 'Controller';
         return $controllername;
     }
 }

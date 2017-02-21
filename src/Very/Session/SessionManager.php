@@ -2,6 +2,8 @@
 
 namespace Very\Session;
 
+use Very\Support\Arr;
+
 class SessionManager
 {
     /**
@@ -64,14 +66,10 @@ class SessionManager
      */
     public function get($key = null, $default = null)
     {
-        $this->session_start();
+        $this->start();
 
         if ($key) {
-            if (isset($_SESSION[$key])) {
-                return $_SESSION[$key];
-            } else {
-                return $default;
-            }
+            return Arr::get($_SESSION, $key, $default);
         } else {
             return $this->getAll();
         }
@@ -90,22 +88,20 @@ class SessionManager
     /**
      * Put a key / value pair or array of key / value pairs in the session.
      *
-     * @param string|array $key
-     * @param mixed|null   $value
+     * @param  string|array $key
+     * @param  mixed        $value
      *
-     * @return $this;
+     * @return void
      */
     public function put($key, $value = null)
     {
         if (!is_array($key)) {
-            $key = array($key => $value);
+            $key = [$key => $value];
         }
 
         foreach ($key as $arrayKey => $arrayValue) {
-            $this->set($arrayKey, $arrayValue);
+            Arr::set($_SESSION, $arrayKey, $arrayValue);
         }
-
-        return $this;
     }
 
     /**
@@ -116,7 +112,7 @@ class SessionManager
      */
     public function set($key, $value)
     {
-        $this->session_start();
+        $this->start();
         $_SESSION[$key] = $value;
     }
 
@@ -127,7 +123,7 @@ class SessionManager
      */
     public function delete($key)
     {
-        $this->session_start();
+        $this->start();
         unset($_SESSION[$key]);
     }
 
@@ -136,7 +132,7 @@ class SessionManager
      */
     public function destroy()
     {
-        $this->session_start();
+        $this->start();
         $this->is_start = false;
         $_SESSION       = array();
         session_destroy();
@@ -150,7 +146,7 @@ class SessionManager
     public function session_id($id = null)
     {
         if ($id === null) {
-            $this->session_start();
+            $this->start();
 
             return session_id();
         } else {
@@ -162,7 +158,7 @@ class SessionManager
     /**
      * 启动Session.
      */
-    private function session_start()
+    public function start()
     {
         if (!$this->is_start) {
             session_start();

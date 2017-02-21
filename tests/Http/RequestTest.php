@@ -6,8 +6,9 @@
  */
 
 use Very\Http\Request;
+use PHPUnit\Framework\TestCase;
 
-class RequestTest extends PHPUnit_Framework_TestCase {
+class RequestTest extends TestCase {
 
     public function testMethod() {
         $data = ['a' => 1, 'b' => 2];

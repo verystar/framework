@@ -1,4 +1,7 @@
 <?php
+
+use Very\Support\Arr;
+
 if (!function_exists('app_path')) {
     /**
      * Get the path to the application folder.
@@ -13,470 +16,396 @@ if (!function_exists('app_path')) {
     }
 }
 
-if (! function_exists('url')) {
-
-    function url($var = null)
+if (!function_exists('url')) {
+    /**
+     * Generate a url for the application.
+     *
+     * @param  string $path
+     * @param  mixed  $parameters
+     * @param  bool   $secure
+     *
+     * @return \Very\Routing\UrlGenerator|string
+     */
+    function url($path = null, $parameters = [], $secure = null)
     {
-        if (substr($var, 0, 4) === 'http') {
-            if (defined('ENVIRON') && ENVIRON === 'dev') {
-                $var = str_replace('//', '//' . ENVIRON . '.', $var);
-            }
+        if (is_null($path)) {
+            return app(\Very\Routing\UrlGenerator::class);
+        }
 
-            return $var;
+        return app(\Very\Routing\UrlGenerator::class)->to($path, $parameters, $secure);
+    }
+}
+
+if (!function_exists('resource_url')) {
+    /**
+     * Generate a resource url for the application.
+     *
+     * @param null   $var
+     * @param string $url_type
+     *
+     * @return mixed|string|\Very\Config
+     */
+    function resource_url($var = null, $url_type = 'resource_url')
+    {
+        $site_root = config('app.' . $url_type);
+        if ($var == null) {
+            return $site_root;
         } else {
-            $site_root = ($_SERVER['HTTPS'] ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
-
-            if ($var == null) {
-                return $site_root;
-            } else {
-                $var = ltrim($var, '/');
-
-                return $site_root . $var;
+            $var = ltrim($var, '/');
+            $ext = pathinfo($var, PATHINFO_EXTENSION);
+            switch ($ext) {
+                case 'js':
+                    $v = '?v=' . config('app.js_version', '20121024');
+                    break;
+                case 'css':
+                    $v = '?v=' . config('app.css_version', '20121024');
+                    break;
+                default:
+                    $v = '';
+                    break;
             }
-        }
-    }
-}
+            $resource_path = config('app.' . $url_type . '_path');
 
-function resource_url($var = null, $url_type = 'resource_url')
-{
-    $site_root = config('app.' . $url_type);
-    if ($var == null) {
-        return $site_root;
-    } else {
-        $var = ltrim($var, '/');
-        $ext = pathinfo($var, PATHINFO_EXTENSION);
-        switch ($ext) {
-            case 'js':
-                $v = '?v=' . config('app.js_version', '20121024');
-                break;
-            case 'css':
-                $v = '?v=' . config('app.css_version', '20121024');
-                break;
-            default:
-                $v = '';
-                break;
-        }
-        $resource_path = config('app.' . $url_type . '_path');
-
-        if (is_dir($resource_path)) {
-            if (defined('ENVIRON') && ENVIRON === 'dev') {
-                $file = rtrim($resource_path, '/') . '/' . $var;
-                if (file_exists($file)) {
-                    $v = '?v=' . substr(md5_file($file), 0, 10);
-                }
-            } else {
-                $v            = '';
-                $rev_mainfest = rtrim($resource_path, '/') . '/static/rev-manifest.json';
-                static $revs = [];
-
-                if (file_exists($rev_mainfest)) {
-                    if (!$revs) {
-                        $revs = json_decode(file_get_contents($rev_mainfest), true);
+            if (is_dir($resource_path)) {
+                if (defined('ENVIRON') && ENVIRON === 'local') {
+                    $file = rtrim($resource_path, '/') . '/' . $var;
+                    if (file_exists($file)) {
+                        $v = '?v=' . substr(md5_file($file), 0, 10);
                     }
-                    if ($revs[$var]) {
-                        $var = $revs[$var];
+                } else {
+                    $v            = '';
+                    $rev_mainfest = rtrim($resource_path, '/') . '/static/rev-manifest.json';
+                    static $revs = [];
+
+                    if (file_exists($rev_mainfest)) {
+                        if (!$revs) {
+                            $revs = json_decode(file_get_contents($rev_mainfest), true);
+                        }
+                        if ($revs[$var]) {
+                            $var = $revs[$var];
+                        }
                     }
                 }
             }
-        }
 
-        return $site_root . $var . $v;
+            return $site_root . $var . $v;
+        }
+    }
+}
+
+if (!function_exists('xml_to_array')) {
+
+    /**
+     * xml转换为array
+     *
+     * @param $xml
+     *
+     * @return mixed
+     */
+    function xml_to_array($xml)
+    {
+        return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
     }
 }
 
-/**
- * 构建URL.
- *
- * @param array $add_params 添加的参数
- * @param array $del_params 删除的参数
- *
- * @return string
- */
-function make_url($add_params = [], $del_params = [])
-{
-    $uri   = request()->uri();
-    $de    = strpos('?', $uri) === false ? '?' : '&';
-    $query = parse_url($uri, PHP_URL_QUERY);
-
-    parse_str($query, $params);
-    $params = array_merge($params, $add_params);
-    foreach ($params as $k => $v) {
-        if (in_array($k, $del_params)) {
-            unset($params[$k]);
-        }
-    }
-    $uri = parse_url($uri, PHP_URL_PATH) . ($params ? $de . http_build_query($params) : '');
-
-    return url($uri);
-}
-
-//xml转换为array
-function xml_to_array($xml)
-{
-    return json_decode(json_encode(simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA)), true);
-}
-
-/**
- * 调试函数一律禁止在线上输出
- */
-function e()
-{
-    if ((defined('DEBUG') && DEBUG) || is_cli()) {
-        $params = func_get_args();
-        foreach ($params as $value) {
-            if (is_array($value) || is_object($value)) {
-                if (is_cli()) {
-                    print_r($value);
-                    echo "\n";
+if (!function_exists('p')) {
+    /**
+     * 调试函数一律禁止在线上输出
+     */
+    function p()
+    {
+        if ((defined('DEBUG') && DEBUG) || is_cli()) {
+            $params = func_get_args();
+            foreach ($params as $value) {
+                if (is_array($value) || is_object($value)) {
+                    if (is_cli()) {
+                        print_r($value);
+                        echo "\n";
+                    } else {
+                        print_r($value);
+                        echo '<br/>';
+                    }
                 } else {
-                    print_r($value);
-                    echo '<br/>';
-                }
-            } else {
-                if (is_cli()) {
-                    echo $value, "\n";
-                } else {
-                    echo $value, '<br/>';
+                    if (is_cli()) {
+                        echo $value, "\n";
+                    } else {
+                        echo $value, '<br/>';
+                    }
                 }
             }
         }
     }
 }
 
-function return_ip()
-{
-    $ip = '-1';
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip_a = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-        for ($i = 0; $i < count($ip_a); ++$i) { //
-            $tmp = trim($ip_a[$i]);
-            if ($tmp == 'unknown' || $tmp == '127.0.0.1' || strncmp($tmp, '10.', 3) == 0 || strncmp($tmp, '172', 3) == 0 || strncmp($tmp, '192', 3) == 0) {
-                continue;
-            }
-            $ip = $tmp;
-            break;
-        }
-    } elseif (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        $ip = trim($_SERVER['HTTP_CLIENT_IP']);
-    } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
-        $ip = trim($_SERVER['REMOTE_ADDR']);
-    } else {
+if (!function_exists('e')) {
+    /**
+     * Escape HTML special characters in a string.
+     *
+     * @param  string $value
+     *
+     * @return string
+     */
+    function e($value)
+    {
+        return htmlspecialchars($value, ENT_QUOTES, 'UTF-8', false);
+    }
+}
+
+if (!function_exists('return_ip')) {
+
+    /**
+     * get client ip
+     * @return string
+     */
+    function return_ip()
+    {
         $ip = '-1';
-    }
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip_a = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            for ($i = 0; $i < count($ip_a); ++$i) { //
+                $tmp = trim($ip_a[$i]);
+                if ($tmp == 'unknown' || $tmp == '127.0.0.1' || strncmp($tmp, '10.', 3) == 0 || strncmp($tmp, '172', 3) == 0 || strncmp($tmp, '192', 3) == 0) {
+                    continue;
+                }
+                $ip = $tmp;
+                break;
+            }
+        } elseif (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = trim($_SERVER['HTTP_CLIENT_IP']);
+        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+            $ip = trim($_SERVER['REMOTE_ADDR']);
+        } else {
+            $ip = '-1';
+        }
 
-    return $ip;
+        return $ip;
+    }
 }
 
-function is_cli()
-{
-    return PHP_SAPI == 'cli' && empty($_SERVER['REMOTE_ADDR']);
+if (!function_exists('is_cli')) {
+
+    /**
+     * Assertions is command line
+     * @return bool
+     */
+    function is_cli()
+    {
+        return PHP_SAPI == 'cli' && empty($_SERVER['REMOTE_ADDR']);
+    }
 }
 
-/**
- * 调试函数一律禁止在线上输出.
- *
- * @param           $info
- * @param bool|true $exit
- *
- * @return bool
- */
-function p($info, $exit = true)
-{
-    if (!defined('DEBUG') || !DEBUG) {
-        return false;
-    }
+if (!function_exists('dd')) {
 
-    $debug  = debug_backtrace();
-    $output = '';
-
-    if (is_cli()) {
-        foreach ($debug as $v) {
-            $output .= 'File:' . $v['file'];
-            $output .= 'Line:' . $v['line'];
-            $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
-            foreach ($v['args'] as $k => $argv) {
-                if (is_object($argv)) {
-                    $v['args'][$k] = 'Object[' . get_class($argv) . ']';
-                }
-            }
-            $output .= implode('\',\' ', $v['args']);
-            $output .= '\')' . PHP_EOL;
+    /**
+     * debug print and backtrace
+     *
+     * @param           $info
+     * @param bool|true $exit
+     *
+     * @return bool
+     */
+    function dd($info, $exit = true)
+    {
+        if (!defined('DEBUG') || !DEBUG) {
+            return false;
         }
-        $output .= '[Info]' . PHP_EOL;
-        $output .= var_export($info, true) . PHP_EOL;
-    } else {
-        foreach ($debug as $v) {
-            $output .= '<b>File</b>:' . $v['file'] . '&nbsp;';
-            $output .= '<b>Line</b>:' . $v['line'] . '&nbsp;';
-            $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
 
-            foreach ($v['args'] as $k => $argv) {
-                if (is_object($argv)) {
-                    $v['args'][$k] = 'Object[' . get_class($argv) . ']';
+        $debug  = debug_backtrace();
+        $output = '';
+
+        if (is_cli()) {
+            foreach ($debug as $v) {
+                $output .= 'File:' . $v['file'];
+                $output .= 'Line:' . $v['line'];
+                $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
+                foreach ($v['args'] as $k => $argv) {
+                    if (is_object($argv)) {
+                        $v['args'][$k] = 'Object[' . get_class($argv) . ']';
+                    }
                 }
+                $output .= implode('\',\' ', $v['args']);
+                $output .= '\')' . PHP_EOL;
             }
-            $output .= implode('\',\' ', $v['args']);
+            $output .= '[Info]' . PHP_EOL;
+            $output .= var_export($info, true) . PHP_EOL;
+        } else {
+            foreach ($debug as $v) {
+                $output .= '<b>File</b>:' . $v['file'] . '&nbsp;';
+                $output .= '<b>Line</b>:' . $v['line'] . '&nbsp;';
+                $output .= $v['class'] . $v['type'] . $v['function'] . '(\'';
 
-            $output .= '\')<br/>';
+                foreach ($v['args'] as $k => $argv) {
+                    if (is_object($argv)) {
+                        $v['args'][$k] = 'Object[' . get_class($argv) . ']';
+                    }
+                }
+                $output .= implode('\',\' ', $v['args']);
+
+                $output .= '\')<br/>';
+            }
+            $output .= '<b>Info</b>:<br/>';
+            $output .= '<pre>';
+            $output .= var_export($info, true);
+            $output .= '</pre>';
         }
-        $output .= '<b>Info</b>:<br/>';
-        $output .= '<pre>';
-        $output .= var_export($info, true);
-        $output .= '</pre>';
-    }
 
-    echo $output;
-    if ($exit) {
+        echo $output;
+        if ($exit) {
+            exit;
+        }
+    }
+}
+
+if (!function_exists('trim_space')) {
+
+    /**
+     * trim space and chinaese space
+     *
+     * @param $s
+     *
+     * @return string
+     */
+    function trim_space($s)
+    {
+        $s = mb_ereg_replace('^(　| )+', '', $s);
+        $s = mb_ereg_replace('(　| )+$', '', $s);
+
+        return $s;
+    }
+}
+
+
+if (!function_exists('rand_sample')) {
+
+    /**
+     * return rand sample assertion
+     *
+     * @param $str
+     * @param $prob
+     *
+     * @return string
+     */
+    function rand_sample($str, $prob = 100)
+    {
+        $prob = $prob < 10 ? 10 : $prob;
+        $rt   = mt_rand(1, $prob);
+
+        return $rt == 8 ? $str : null;
+    }
+}
+
+if (!function_exists('redirect')) {
+
+    /**
+     * Redirect uri
+     *
+     * @param string $uri
+     * @param string $method
+     * @param int    $http_response_code
+     */
+    function redirect($uri = '/', $method = 'location', $http_response_code = 302)
+    {
+        switch ($method) {
+            case 'refresh'    :
+                header('Refresh:0;url=' . $uri);
+                break;
+            default            :
+                header('Location: ' . $uri, true, $http_response_code);
+                break;
+        }
         exit;
     }
 }
 
-/**
- * 字符串截取，支持中文和其他编码
- *
- * @param string $str     需要转换的字符串
- * @param int    $start   开始位置
- * @param int    $length  截取长度
- * @param string $charset 编码格式
- * @param string $suffix  截断显示字符
- *
- * @return string
- */
-function msubstr($str, $start = 0, $length, $charset = 'utf-8', $suffix = '...')
-{
-    if (function_exists('mb_substr')) {
-        $slice = mb_substr($str, $start, $length, $charset);
-    } elseif (function_exists('iconv_substr')) {
-        $slice = iconv_substr($str, $start, $length, $charset);
-    } else {
-        $re['utf-8']  = "/[\x01-\x7f]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xff][\x80-\xbf]{3}/";
-        $re['gb2312'] = "/[\x01-\x7f]|[\xb0-\xf7][\xa0-\xfe]/";
-        $re['gbk']    = "/[\x01-\x7f]|[\x81-\xfe][\x40-\xfe]/";
-        $re['big5']   = "/[\x01-\x7f]|[\x81-\xfe]([\x40-\x7e]|\xa1-\xfe])/";
-        preg_match_all($re[$charset], $str, $match);
-        $slice = implode('', array_slice($match[0], $start, $length));
-    }
+if (!function_exists('base32_encode')) {
 
-    return $slice . $suffix;
-}
+    /**
+     * base32 encode
+     *
+     * @param $input
+     *
+     * @return string
+     */
+    function base32_encode($input)
+    {
+        $base32_alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        $output          = '';
+        //$position         = 0;
+        $stored_data      = 0;
+        $stored_bit_count = 0;
+        $index            = 0;
 
-//去除空格
-function trim_space($s)
-{
-    $s = mb_ereg_replace('^(　| )+', '', $s);
-    $s = mb_ereg_replace('(　| )+$', '', $s);
+        while ($index < strlen($input)) {
+            $stored_data <<= 8;
+            $stored_data += ord($input[$index]);
+            $stored_bit_count += 8;
+            $index += 1;
 
-    return $s;
-}
+            //take as much data as possible out of storedData
+            while ($stored_bit_count >= 5) {
+                $stored_bit_count -= 5;
+                $output .= $base32_alphabet[$stored_data >> $stored_bit_count];
+                $stored_data &= ((1 << $stored_bit_count) - 1);
+            }
+        } //while
 
-/**
- * 随机采样.
- *
- * @param $str
- * @param $prob
- *
- * @return string
- */
-function rand_sample($str, $prob = 100)
-{
-    $prob = $prob < 10 ? 10 : $prob;
-    $rt   = mt_rand(1, $prob);
-
-    return $rt == 8 ? $str : null;
-}
-
-//去除空格判断空
-function trim_empty($str, $is_zh = false)
-{
-    $str = $is_zh ? trim_space($str) : trim($str);
-
-    return empty($str);
-}
-
-//跳转
-function redirect($uri = '/', $method = 'location', $http_response_code = 302)
-{
-    switch ($method) {
-        case 'refresh'    :
-            header('Refresh:0;url=' . $uri);
-            break;
-        default            :
-            header('Location: ' . $uri, true, $http_response_code);
-            break;
-    }
-    exit;
-}
-
-function _iconv(&$data, $key, $encodeing)
-{
-    $data = mb_convert_encoding($data, $encodeing[1], $encodeing[0]);
-}
-
-function gbk2utf8($data)
-{
-    if (is_array($data)) {
-        array_walk_recursive($data, '_iconv', array('gbk', 'utf-8'));
-    } elseif (is_object($data)) {
-        array_walk_recursive(get_object_vars($data), '_iconv', array('utf-8', 'gbk'));
-    } else {
-        $data = mb_convert_encoding($data, 'utf-8', 'gbk');
-    }
-
-    return $data;
-}
-
-function utf8togbk($data)
-{
-    if (is_array($data)) {
-        array_walk_recursive($data, '_iconv', array('utf-8', 'gbk'));
-    } elseif (is_object($data)) {
-        array_walk_recursive(get_object_vars($data), '_iconv', array('utf-8', 'gbk'));
-    } else {
-        $data = mb_convert_encoding($data, 'gbk', 'utf-8');
-    }
-
-    return $data;
-}
-
-/**
- * Set HTTP Status Header.
- *
- *
- * @param   $code int the status code
- * @param   $text string
- */
-function set_status_header($code = 200, $text = '')
-{
-    static $stati = array(
-        200 => 'OK',
-        201 => 'Created',
-        202 => 'Accepted',
-        203 => 'Non-Authoritative Information',
-        204 => 'No Content',
-        205 => 'Reset Content',
-        206 => 'Partial Content',
-        300 => 'Multiple Choices',
-        301 => 'Moved Permanently',
-        302 => 'Found',
-        304 => 'Not Modified',
-        305 => 'Use Proxy',
-        307 => 'Temporary Redirect',
-        400 => 'Bad Request',
-        401 => 'Unauthorized',
-        403 => 'Forbidden',
-        404 => 'Not Found',
-        405 => 'Method Not Allowed',
-        406 => 'Not Acceptable',
-        407 => 'Proxy Authentication Required',
-        408 => 'Request Timeout',
-        409 => 'Conflict',
-        410 => 'Gone',
-        411 => 'Length Required',
-        412 => 'Precondition Failed',
-        413 => 'Request Entity Too Large',
-        414 => 'Request-URI Too Long',
-        415 => 'Unsupported Media Type',
-        416 => 'Requested Range Not Satisfiable',
-        417 => 'Expectation Failed',
-        500 => 'Internal Server Error',
-        501 => 'Not Implemented',
-        502 => 'Bad Gateway',
-        503 => 'Service Unavailable',
-        504 => 'Gateway Timeout',
-        505 => 'HTTP Version Not Supported',
-    );
-
-    if (isset($stati[$code])) {
-        $text = $text ? $text : $stati[$code];
-
-        $server_protocol = (isset($_SERVER['SERVER_PROTOCOL'])) ? $_SERVER['SERVER_PROTOCOL'] : false;
-
-        if (substr(php_sapi_name(), 0, 3) == 'cgi') {
-            header("Status: {$code} {$text}", true);
-        } elseif ($server_protocol == 'HTTP/1.1' || $server_protocol == 'HTTP/1.0') {
-            header($server_protocol . " {$code} {$text}", true, $code);
-        } else {
-            header("HTTP/1.1 {$code} {$text}", true, $code);
-        }
-    }
-}
-
-function base32_encode($input)
-{
-    $base32_alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    $output          = '';
-    //$position         = 0;
-    $stored_data      = 0;
-    $stored_bit_count = 0;
-    $index            = 0;
-
-    while ($index < strlen($input)) {
-        $stored_data <<= 8;
-        $stored_data += ord($input[$index]);
-        $stored_bit_count += 8;
-        $index += 1;
-
-        //take as much data as possible out of storedData
-        while ($stored_bit_count >= 5) {
-            $stored_bit_count -= 5;
-            $output .= $base32_alphabet[$stored_data >> $stored_bit_count];
-            $stored_data &= ((1 << $stored_bit_count) - 1);
-        }
-    } //while
-
-    //deal with leftover data
-    if ($stored_bit_count > 0) {
-        $stored_data <<= (5 - $stored_bit_count);
-        $output .= $base32_alphabet[$stored_data];
-    }
-
-    return $output;
-}
-
-/**
- * @param $input
- *
- * @return string
- *
- * @author 蔡旭东 mailto:fifsky@dev.ppstream.com
- */
-function base32_decode($input)
-{
-    if (empty($input)) {
-        return $input;
-    }
-
-    static $asc = array();
-    $output = '';
-    $v      = 0;
-    $vbits  = 0;
-    $i      = 0;
-    $input  = strtolower($input);
-    $j      = strlen($input);
-    while ($i < $j) {
-        if (!isset($asc[$input[$i]])) {
-            $asc[$input[$i]] = ord($input[$i]);
+        //deal with leftover data
+        if ($stored_bit_count > 0) {
+            $stored_data <<= (5 - $stored_bit_count);
+            $output .= $base32_alphabet[$stored_data];
         }
 
-        $v <<= 5;
-        if ($input[$i] >= 'a' && $input[$i] <= 'z') {
-            $v += ($asc[$input[$i]] - 97);
-        } elseif ($input[$i] >= '2' && $input[$i] <= '7') {
-            $v += (24 + $input[$i]);
-        } else {
-            exit(1);
-        }
-        ++$i;
-
-        $vbits += 5;
-        while ($vbits >= 8) {
-            $vbits -= 8;
-            $output .= chr($v >> $vbits);
-            $v &= ((1 << $vbits) - 1);
-        }
+        return $output;
     }
+}
 
-    return $output;
+if (!function_exists('base32_decode')) {
+
+    /**
+     * base32 decode
+     *
+     * @param $input
+     *
+     * @return string
+     */
+    function base32_decode($input)
+    {
+        if (empty($input)) {
+            return $input;
+        }
+
+        static $asc = array();
+        $output = '';
+        $v      = 0;
+        $vbits  = 0;
+        $i      = 0;
+        $input  = strtolower($input);
+        $j      = strlen($input);
+        while ($i < $j) {
+            if (!isset($asc[$input[$i]])) {
+                $asc[$input[$i]] = ord($input[$i]);
+            }
+
+            $v <<= 5;
+            if ($input[$i] >= 'a' && $input[$i] <= 'z') {
+                $v += ($asc[$input[$i]] - 97);
+            } elseif ($input[$i] >= '2' && $input[$i] <= '7') {
+                $v += (24 + $input[$i]);
+            } else {
+                exit(1);
+            }
+            ++$i;
+
+            $vbits += 5;
+            while ($vbits >= 8) {
+                $vbits -= 8;
+                $output .= chr($v >> $vbits);
+                $v &= ((1 << $vbits) - 1);
+            }
+        }
+
+        return $output;
+    }
 }
 
 if (!function_exists('textarea_to_html')) {
@@ -499,54 +428,85 @@ if (!function_exists('html_to_textarea')) {
         return $str;
     }
 }
-//加密解密
-function encrypt($string, $skey = '%f1f5kyL@<eYu9n$')
-{
-    $code   = '';
-    $key    = substr(md5($skey), 8, 18);
-    $keylen = strlen($key);
-    $strlen = strlen($string);
-    for ($i = 0; $i < $strlen; ++$i) {
-        $k = $i % $keylen;
-        $code .= $string[$i] ^ $key[$k];
+if (!function_exists('encrypt')) {
+
+    /**
+     * Simple encryption
+     *
+     * @param        $string
+     * @param string $skey
+     *
+     * @return mixed
+     */
+    function encrypt($string, $skey = '%f1f5kyL@<eYu9n$')
+    {
+        $code   = '';
+        $key    = substr(md5($skey), 8, 18);
+        $keylen = strlen($key);
+        $strlen = strlen($string);
+        for ($i = 0; $i < $strlen; ++$i) {
+            $k = $i % $keylen;
+            $code .= $string[$i] ^ $key[$k];
+        }
+
+        return str_replace(array('+', '/', '='), array('-', '_', ''), base64_encode($code));
     }
-
-    return str_replace(array('+', '/', '='), array('-', '_', ''), base64_encode($code));
 }
+if (!function_exists('decrypt')) {
 
-function decrypt($string, $skey = '%f1f5kyL@<eYu9n$')
-{
-    $string = base64_decode(str_replace(array('-', '_'), array('+', '/'), $string));
-    $code   = '';
-    $key    = substr(md5($skey), 8, 18);
-    $keylen = strlen($key);
-    $strlen = strlen($string);
-    for ($i = 0; $i < $strlen; ++$i) {
-        $k = $i % $keylen;
-        $code .= $string[$i] ^ $key[$k];
+    /**
+     * Simple encryption
+     *
+     * @param        $string
+     * @param string $skey
+     *
+     * @return string
+     */
+    function decrypt($string, $skey = '%f1f5kyL@<eYu9n$')
+    {
+        $string = base64_decode(str_replace(array('-', '_'), array('+', '/'), $string));
+        $code   = '';
+        $key    = substr(md5($skey), 8, 18);
+        $keylen = strlen($key);
+        $strlen = strlen($string);
+        for ($i = 0; $i < $strlen; ++$i) {
+            $k = $i % $keylen;
+            $code .= $string[$i] ^ $key[$k];
+        }
+
+        return $code;
     }
-
-    return $code;
 }
 
-function ifset($array, $key, $default = null)
-{
-    return isset($array[$key]) ? $array[$key] : $default;
+if (!function_exists('array_get')) {
+    /**
+     * Get an item from an array using "dot" notation.
+     *
+     * @param  \ArrayAccess|array $array
+     * @param  string             $key
+     * @param  mixed              $default
+     *
+     * @return mixed
+     */
+    function array_get($array, $key, $default = null)
+    {
+        return Arr::get($array, $key, $default);
+    }
 }
 
-function is_utf8($string)
-{
-    //可以使用mb_detect_encoding($string,"UTF-8")替代
-    return preg_match('%^(?:
-       [\x09\x0A\x0D\x20-\x7E]              # ASCII
-       | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte
-       |  \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
-       | [\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}  # straight 3-byte
-       |  \xED[\x80-\x9F][\x80-\xBF]        # excluding surrogates
-       |  \xF0[\x90-\xBF][\x80-\xBF]{2}     # planes 1-3
-       | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
-       |  \xF4[\x80-\x8F][\x80-\xBF]{2}     # plane 16
-       )*$%xs', $string);
+if (!function_exists('array_has')) {
+    /**
+     * Check if an item or items exist in an array using "dot" notation.
+     *
+     * @param  \ArrayAccess|array $array
+     * @param  string|array       $keys
+     *
+     * @return bool
+     */
+    function array_has($array, $keys)
+    {
+        return Arr::has($array, $keys);
+    }
 }
 
 if (!function_exists('value')) {
@@ -563,90 +523,103 @@ if (!function_exists('value')) {
     }
 }
 
-/**
- * 检测参数是否有值，如果有一个参数没有值则返回false.
- *
- * @return bool
- */
-function required_params()
-{
-    $params = func_get_args();
-    foreach ($params as $value) {
-        if (is_array($value)) {
-            if (empty($value)) {
-                return false;
-            }
-        } else {
-            if ($value === null || strlen(trim($value)) == 0) {
-                return false;
+if (!function_exists('required_params')) {
+
+    /**
+     * check params is null first return false
+     *
+     * @return bool
+     */
+    function required_params()
+    {
+        $params = func_get_args();
+        foreach ($params as $value) {
+            if (is_array($value)) {
+                if (empty($value)) {
+                    return false;
+                }
+            } else {
+                if ($value === null || strlen(trim($value)) == 0) {
+                    return false;
+                }
             }
         }
+
+        return true;
     }
-
-    return true;
 }
 
-/**
- * 过滤数组的空.
- *
- * @param $arr
- *
- * @return array
- */
-function filter_empty($arr)
-{
-    return array_filter($arr, function ($val) {
-        if (is_bool($val) || is_array($val)) {
-            //此处之所以做出这样的判断因为trim对false 和 true返回值完全不同
-            return true;
-        }
+if (!function_exists('filter_empty')) {
 
-        return $val !== '' && $val !== null && strlen(trim($val)) > 0;
-    });
+    /**
+     * Filter array empty values.
+     *
+     * @param $arr
+     *
+     * @return array
+     */
+    function filter_empty($arr)
+    {
+        return array_filter($arr, function ($val) {
+            if (is_bool($val) || is_array($val)) {
+                return true;
+            }
+
+            return $val !== '' && $val !== null && strlen(trim($val)) > 0;
+        });
+    }
+}
+if (!function_exists('restore_empty')) {
+
+    /**
+     * Restore data through the empty keys.
+     *
+     * @param $data
+     * @param $filed
+     *
+     * @return array
+     */
+    function restore_empty($data, $filed)
+    {
+        return array_merge(array_fill_keys($filed, ''), $data);
+    }
 }
 
-/**
- * 还原过滤的空字段.
- *
- * @param $data
- * @param $filed
- *
- * @return array
- */
-function restore_empty($data, $filed)
-{
-    return array_merge(array_fill_keys($filed, ''), $data);
+if (!function_exists('filter_field')) {
+
+    /**
+     * Data filter through the keys.
+     *
+     * @param $data
+     * @param $field
+     *
+     * @return array
+     */
+    function filter_field($data, $field)
+    {
+        return array_intersect_key($data, array_fill_keys($field, ''));
+    }
 }
 
-/**
- * 根据固定key过滤数组.
- *
- * @param $data
- * @param $field
- *
- * @return array
- */
-function filter_field($data, $field)
-{
-    return array_intersect_key($data, array_fill_keys($field, ''));
-}
+if (!function_exists('emptystr_tonull')) {
 
-/**
- * 空字符串转换为NULL，不包含对空格的处理.
- *
- * @param $arr
- *
- * @return array
- */
-function emptystr_tonull($arr)
-{
-    return array_map(function ($val) {
-        if ($val === '') {
-            $val = null;
-        }
+    /**
+     * empty value to null
+     *
+     * @param $arr
+     *
+     * @return array
+     */
+    function emptystr_tonull($arr)
+    {
+        return array_map(function ($val) {
+            if ($val === '') {
+                $val = null;
+            }
 
-        return $val;
-    }, $arr);
+            return $val;
+        }, $arr);
+    }
 }
 
 if (!function_exists('app')) {
@@ -654,17 +627,16 @@ if (!function_exists('app')) {
      * Get the available container instance.
      *
      * @param  string $make
-     * @param  array  $parameters
      *
      * @return mixed|\Very\Application
      */
-    function app($make = null, $parameters = [])
+    function app($make = null)
     {
         if (is_null($make)) {
             return \Very\Application::getInstance();
         }
 
-        return \Very\Application::getInstance()->make($make, $parameters);
+        return \Very\Application::getInstance()->make($make);
     }
 }
 
@@ -822,6 +794,25 @@ if (!function_exists('response')) {
     }
 }
 
+if (! function_exists('trans')) {
+    /**
+     * Translate the given message.
+     *
+     * @param  string  $key
+     * @param  array   $replace
+     * @param  string  $locale
+     * @return \Very\Translation\Translator|string
+     */
+    function trans($key = null, $replace = [], $locale = null)
+    {
+        if (is_null($key)) {
+            return app('translator');
+        }
+
+        return app('translator')->trans($key, $replace, $locale);
+    }
+}
+
 if (!function_exists('mstat')) {
     /**
      * @return \Very\Support\Stat
@@ -851,12 +842,12 @@ if (!function_exists('debug_end')) {
         $GLOBALS[$s]['end_mem']  = memory_get_usage();
 
         if (isset($GLOBALS[$s]['start_time'])) {
-            e($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
+            p($s . ':---Time:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_total_time'],
                     6) . ':---DTime:' . number_format($GLOBALS[$s]['end_time'] - $GLOBALS[$s]['start_time'],
                     6) . '---Mem:' . number_format(($GLOBALS[$s]['end_mem'] - $GLOBALS[$s]['start_mem']) / (1024 * 1024),
                     6) . 'M---PMem:' . number_format(memory_get_peak_usage() / (1024 * 1024), 2) . 'M');
         } else {
-            e('not start');
+            p('not start');
         }
     }
 }
@@ -871,9 +862,10 @@ if (!function_exists('curl')) {
     }
 }
 
-if (! function_exists('retry')) {
+if (!function_exists('retry')) {
     /**
      * Retry an operation a given number of times.
+     *
      * @param          $times
      * @param callable $callback
      * @param int      $sleep
@@ -888,7 +880,7 @@ if (! function_exists('retry')) {
         try {
             return $callback();
         } catch (Exception $e) {
-            if (! $times) {
+            if (!$times) {
                 throw $e;
             }
             $times--;

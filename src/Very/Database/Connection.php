@@ -2,7 +2,6 @@
 
 namespace Very\Database;
 
-use PDO;
 use PDOException;
 use RuntimeException;
 
@@ -40,9 +39,12 @@ class Connection
                             $dns .= ';port=' . $config['dbport'];
                         }
 
-                        self::$instances[$db] = new MysqlConnection($dns, $config['dbuser'], $config['dbpswd'], array(
-                            PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES ' . $config['dbcharset'],
-                        ));
+                        self::$instances[$db] = new MysqlConnection($dns, $config['dbuser'], $config['dbpswd']);
+                        $collation = !is_null($config['collation']) ? " collate '{$config['collation']}'" : '';
+
+                        self::$instances[$db]->prepare(
+                            "set names '{$config['charset']}'" . $collation
+                        )->execute();
                     }
 
                     return self::$instances[$db];

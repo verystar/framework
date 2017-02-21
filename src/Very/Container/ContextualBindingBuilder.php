@@ -2,7 +2,6 @@
 
 namespace Very\Container;
 
-
 class ContextualBindingBuilder
 {
     /**
@@ -29,19 +28,20 @@ class ContextualBindingBuilder
     /**
      * Create a new contextual binding builder.
      *
-     * @param  \Very\Container\Container  $container
-     * @param  string  $concrete
+     * @param  \Very\Container\Container $container
+     * @param  string                    $concrete
      */
     public function __construct(Container $container, $concrete)
     {
-        $this->concrete = $concrete;
+        $this->concrete  = $concrete;
         $this->container = $container;
     }
 
     /**
      * Define the abstract target that depends on the context.
      *
-     * @param  string  $abstract
+     * @param  string $abstract
+     *
      * @return $this
      */
     public function needs($abstract)
@@ -54,11 +54,14 @@ class ContextualBindingBuilder
     /**
      * Define the implementation for the contextual binding.
      *
-     * @param  \Closure|string  $implementation
+     * @param  \Closure|string $implementation
+     *
      * @return void
      */
     public function give($implementation)
     {
-        $this->container->addContextualBinding($this->concrete, $this->needs, $implementation);
+        $this->container->addContextualBinding(
+            $this->concrete, $this->needs, $implementation
+        );
     }
 }

@@ -1,12 +1,13 @@
 <?php
-
-namespace Very\Cookie;
-
 /**
  * Created by PhpStorm.
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/16 下午4:18.
  */
+namespace Very\Cookie;
+
+use Very\Support\Arr;
+
 class CookieJar
 {
     /**
@@ -49,12 +50,8 @@ class CookieJar
     public function get($key = null, $default = null)
     {
         if ($key) {
-            $key = $this->prefix.$key;
-            if (isset($_COOKIE[$key])) {
-                return $_COOKIE[$key];
-            } else {
-                return $default;
-            }
+            $key = $this->prefix . $key;
+            return Arr::get($_COOKIE, $key, $default);
         } else {
             return $default;
         }
@@ -86,7 +83,7 @@ class CookieJar
         if ($domain === null) {
             $domain = $this->domain;
         }
-        $key = $this->prefix.$key;
+        $key = $this->prefix . $key;
         setcookie($key, $value, time() + $time, $path, $domain);
         //立即生效
         $_COOKIE[$key] = $value;
@@ -102,12 +99,12 @@ class CookieJar
      * @param string $path   路径
      * @param string $domain 域
      */
-    public function remove($key, $time = 86400, $path = '/', $domain = null)
+    public function delete($key, $time = 86400, $path = '/', $domain = null)
     {
         if ($domain === null) {
             $domain = $this->domain;
         }
-        $key = $this->prefix.$key;
+        $key = $this->prefix . $key;
         setcookie($key, null, time() - $time, $path, $domain);
     }
 }
