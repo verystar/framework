@@ -13,8 +13,16 @@ class MysqlConnection extends PDOConnection
 {
     public function __construct(array $config)
     {
-        $options = isset($config['options']) ? $config['options'] : [];
-        $this->connect($this->getDsn($config), $config['dbuser'], $config['dbpswd'], $options);
+        $config['options'] = isset($config['options']) ? $config['options'] : [];
+
+        // Here we'll set a reconnector callback. This reconnector can be any callable
+        // so we will set a Closure to reconnect from this manager with the name of
+        // the connection, which will allow us to reconnect from the connections.
+        $this->setReconnector(function ($connection) use ($config) {
+            $this->connect($this->getDsn($config), $config['dbuser'], $config['dbpswd'], $config['options']);
+        });
+
+        $this->connect($this->getDsn($config), $config['dbuser'], $config['dbpswd'], $config['options']);
         $this->configureEncoding($this->getPdo(), $config);
         $this->configureTimezone($this->getPdo(), $config);
         $this->setModes($this->getPdo(), $config);

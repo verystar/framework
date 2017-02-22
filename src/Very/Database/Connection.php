@@ -2,7 +2,6 @@
 
 namespace Very\Database;
 
-use PDOException;
 use RuntimeException;
 
 class Connection
@@ -30,20 +29,17 @@ class Connection
     {
         if (!isset(self::$instances[$db])) {
             $config = config('db.' . $db);
-            if ($config) {
-                try {
-                    if ($config['dbtype'] == 'mysql') {
-                        self::$instances[$db] = new MysqlConnection($config);
-                    }
-                    return self::$instances[$db];
-                } catch (PDOException $e) {
-                    throw new RuntimeException("DB connect error for db $db:" . $e->getMessage());
-                }
-            } else {
-                throw new RuntimeException('DB config error! Please checking dir in config/db.php');
+            if (!$config) {
+                throw new RuntimeException('Not found database config [' . $db . '], Please checking file config/db.php');
             }
-        } else {
-            return self::$instances[$db];
+
+            switch ($config['dbtype']) {
+                case 'mysql':
+                    self::$instances[$db] = new MysqlConnection($config);
+                    break;
+            }
         }
+
+        return self::$instances[$db];
     }
 }
