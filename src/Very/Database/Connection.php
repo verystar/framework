@@ -33,20 +33,8 @@ class Connection
             if ($config) {
                 try {
                     if ($config['dbtype'] == 'mysql') {
-                        $dns = 'mysql:host=' . $config['dbhost'] . ';dbname=' . $config['dbname'];
-
-                        if (isset($config['dbport']) && !empty($config['dbport'])) {
-                            $dns .= ';port=' . $config['dbport'];
-                        }
-
-                        self::$instances[$db] = new MysqlConnection($dns, $config['dbuser'], $config['dbpswd']);
-                        $collation = !is_null($config['collation']) ? " collate '{$config['collation']}'" : '';
-
-                        self::$instances[$db]->prepare(
-                            "set names '{$config['charset']}'" . $collation
-                        )->execute();
+                        self::$instances[$db] = new MysqlConnection($config);
                     }
-
                     return self::$instances[$db];
                 } catch (PDOException $e) {
                     throw new RuntimeException("DB connect error for db $db:" . $e->getMessage());

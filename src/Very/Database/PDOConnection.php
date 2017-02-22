@@ -10,18 +10,37 @@ namespace Very\Database;
 use PDO;
 use PDOException;
 
-class PDOConnection extends PDO
+class PDOConnection
 {
+
+    /**
+     * The default PDO connection options.
+     *
+     * @var array
+     */
+    protected $options = [
+        PDO::ATTR_CASE       => PDO::CASE_NATURAL,
+//        PDO::ATTR_ERRMODE           => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_AUTOCOMMIT => 1,
+//        PDO::ATTR_ORACLE_NULLS      => PDO::NULL_NATURAL,
+//        PDO::ATTR_STRINGIFY_FETCHES => false,
+//        PDO::ATTR_EMULATE_PREPARES  => false,
+    ];
+
     protected $connect_time = 0;
     protected $execute_time = 0;
-    private $dsn;
-    private $sql;
-    private $is_stat = true; //是否监控统计
-    private $error_code;
-    private $error_info;
-    private $driver_options;
-    private $username;
-    private $password;
+    private   $dsn;
+    private   $sql;
+    private   $is_stat      = true; //是否监控统计
+    private   $error_code;
+    private   $error_info;
+    private   $driver_options;
+    private   $username;
+    private   $password;
+    /**
+     * @var \PDO
+     */
+    protected $pdo;
 
     public function connect($dsn, $username, $password, $driver_options = array())
     {
@@ -31,11 +50,8 @@ class PDOConnection extends PDO
             $this->username       = $username;
             $this->password       = $password;
             $this->driver_options = $driver_options;
-            parent::__construct($dsn, $username, $password, array(
-                    PDO::ATTR_CASE    => PDO::CASE_LOWER,
-                    PDO::ATTR_AUTOCOMMIT => 1,
-                    PDO::ATTR_TIMEOUT => 1,
-                ) + $driver_options);
+            $this->pdo            = new PDO($dsn, $username, $password, $this->getOptions($driver_options));
+
             $this->connect_time = number_format(microtime(true) - $start_time, 6);
 
             if ($this->is_stat) {
@@ -49,6 +65,23 @@ class PDOConnection extends PDO
             mstat()->set(1, 'BUG错误', 'SQL连接错误', $dsn, $e->getMessage());
             throw new \PDOException("DB connect error for dns $dsn:" . $e->getMessage());
         }
+    }
+
+    /**
+     * Get the PDO options based on the configuration.
+     *
+     * @param  array $options
+     *
+     * @return array
+     */
+    public function getOptions(array $options)
+    {
+        return array_diff_key($this->options, $options) + $options;
+    }
+
+    public function getPdo()
+    {
+        return $this->pdo;
     }
 
     public function selectLimit($sql, $limit, $limit_from = 0, $params = array(), $driver_options = array())
@@ -75,9 +108,7 @@ class PDOConnection extends PDO
     public function getAll($sql, $params = array(), $driver_options = array(), $fetch_style = PDO::FETCH_ASSOC)
     {
         $stmt = $this->execute($sql, $params, $driver_options);
-        $all  = $stmt->fetchAll($fetch_style);
-
-        return $all;
+        return $stmt->fetchAll($fetch_style);
     }
 
     public function getOneAll($sql, $params = array(), $column_number = 0, $driver_options = array())
@@ -94,37 +125,49 @@ class PDOConnection extends PDO
     public function getRow($sql, $params = array(), $driver_options = array(), $fetch_style = PDO::FETCH_ASSOC)
     {
         $stmt = $this->execute($sql, $params, $driver_options);
-        $row  = $stmt->fetch($fetch_style);
-
-        return $row;
+        return $stmt->fetch($fetch_style);
     }
 
     public function getOne($sql, $params = array(), $driver_options = array(), $column_number = 0)
     {
         $stmt = $this->execute($sql, $params, $driver_options);
-        $one  = $stmt->fetchColumn($column_number);
-
-        return $one;
+        return $stmt->fetchColumn($column_number);
     }
+
+
+    /**
+     * Bind values to their parameters in the given statement.
+     *
+     * @param  \PDOStatement $statement
+     * @param  array         $bindings
+     *
+     * @return void
+     */
+    public function bindValues($statement, $bindings)
+    {
+        foreach ($bindings as $key => $value) {
+            $statement->bindValue(
+                is_string($key) ? $key : $key + 1, $value,
+                is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+            );
+        }
+    }
+
 
     public function execute($sql, $params = array(), $driver_options = array())
     {
         for ($i = 0; $i < 2; ++$i) {
             $start_time = microtime(true);
-            $stmt       = $this->prepare($sql, $driver_options);
+            $stmt       = $this->getPdo()->prepare($sql, $driver_options);
             $this->sql  = $sql;
 
-            if ($stmt) {
-                foreach ($params as $k => &$param) {
-                    $stmt->bindParam($k, $param, PDO::PARAM_STR, strlen($param));
-                }
-                $stmt->execute();
-            }
+            $this->bindValues($stmt, $params);
+            $stmt->execute();
 
             $end_time           = microtime(true);
             $this->execute_time = number_format($end_time - $start_time, 6);
-            $this->error_code   = $stmt ? $stmt->errorCode() : $this->errorCode();
-            $this->error_info   = $stmt ? $stmt->errorInfo() : $this->errorInfo();
+            $this->error_code   = $stmt ? $stmt->errorCode() : $this->getPdo()->errorCode();
+            $this->error_info   = $stmt ? $stmt->errorInfo() : $this->getPdo()->errorInfo();
 
             //在常驻进程中，DB连接会丢失，但是并不会抛出异常，因此需要判断错误的值为2006就需要重新连接DB，然后再次执行query
             if ($this->isError() && $this->error_info[1] == 2006) {
