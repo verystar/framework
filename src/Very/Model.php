@@ -56,7 +56,7 @@ abstract class Model
     private function checkModelConfiguration()
     {
         if (!$this->primaryKey || !$this->table || !$this->columns) {
-            throw new RuntimeException('invalid model configuration');
+            throw new RuntimeException('Invalid model configuration:' . get_called_class());
         }
     }
 
@@ -131,11 +131,11 @@ abstract class Model
             return false;
         }
 
-        if(in_array(static::CREATED_AT,$this->columns)){
+        if (in_array(static::CREATED_AT, $this->columns)) {
             $data[static::CREATED_AT] = date('Y-m-d H:i:s');
         }
 
-        if(in_array(static::UPDATED_AT,$this->columns)){
+        if (in_array(static::UPDATED_AT, $this->columns)) {
             $data[static::UPDATED_AT] = $data[static::CREATED_AT];
         }
 
@@ -156,7 +156,7 @@ abstract class Model
             return false;
         }
 
-        if(in_array(static::UPDATED_AT,$this->columns)){
+        if (in_array(static::UPDATED_AT, $this->columns)) {
             $data[static::UPDATED_AT] = date('Y-m-d H:i:s');
         }
 
@@ -166,11 +166,6 @@ abstract class Model
     public function delete($data)
     {
         $this->checkModelConfiguration();
-
-        $data = filter_field($data, $this->columns);
-        if (!$data) {
-            return false;
-        }
-        return $this->db()->delete($this->table, "{$this->primaryKey} = :{$this->primaryKey}", $data);
+        return $this->db()->delete($this->table, "{$this->primaryKey} = :{$this->primaryKey}", [$this->primaryKey => $data]);
     }
 }
