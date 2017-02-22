@@ -253,7 +253,7 @@ class PDOConnection
         $sql = "insert into {$table}($fileds) values($filed_values)";
         $ret = $this->execute($sql, $params);
         if ($ret->rowCount()) {
-            return $this->lastInsertId();
+            return $this->getPdo()->lastInsertId();
         } else {
             return false;
         }
