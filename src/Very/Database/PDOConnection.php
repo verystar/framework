@@ -426,23 +426,21 @@ class PDOConnection
     /**
      * Enable the query log on the connection.
      *
-     * @return $this
+     * @return void
      */
     public function enableQueryLog()
     {
         $this->loggingQueries = true;
-        return $this;
     }
 
     /**
      * Disable the query log on the connection.
      *
-     * @return $this
+     * @return void
      */
     public function disableQueryLog()
     {
         $this->loggingQueries = false;
-        return $this;
     }
 
     /**
