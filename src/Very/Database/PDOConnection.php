@@ -227,7 +227,7 @@ class PDOConnection
     {
         $num = (int)$num;
         $sql .= ' limit :limit_from,:limit';
-        $ret = $this->getAll($sql, array_merge($params, array('limit' => $num + 1, 'limit_from' => ($page - 1) * $num)));
+        $ret = $this->getAll($sql, array_merge($params, array('limit' => $num, 'limit_from' => ($page - 1) * $num)));
         return $ret;
     }
 
