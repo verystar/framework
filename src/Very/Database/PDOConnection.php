@@ -264,7 +264,7 @@ class PDOConnection
      */
     public function getAll($sql, $params = array())
     {
-        $stmt = $this->statement($sql, $params);
+        $stmt = $this->execute($sql, $params);
         return $stmt->fetchAll($this->fetchMode);
     }
 
@@ -279,7 +279,7 @@ class PDOConnection
      */
     public function getOneAll($sql, $params = array(), $column_number = 0)
     {
-        $stmt = $this->statement($sql, $params);
+        $stmt = $this->execute($sql, $params);
         $all  = array();
         while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
             $all[] = $row[$column_number];
@@ -298,7 +298,7 @@ class PDOConnection
      */
     public function getRow($sql, $params = array())
     {
-        $stmt = $this->statement($sql, $params);
+        $stmt = $this->execute($sql, $params);
         return $stmt->fetch($this->fetchMode);
     }
 
@@ -313,7 +313,7 @@ class PDOConnection
      */
     public function getOne($sql, $params = array(), $column_number = 0)
     {
-        $stmt = $this->statement($sql, $params);
+        $stmt = $this->execute($sql, $params);
         return $stmt->fetchColumn($column_number);
     }
 
@@ -467,7 +467,7 @@ class PDOConnection
      *
      * @return \PDOStatement
      */
-    public function statement($query, $bindings = [])
+    public function execute($query, $bindings = [])
     {
         return $this->run($query, $bindings, function ($query, $bindings) {
             if ($this->pretending()) {
@@ -493,7 +493,7 @@ class PDOConnection
      */
     public function affectingStatement($query, $bindings = [])
     {
-        $statement = $this->statement($query, $bindings);
+        $statement = $this->execute($query, $bindings);
         return $statement->rowCount();
     }
 
