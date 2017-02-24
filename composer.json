@@ -18,6 +18,7 @@
     "php": ">=5.6.4",
     "ext-mbstring": "*",
     "ext-mcrypt": "*",
+    "symfony/debug": "~3.2",
     "monolog/monolog": "~1.17"
   },
   "require-dev": {

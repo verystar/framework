@@ -4,6 +4,8 @@ namespace Very\Exceptions;
 
 use Exception;
 use ErrorException;
+use Symfony\Component\Debug\Exception\FatalErrorException;
+use Symfony\Component\Debug\Exception\FatalThrowableError;
 use Very\Application;
 use Very\Contracts\Debug\ExceptionHandler;
 
@@ -96,7 +98,7 @@ class HandleExceptions
      *
      * @param  array  $error
      * @param  int|null  $traceOffset
-     * @return \Very\Exceptions\FatalErrorException
+     * @return \Symfony\Component\Debug\Exception\FatalErrorException
      */
     protected function fatalExceptionFromError(array $error, $traceOffset = null)
     {
