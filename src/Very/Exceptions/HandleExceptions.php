@@ -1,11 +1,11 @@
 <?php
 
-namespace Very;
+namespace Very\Exceptions;
 
 use Exception;
 use ErrorException;
+use Very\Application;
 use Very\Contracts\Debug\ExceptionHandler;
-use Very\Exceptions\FatalThrowableError;
 
 class HandleExceptions
 {
@@ -69,7 +69,7 @@ class HandleExceptions
      */
     public function handleException($e)
     {
-        if (! $e instanceof Exception) {
+        if (!$e instanceof Exception) {
             $e = new FatalThrowableError($e);
         }
 

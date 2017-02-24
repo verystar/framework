@@ -28,7 +28,7 @@ class Application extends Container
      * @var array
      */
     protected $bootstrappers = [
-        \Very\HandleExceptions::class,
+        \Very\Exceptions\HandleExceptions::class,
     ];
 
     /**
