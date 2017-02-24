@@ -45,9 +45,9 @@ class Application extends Container
         if ($basePath) {
             $this->setBasePath($basePath);
         }
-
+        define('ENVIRON', (getenv('APP_ENV') ? getenv('APP_ENV') : 'pro'));
         /*
-         * 注入基本类库到Application
+         * Bind base library
          */
         $this->singleton('config', function ($app) {
             $config = new Config($app['path.config']);

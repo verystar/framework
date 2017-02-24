@@ -26,9 +26,6 @@ class HandleExceptions
     public function bootstrap(Application $app)
     {
         $this->app = $app;
-        $app_env   = getenv('APP_ENV');
-        $app_env   = $app_env ? $app_env : 'pro';
-        define('ENVIRON', $app_env);
         define('DEBUG', (ENVIRON == 'local' || ENVIRON == 'test'));
         if (DEBUG) {
             error_reporting(E_ALL ^ E_NOTICE);
