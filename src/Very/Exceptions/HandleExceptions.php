@@ -74,6 +74,7 @@ class HandleExceptions
         }
 
         $this->getExceptionHandler()->report($e);
+        $this->getExceptionHandler()->render($e);
     }
 
     /**
