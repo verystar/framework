@@ -12,9 +12,22 @@ use Exception;
 interface ExceptionHandler
 {
     /**
+     * Report or log an exception.
+     *
+     * @param  \Exception  $e
+     */
+    public function report(Exception $e);
+
+    /**
      * Render an exception into an HTTP response.
      *
      * @param  \Exception  $e
      */
     public function render(Exception $e);
+
+    /**
+     * PHP shutdown call
+     * @return mixed
+     */
+    public function shutdown();
 }

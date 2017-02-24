@@ -23,6 +23,15 @@ class Application extends Container
     protected $loadedProviders  = [];
 
     /**
+     * The bootstrap classes for the application.
+     *
+     * @var array
+     */
+    protected $bootstrappers = [
+        \Very\HandleExceptions::class,
+    ];
+
+    /**
      * The Very framework version.
      *
      * @var string
@@ -58,6 +67,7 @@ class Application extends Container
 
         $this->registerAppProviders();
         $this->registerCoreContainerAliases();
+        $this->bootstrapWith();
     }
 
     /**
@@ -212,6 +222,17 @@ class Application extends Container
         $this->markAsRegistered($provider);
 
         return $provider;
+    }
+
+    /**
+     * Run the given array of bootstrap classes.
+     * @return void
+     */
+    public function bootstrapWith()
+    {
+        foreach ($this->bootstrappers as $bootstrapper) {
+            $this->make($bootstrapper)->bootstrap($this);
+        }
     }
 
     /**
