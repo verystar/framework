@@ -7,9 +7,11 @@ namespace Very\Routing;
  *
  * @author caixudong
  */
-use Very\Http\Exception\HttpResponseException;
+use Exception;
 use RuntimeException;
 use Very\Http\FormRequest;
+use Very\Contracts\Debug\ExceptionHandler;
+use Very\Http\Exception\HttpResponseException;
 
 class Router
 {
@@ -69,9 +71,8 @@ class Router
 
         try {
             $this->handle($controller, $action);
-        } catch (HttpResponseException $e) {
-            $controllername = $this->getNamespace() . '\\Exceptions\\Handler';
-            app()->make($controllername)->render($e);
+        } catch (Exception $e) {
+            app()->make(ExceptionHandler::class)->render($e);
         }
     }
 

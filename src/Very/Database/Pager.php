@@ -7,7 +7,7 @@ class Pager
     public $total_count = 0;
     public $per_page;
     public $curr_page;
-    public $total_page = null;
+    public $total_page  = null;
     public $nearer_page = 10;
 
     /**
@@ -18,8 +18,8 @@ class Pager
     public function __construct($dao, $curr_page = 1, $per_page = 10)
     {
         $this->data_provider = $dao;
-        $this->per_page = $per_page;
-        $this->curr_page = $curr_page;
+        $this->per_page      = $per_page;
+        $this->curr_page     = $curr_page;
 
         return $this;
     }
@@ -38,7 +38,7 @@ class Pager
     public function rs($cmd, $params = array())
     {
         if (is_string($cmd)) {
-            $rs = $this->getResult($cmd, $this->getPerPage(), ($this->getCurrPage() - 1) * $this->getPerPage(), $params);
+            $rs = $this->getResult($cmd, $this->getCurrPage(), $this->getPerPage(), $params);
         } else {
             $rs = $cmd;
         }
@@ -51,9 +51,9 @@ class Pager
         return $this->data_provider['ct']->getOne($count_sql, $params);
     }
 
-    public function getResult($select_sql, $per_page, $offset, $params = array())
+    public function getResult($select_sql, $page, $num, $params = array())
     {
-        return $this->data_provider['select']->selectLimit($select_sql, $per_page, $offset, $params);
+        return $this->data_provider['select']->getLimit($select_sql, $page, $num, $params);
     }
 
     public function getTotalCount()
@@ -111,26 +111,31 @@ class Pager
         $this->total_page = $total_page;
     }
 
+    //Is first page
     public function hasFirstPage()
     {
         return $this->getCurrPage() != 1;
     }
 
+    //Is last page
     public function hasLastPage()
     {
         return $this->getCurrPage() != $this->getTotalPage();
     }
 
+    //Is pre page
     public function hasPrePage()
     {
         return $this->getCurrPage() > 1;
     }
 
+    //Is next page
     public function hasNextPage()
     {
         return $this->getCurrPage() < $this->getTotalPage();
     }
 
+    //
     public function getNearerPages()
     {
         $min_page = $this->getNearerPage() > $this->getTotalPage() ? 1 : max(1, $this->getCurrPage() - ceil($this->getNearerPage() / 2));

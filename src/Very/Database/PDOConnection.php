@@ -222,17 +222,18 @@ class PDOConnection
      * Get limit reulst
      *
      * @param       $sql
-     * @param       $limit
-     * @param int   $limit_from
+     * @param       $page
+     * @param int   $num
      * @param array $params
      *
      * @return array
      */
-    public function selectLimit($sql, $limit, $limit_from = 0, $params = array())
+    public function getLimit($sql, $page, $num = 0, $params = array())
     {
+        $num = (int)$num;
         $sql .= ' limit :limit_from,:limit';
-
-        return $this->getAll($sql, array_merge($params, array('limit' => (int)$limit, 'limit_from' => (int)$limit_from)));
+        $ret = $this->getAll($sql, array_merge($params, array('limit' => $num + 1, 'limit_from' => ($page - 1) * $num)));
+        return $ret;
     }
 
     /**
@@ -247,8 +248,8 @@ class PDOConnection
      */
     public function getPager($sql, $page, $num = 0, $params = array())
     {
-        $sql .= ' limit :limit_from,:limit';
-        $ret   = $this->getAll($sql, array_merge($params, array('limit' => (int)$num + 1, 'limit_from' => ($page - 1) * (int)$num)));
+        $num   = $num + 1;
+        $ret   = $this->getLimit($sql, $page, $num, $params);
         $count = count($ret);
         $count > $num && array_pop($ret);
 
@@ -343,6 +344,7 @@ class PDOConnection
 
     /**
      * Execute sql
+     *
      * @param       $sql
      * @param array $params
      *
