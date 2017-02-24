@@ -8,6 +8,7 @@
 namespace Very\Database;
 
 use PDO;
+use Closure;
 use Exception;
 use PDOException;
 use LogicException;
@@ -37,28 +38,10 @@ class PDOConnection
     protected $fetchMode = PDO::FETCH_ASSOC;
 
     /**
-     * The database connection time
-     * @var int
-     */
-    protected $connectTime = 0;
-
-    /**
      * If lost conntection reconnect
      * @var callable
      */
     protected $reconnector;
-
-    /**
-     * Current sql execute error code
-     * @var string
-     */
-    private $errorCode;
-
-    /**
-     * Current sql execute error info
-     * @var array
-     */
-    private $errorInfo;
 
     /**
      * All of the queries run against the connection.
@@ -73,6 +56,13 @@ class PDOConnection
      * @var bool
      */
     protected $loggingQueries = false;
+
+    /**
+     * Indicates if the connection is in a "dry run".
+     *
+     * @var bool
+     */
+    protected $pretending = false;
 
 
     /**
@@ -91,15 +81,19 @@ class PDOConnection
                     $dsn, $username, $password, $this->options
                 );
             } catch (Exception $e) {
-                $this->pdo = $this->tryAgainIfCausedByLostConnection(
-                    $e, $dsn, $username, $password, $this->options
-                );
+                if ($this->causedByLostConnection($e)) {
+                    $this->pdo = $this->createPdoConnection(
+                        $dsn, $username, $password, $this->options
+                    );
+                } else {
+                    throw $e;
+                }
             }
 
-            $this->connectTime = $this->getElapsedTime($start_time);
+            $connection_time = $this->getElapsedTime($start_time);
             //监控SQL连接效率
-            if ($this->getConnTime()) {
-                mstat()->set(1, 'SQL连接效率', mstat()->formatTime($this->getConnTime()), $dsn);
+            if ($connection_time) {
+                mstat()->set(1, 'SQL连接效率', mstat()->formatTime($connection_time), $dsn);
             }
         } catch (PDOException $e) {
             //监控SQL连接错误
@@ -125,7 +119,7 @@ class PDOConnection
     /**
      * Reconnect to the database.
      *
-     * @return void
+     * @return mixed
      *
      * @throws \LogicException
      */
@@ -180,22 +174,23 @@ class PDOConnection
     }
 
     /**
-     * Handle an exception that occurred during connect execution.
+     * Handle a query exception that occurred during query execution.
      *
-     * @param  \Exception $e
-     * @param  string     $dsn
-     * @param  string     $username
-     * @param  string     $password
-     * @param  array      $options
+     * @param  \Very\Database\QueryException $e
+     * @param  string                        $query
+     * @param  array                         $bindings
+     * @param  \Closure                      $callback
      *
-     * @return \PDO
+     * @return mixed
      *
-     * @throws \Exception
+     * @throws \Very\Database\QueryException
      */
-    protected function tryAgainIfCausedByLostConnection(Exception $e, $dsn, $username, $password, $options)
+    protected function tryAgainIfCausedByLostConnection(QueryException $e, $query, $bindings, Closure $callback)
     {
-        if ($this->causedByLostConnection($e)) {
-            return $this->createPdoConnection($dsn, $username, $password, $options);
+        if ($this->causedByLostConnection($e->getPrevious())) {
+            $this->reconnect();
+
+            return $this->runQueryCallback($query, $bindings, $callback);
         }
 
         throw $e;
@@ -269,7 +264,7 @@ class PDOConnection
      */
     public function getAll($sql, $params = array())
     {
-        $stmt = $this->execute($sql, $params);
+        $stmt = $this->statement($sql, $params);
         return $stmt->fetchAll($this->fetchMode);
     }
 
@@ -284,7 +279,7 @@ class PDOConnection
      */
     public function getOneAll($sql, $params = array(), $column_number = 0)
     {
-        $stmt = $this->execute($sql, $params);
+        $stmt = $this->statement($sql, $params);
         $all  = array();
         while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
             $all[] = $row[$column_number];
@@ -303,7 +298,7 @@ class PDOConnection
      */
     public function getRow($sql, $params = array())
     {
-        $stmt = $this->execute($sql, $params);
+        $stmt = $this->statement($sql, $params);
         return $stmt->fetch($this->fetchMode);
     }
 
@@ -318,7 +313,7 @@ class PDOConnection
      */
     public function getOne($sql, $params = array(), $column_number = 0)
     {
-        $stmt = $this->execute($sql, $params);
+        $stmt = $this->statement($sql, $params);
         return $stmt->fetchColumn($column_number);
     }
 
@@ -343,49 +338,163 @@ class PDOConnection
 
 
     /**
-     * Execute sql
+     * Reconnect to the database if a PDO connection is missing.
      *
-     * @param       $sql
-     * @param array $params
+     * @return void
+     */
+    protected function reconnectIfMissingConnection()
+    {
+        if (is_null($this->pdo)) {
+            $this->reconnect();
+        }
+    }
+
+
+    /**
+     * Run a SQL statement.
+     *
+     * @param  string   $query
+     * @param  array    $bindings
+     * @param  \Closure $callback
+     *
+     * @return mixed
+     *
+     * @throws \Very\Database\QueryException
+     */
+    protected function runQueryCallback($query, $bindings, Closure $callback)
+    {
+        // To execute the statement, we'll simply call the callback, which will actually
+        // run the SQL against the PDO connection. Then we can calculate the time it
+        // took to execute and log the query SQL, bindings and time in our memory.
+        try {
+            $result = $callback($query, $bindings);
+        }
+
+            // If an exception occurs when attempting to run a query, we'll format the error
+            // message to include the bindings with SQL, which will make this exception a
+            // lot more helpful to the developer instead of just the database's errors.
+        catch (Exception $e) {
+            throw new QueryException(
+                $query, $bindings, $e
+            );
+        }
+
+        return $result;
+    }
+
+
+    /**
+     * Handle a query exception.
+     *
+     * @param  \Very\Database\QueryException $e
+     * @param  string                        $query
+     * @param  array                         $bindings
+     * @param  \Closure                      $callback
+     *
+     * @return mixed
+     */
+    protected function handleQueryException($e, $query, $bindings, Closure $callback)
+    {
+        return $this->tryAgainIfCausedByLostConnection(
+            $e, $query, $bindings, $callback
+        );
+    }
+
+
+    /**
+     * Run a SQL statement and log its execution context.
+     *
+     * @param  string   $query
+     * @param  array    $bindings
+     * @param  \Closure $callback
+     *
+     * @return mixed
+     *
+     * @throws \Very\Database\QueryException
+     */
+    protected function run($query, $bindings, Closure $callback)
+    {
+        $this->reconnectIfMissingConnection();
+
+        $start = microtime(true);
+
+        // Here we will run this query. If an exception occurs we'll determine if it was
+        // caused by a connection that has been lost. If that is the cause, we'll try
+        // to re-establish connection and re-run the query with a fresh connection.
+        try {
+            $result = $this->runQueryCallback($query, $bindings, $callback);
+        } catch (QueryException $e) {
+            $result = $this->handleQueryException(
+                $e, $query, $bindings, $callback
+            );
+            logger()->error('SQL Error', [$query, $bindings]);
+            mstat()->set(1, 'BUG错误', 'SQL执行错误', $query, $e->getMessage(), 100);
+        }
+
+        $execute_time = $this->getElapsedTime($start);
+        //监控SQL执行效率
+        if ($execute_time) {
+            mstat()->set(1, 'SQL执行效率', mstat()->formatTime($execute_time), $query);
+        }
+
+        // Once we have run the query we will calculate the time that it took to run and
+        // then log the query, bindings, and execution time so we will report them on
+        // the event that the developer needs them. We'll log time in milliseconds.
+        $this->logQuery(
+            $query, $bindings, $execute_time
+        );
+
+        return $result;
+    }
+
+
+    /**
+     * Determine if the connection in a "dry run".
+     *
+     * @return bool
+     */
+    public function pretending()
+    {
+        return $this->pretending === true;
+    }
+
+
+    /**
+     * Execute an SQL statement and return the boolean result.
+     *
+     * @param  string $query
+     * @param  array  $bindings
      *
      * @return \PDOStatement
      */
-    public function execute($sql, $params = array())
+    public function statement($query, $bindings = [])
     {
-        for ($i = 0; $i < 2; ++$i) {
-            $start_time = microtime(true);
-            $stmt       = $this->getPdo()->prepare($sql);
-            $this->bindValues($stmt, $params);
-            $stmt->execute();
-            $this->errorCode = $stmt->errorCode();
-            $this->errorInfo = $stmt->errorInfo();
-
-            //在常驻进程中，DB连接会丢失，但是并不会抛出异常，因此需要判断错误的值为2006就需要重新连接DB，然后再次执行query
-            if ($this->errorCode != '00000' && $this->errorInfo[1] == 2006) {
-                $this->reconnect();
-                continue;
+        return $this->run($query, $bindings, function ($query, $bindings) {
+            if ($this->pretending()) {
+                return true;
             }
 
-            $execute_time = $this->getElapsedTime($start_time);
+            $statement = $this->getPdo()->prepare($query);
 
-            $this->logQuery(
-                $sql, $params, $execute_time, $this->errorInfo
-            );
+            $this->bindValues($statement, $bindings);
 
-            //监控SQL错误
-            if ($this->errorCode != '00000') {
-                logger()->error('SQL Error', [$sql, $params, $execute_time]);
-                mstat()->set(1, 'BUG错误', 'SQL执行错误', $sql, json_encode($this->getErrorInfo()), 100);
-            }
+            $statement->execute();
+            return $statement;
+        });
+    }
 
-            //监控SQL执行效率
-            if ($execute_time) {
-                mstat()->set(1, 'SQL执行效率', mstat()->formatTime($execute_time), $sql);
-            }
-            break;
-        }
-
-        return $stmt;
+    /**
+     * Run an SQL statement and get the number of rows affected.
+     *
+     * @param  string $query
+     * @param  array  $bindings
+     *
+     * @return int
+     */
+    public function affectingStatement($query, $bindings = [])
+    {
+        $statement = $this->statement($query, $bindings);
+        return $statement->rowCount();
     }
 
     /**
@@ -394,14 +503,13 @@ class PDOConnection
      * @param  string     $query
      * @param  array      $bindings
      * @param  float|null $time
-     * @param  array      $info
      *
      * @return void
      */
-    public function logQuery($query, $bindings, $time = null, $info)
+    public function logQuery($query, $bindings, $time = null)
     {
         if ($this->loggingQueries) {
-            $this->queryLog[] = compact('query', 'bindings', 'time', 'info');
+            $this->queryLog[] = compact('query', 'bindings', 'time');
         }
     }
 
@@ -458,87 +566,59 @@ class PDOConnection
     /**
      * Get the elapsed time since a given starting point.
      *
-     * @param  float $start_time
+     * @param  float $start
      *
      * @return float
      */
-    protected function getElapsedTime($start_time)
+    protected function getElapsedTime($start)
     {
-        return number_format(microtime(true) - $start_time, 6);
+        return round((microtime(true) - $start) * 1000, 3);
     }
 
-    public function update($table, $where, $params = array(), $where_field = array())
+    public function update($table, $where, $bindings = array(), $where_field = array())
     {
-        if (strpos($where, '=') < 1 || !$params) {
+        if (strpos($where, '=') < 1 || !$bindings) {
             return false;
         }
 
         $sets = array();
-        foreach ($params as $k => $v) {
+        foreach ($bindings as $k => $v) {
             if (!in_array($k, $where_field)) {
                 $sets[] = ' `' . $k . '` =:' . $k;
             }
         }
 
-        $set = implode(',', $sets);
-        $sql = "update {$table} set $set where $where";
-
-        $ret = $this->execute($sql, $params);
-
-        if ($ret->errorCode() != '00000') {
-            return false;
-        }
-
-        return $ret;
+        $set   = implode(',', $sets);
+        $query = "update {$table} set $set where $where";
+        return $this->affectingStatement($query, $bindings);
     }
 
-    public function insert($table, $params = array())
+    public function insert($table, $bindings = array())
     {
-        if (!$params) {
+        if (!$bindings) {
             return false;
         }
 
-        $keys         = array_keys($params);
+        $keys         = array_keys($bindings);
         $fileds       = '`' . implode('`,`', $keys) . '`';
         $filed_values = ':' . implode(',:', $keys);
 
-        $sql = "insert into {$table}($fileds) values($filed_values)";
-        $ret = $this->execute($sql, $params);
-        if ($ret->rowCount()) {
+        $query     = "insert into {$table}($fileds) values($filed_values)";
+        $row_count = $this->affectingStatement($query, $bindings);
+        if ($row_count) {
             return $this->getPdo()->lastInsertId();
         } else {
             return false;
         }
     }
 
-    public function delete($table, $where, $params)
+    public function delete($table, $where, $bindings)
     {
-        if (!$params) {
+        if (!$bindings) {
             return false;
         }
 
-        $sql = "delete from {$table} where $where";
-        $ret = $this->execute($sql, $params);
-
-        if ($ret->errorCode() != '00000') {
-            return false;
-        }
-
-        return $ret;
-    }
-
-    public function getConnTime()
-    {
-        return $this->connectTime;
-    }
-
-    public function getErrorCode()
-    {
-        return $this->errorCode;
-    }
-
-    public function getErrorInfo()
-    {
-        return $this->errorInfo;
+        $query = "delete from {$table} where $where";
+        return $this->affectingStatement($query, $bindings);
     }
 }
