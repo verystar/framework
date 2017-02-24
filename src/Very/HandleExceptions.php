@@ -5,6 +5,7 @@ namespace Very;
 use Exception;
 use ErrorException;
 use Very\Contracts\Debug\ExceptionHandler;
+use Very\Exceptions\FatalThrowableError;
 
 class HandleExceptions
 {
@@ -57,10 +58,10 @@ class HandleExceptions
     public function handleError($level, $message, $file = '', $line = 0, $context = [])
     {
         if (error_reporting() & $level) {
-            $e = new ErrorException($message, 0, $level, $file, $line);
-            $this->handleException($e);
+            throw new ErrorException($message, 0, $level, $file, $line);
         }
     }
+
 
     /**
      * Handle an uncaught exception from the application.
@@ -71,6 +72,10 @@ class HandleExceptions
      */
     public function handleException($e)
     {
+        if (! $e instanceof Exception) {
+            $e = new FatalThrowableError($e);
+        }
+
         $this->getExceptionHandler()->report($e);
     }
 
