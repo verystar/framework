@@ -64,7 +64,7 @@ class Handler implements ExceptionHandlerContract
     protected function convertExceptionToResponse(Exception $e)
     {
         $e = FlattenException::create($e);
-        $handler = new SymfonyExceptionHandler(config('app.debug'));
+        $handler = new SymfonyExceptionHandler(DEBUG);
         echo $handler->getHtml($e);
     }
 
