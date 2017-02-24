@@ -11,7 +11,8 @@ class Handler implements ExceptionHandlerContract
     /**
      * Report or log an exception.
      *
-     * @param  \Exception  $e
+     * @param  \Exception $e
+     *
      * @return void
      *
      * @throws \Exception
@@ -19,16 +20,17 @@ class Handler implements ExceptionHandlerContract
     public function report(Exception $e)
     {
         logger()->error('PHP Error', [
-            'file'=>$e->getFile(),
-            'line'=>$e->getLine(),
-            'message'=>$e->getMessage()
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine(),
+            'message' => $e->getMessage()
         ]);
     }
 
     /**
      * Render an exception into a response.
      *
-     * @param  \Exception  $e
+     * @param  \Exception $e
+     * @throws \Exception
      */
     public function render(Exception $e)
     {
@@ -45,6 +47,8 @@ class Handler implements ExceptionHandlerContract
                     echo 0, ':', $e->getMessage();
                     break;
             }
+        } else {
+            throw $e;
         }
     }
 

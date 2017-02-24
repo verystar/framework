@@ -85,9 +85,24 @@ class HandleExceptions
     public function handleShutdown()
     {
         if (!is_null($error = error_get_last()) && $this->isFatal($error['type'])) {
-            $this->handleError($error['type'], $error['message'], $error['file'], $error['line']);
+            $this->handleException($this->fatalExceptionFromError($error, 0));
         }
         $this->getExceptionHandler()->shutdown();
+    }
+
+
+    /**
+     * Create a new fatal exception instance from an error array.
+     *
+     * @param  array  $error
+     * @param  int|null  $traceOffset
+     * @return \Very\Exceptions\FatalErrorException
+     */
+    protected function fatalExceptionFromError(array $error, $traceOffset = null)
+    {
+        return new FatalErrorException(
+            $error['message'], $error['type'], 0, $error['file'], $error['line'], $traceOffset
+        );
     }
 
     /**
