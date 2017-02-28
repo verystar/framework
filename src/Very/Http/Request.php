@@ -8,17 +8,12 @@ namespace Very\Http;
  * Date: 15/2/16 下午5:29.
  */
 use Very\Support\Str;
+use Very\Support\Traits\Singleton;
 
 class Request
 {
     protected $params = [];
-
-    public static function getInstance()
-    {
-        static $_instance = null;
-
-        return $_instance ?: $_instance = new self();
-    }
+    use Singleton;
 
     private function fetchArray($array, $index = '', $default = null)
     {
@@ -99,8 +94,7 @@ class Request
 
     public function isRequest($method)
     {
-        $request_method = $_SERVER['REQUEST_METHOD'];
-        if ($request_method == $method) {
+        if ($this->server('REQUEST_METHOD') == $method) {
             return true;
         }
 
@@ -134,7 +128,7 @@ class Request
 
     public function isAjax()
     {
-        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
+        return $this->server('HTTP_X_REQUESTED_WITH') === 'XMLHttpRequest';
     }
 
     public function server($index = '', $default = '')
@@ -161,7 +155,7 @@ class Request
     public function isSecure()
     {
         $https = $this->server('HTTPS');
-        return !empty($https) && 'off' !== strtolower($https);
+        return !empty($https) && 'off' !== strtolower($https) || (int)$this->server('SERVER_PORT') === 443;
     }
 
     /**

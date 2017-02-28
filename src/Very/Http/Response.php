@@ -7,6 +7,9 @@ namespace Very\Http;
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/16 下午5:29.
  */
+
+use Very\Support\Traits\Singleton;
+
 class Response
 {
     const JSON = 'application/json';
@@ -17,6 +20,7 @@ class Response
     protected $version = '1.0';
     protected $headers;
 
+    use Singleton;
     /**
      * Status codes translation table.
      *
@@ -91,13 +95,6 @@ class Response
         510 => 'Not Extended',                                                // RFC2774
         511 => 'Network Authentication Required',                             // RFC6585
     );
-
-    public static function getInstance()
-    {
-        static $_instance = null;
-
-        return $_instance ?: $_instance = new self();
-    }
 
     /**
      * Is response invalid?

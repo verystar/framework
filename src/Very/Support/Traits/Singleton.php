@@ -1,5 +1,5 @@
 <?php
-namespace Very\Traits;
+namespace Very\Support\Traits;
 
 /**
  * Created by PhpStorm.
