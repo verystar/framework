@@ -575,12 +575,8 @@ class PDOConnection
         return round((microtime(true) - $start) * 1000, 3);
     }
 
-    public function update($table, $where, $bindings = array(), $where_field = array())
+    public function update($table, $where, $bindings = [], $where_field = [])
     {
-        if (strpos($where, '=') < 1 || !$bindings) {
-            return false;
-        }
-
         $sets = array();
         foreach ($bindings as $k => $v) {
             if (!in_array($k, $where_field)) {
@@ -593,7 +589,7 @@ class PDOConnection
         return $this->affectingStatement($query, $bindings);
     }
 
-    public function insert($table, $bindings = array())
+    public function insert($table, $bindings = [])
     {
         if (!$bindings) {
             return false;
