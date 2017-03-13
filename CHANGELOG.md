@@ -1,4 +1,8 @@
 # Release Notes
+## v2.7.* (2017-03-13)
+- PDO ATTR_ERRMODE change to ERRMODE_EXCEPTION
+- add symfony/debug
+
 ## v2.6.* (2017-02-20)
 
 - Support Middleware
