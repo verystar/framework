@@ -494,6 +494,24 @@ if (!function_exists('array_get')) {
     }
 }
 
+
+if (! function_exists('array_set')) {
+    /**
+     * Set an array item to a given value using "dot" notation.
+     *
+     * If no key is given to the method, the entire array will be replaced.
+     *
+     * @param  array   $array
+     * @param  string  $key
+     * @param  mixed   $value
+     * @return array
+     */
+    function array_set(&$array, $key, $value)
+    {
+        return Arr::set($array, $key, $value);
+    }
+}
+
 if (!function_exists('array_has')) {
     /**
      * Check if an item or items exist in an array using "dot" notation.
@@ -506,6 +524,20 @@ if (!function_exists('array_has')) {
     function array_has($array, $keys)
     {
         return Arr::has($array, $keys);
+    }
+}
+
+if (! function_exists('array_forget')) {
+    /**
+     * Remove one or many array items from a given array using "dot" notation.
+     *
+     * @param  array  $array
+     * @param  array|string  $keys
+     * @return void
+     */
+    function array_forget(&$array, $keys)
+    {
+        return Arr::forget($array, $keys);
     }
 }
 
