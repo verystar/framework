@@ -42,9 +42,10 @@ class MysqlConnection extends PDOConnection
             return $connection;
         }
 
-        $connection->prepare(
+        //Don't use prepare because ali cloud does not support
+        $connection->exec(
             "set names '{$config['charset']}'" . $this->getCollation($config)
-        )->execute();
+        );
     }
 
     /**
@@ -58,7 +59,7 @@ class MysqlConnection extends PDOConnection
     protected function configureTimezone($connection, array $config)
     {
         if (isset($config['timezone'])) {
-            $connection->prepare('set time_zone="' . $config['timezone'] . '"')->execute();
+            $connection->exec('set time_zone="' . $config['timezone'] . '"');
         }
     }
 
@@ -146,9 +147,9 @@ class MysqlConnection extends PDOConnection
             $this->setCustomModes($connection, $config);
         } elseif (isset($config['strict'])) {
             if ($config['strict']) {
-                $connection->prepare($this->strictMode())->execute();
+                $connection->exec($this->strictMode());
             } else {
-                $connection->prepare("set session sql_mode='NO_ENGINE_SUBSTITUTION'")->execute();
+                $connection->exec("set session sql_mode='NO_ENGINE_SUBSTITUTION'");
             }
         }
     }
@@ -166,7 +167,7 @@ class MysqlConnection extends PDOConnection
     {
         $modes = implode(',', $config['modes']);
 
-        $connection->prepare("set session sql_mode='{$modes}'")->execute();
+        $connection->exec("set session sql_mode='{$modes}'");
     }
 
     /**
