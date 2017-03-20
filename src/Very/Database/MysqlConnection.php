@@ -19,10 +19,10 @@ class MysqlConnection extends PDOConnection
         // so we will set a Closure to reconnect from this manager with the name of
         // the connection, which will allow us to reconnect from the connections.
         $this->setReconnector(function ($connection) use ($config) {
-            $this->connect($this->getDsn($config), $config['dbuser'], $config['dbpswd'], $config['options']);
+            $this->connect($this->getDsn($config), $config['username'], $config['password'], $config['options']);
         });
 
-        $this->connect($this->getDsn($config), $config['dbuser'], $config['dbpswd'], $config['options']);
+        $this->connect($this->getDsn($config), $config['username'], $config['password'], $config['options']);
         $this->configureEncoding($this->getPdo(), $config);
         $this->configureTimezone($this->getPdo(), $config);
         $this->setModes($this->getPdo(), $config);
@@ -125,9 +125,9 @@ class MysqlConnection extends PDOConnection
      */
     protected function getHostDsn(array $config)
     {
-        $dns = 'mysql:host=' . $config['dbhost'] . ';dbname=' . $config['dbname'];
-        if (isset($config['dbport']) && !empty($config['dbport'])) {
-            $dns .= ';port=' . $config['dbport'];
+        $dns = 'mysql:host=' . $config['host'] . ';dbname=' . $config['database'];
+        if (isset($config['port']) && !empty($config['port'])) {
+            $dns .= ';port=' . $config['port'];
         }
         return $dns;
     }
