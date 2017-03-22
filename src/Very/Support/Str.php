@@ -185,6 +185,18 @@ class Str
         return (bool)preg_match('#^' . $pattern . '\z#u', $value);
     }
 
+
+    /**
+     * Convert a string to kebab case.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public static function kebab($value)
+    {
+        return static::snake($value, '-');
+    }
+
     /**
      * Return the length of the given string.
      *

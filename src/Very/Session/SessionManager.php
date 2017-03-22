@@ -7,16 +7,16 @@ use Very\Support\Arr;
 class SessionManager
 {
     /**
-     * 判断是否启用session_start的标志符.
+     * Session store started status.
      *
      * @var bool
      */
-    private $is_start = false;
+    private $started = false;
 
     private $default_options = array(
         'session_save_path' => '',
-        'session_type'      => 'file', //支持memcache,file,mysql
-        'session_lefttime'  => 3600, //默认1小时
+        'session_type'      => 'file', //memcache,file,mysql
+        'session_lefttime'  => 3600, //1 hour
         'session_name'      => 'php_session',
     );
 
@@ -25,44 +25,53 @@ class SessionManager
         $options = array_merge($this->default_options, $options);
 
         if ($options['session_name']) {
-            //设置session_name
             session_name($options['session_name']);
         }
 
         if ($options['session_lefttime']) {
-            //设置最大生存时间
             $this->setLifeTime($options['session_lefttime']);
         }
 
         if ($options['session_type'] === 'file' && is_dir($options['session_save_path'])) {
-            //存储路径
             session_save_path($options['session_save_path']);
         }
 
         if ($options['session_type'] == 'memcache') {
             ini_set('session.save_handler', 'memcache');
-            ini_set('session.save_path', 'tcp://127.0.0.1:11211?timeout=' . $options['session_lefttime']);
-            //pecl libmemcached扩展使用
-            //ini_set("session.save_handler", "memcache");
-            //ini_set("session.save_path", "127.0.0.1:11211");
-            //使用多个 memcached server 时用逗号","隔开，并且和 Memcache::addServer() 文档中说明的一样，可以带额外的参数"persistent"、"weight"、"timeout"、"retry_interval" 等等，类似这样的："tcp://host1:port1?persistent=1&weight=2,tcp://host2:port2"
+            $host = $options['host'] ? $options['host'] : '127.0.0.1';
+            $port = $options['port'] ? $options['port'] : 11211;
+            ini_set('session.save_path', 'tcp://' . $host . ':' . $port . '?timeout=' . $options['session_lefttime']);
         }
     }
 
     public function setLifeTime($session_lefttime)
     {
-        //设置最大生存时间
         ini_set('session.gc_maxlifetime', $session_lefttime);
         session_cache_expire($session_lefttime);
     }
 
+
     /**
-     * 获取Session值
+     * Checks if an a key is present and not null.
      *
-     * @param string $key     需要获取的Session名
-     * @param mixed  $default 当不存在需要获取的Session值时的默认值
+     * @param  string|array $key
      *
-     * @return mixed 返回的Session值
+     * @return bool
+     */
+    public function has($key)
+    {
+        return !collect(is_array($key) ? $key : func_get_args())->contains(function ($key) {
+            return is_null($this->get($key));
+        });
+    }
+
+    /**
+     * Get an item from the session.
+     *
+     * @param string $key
+     * @param mixed  $default
+     *
+     * @return mixed
      */
     public function get($key = null, $default = null)
     {
@@ -76,9 +85,9 @@ class SessionManager
     }
 
     /**
-     * 返回所有Session数据.
+     * Get all item from the session.
      *
-     * @return array 返回的所有Session数据
+     * @return array
      */
     public function getAll()
     {
@@ -105,10 +114,10 @@ class SessionManager
     }
 
     /**
-     * 设置Session值
+     * Set an item from the session.
      *
-     * @param string $key   需要设置的Session名
-     * @param mixed  $value 需要设置的Session值
+     * @param string $key
+     * @param mixed  $value
      */
     public function set($key, $value)
     {
@@ -117,59 +126,81 @@ class SessionManager
     }
 
     /**
-     * 删除某Session值，del()方法的别名.
+     * Remove one or many items from the session.
      *
-     * @see del
+     * @param  string $keys
+     *
+     * @return void
      */
-    public function delete($key)
+    public function delete($keys)
     {
         $this->start();
-        unset($_SESSION[$key]);
+        Arr::forget($_SESSION, $keys);
     }
 
     /**
-     * 销毁所有Session数据.
+     *  Destroy session.
+     * @return void
      */
     public function destroy()
     {
         $this->start();
-        $this->is_start = false;
-        $_SESSION       = array();
+        $this->started = false;
+        $_SESSION      = array();
         session_destroy();
     }
 
     /**
-     * @param null $id
+     * Get session id
      *
      * @return string
      */
-    public function session_id($id = null)
+    public function getId()
     {
-        if ($id === null) {
-            $this->start();
-
-            return session_id();
-        } else {
-            $this->close();
-            session_id($id);
-        }
+        $this->start();
+        return session_id();
     }
 
     /**
-     * 启动Session.
+     * Set session id
+     *
+     * @param null $id
+     *
+     * @return void
+     */
+    public function setId($id = null)
+    {
+        $this->close();
+        session_id($id);
+    }
+
+    /**
+     * Started session.
      */
     public function start()
     {
-        if (!$this->is_start) {
-            session_start();
-            $this->is_start = true;
+        if (!$this->started) {
+            if (!is_cli()) {
+                session_start();
+            };
+            $this->started = true;
         }
     }
 
     public function close()
     {
         session_write_close();
-        $this->is_start = false;
+        $this->started = false;
+    }
+
+    /**
+     * Determine if the session has been started.
+     *
+     * @return bool
+     */
+    public function isStarted()
+    {
+        return $this->started;
     }
 
     public function __destruct()

@@ -36,7 +36,7 @@ https://github.com/verystar/very
 ## 测试
 
 ```
-phpunit --bootstrap tests/bootstrap.php tests
+ ./vendor/bin/phpunit
 ```
 
 > 目前测试文档还没有来得及编写，欢迎补充测试文档

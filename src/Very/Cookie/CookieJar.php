@@ -11,7 +11,7 @@ use Very\Support\Arr;
 class CookieJar
 {
     /**
-     * 存储Cookie的命名前缀
+     * cookie prefix
      *
      * @var string
      */
@@ -21,12 +21,11 @@ class CookieJar
     public function setPrefix($prefix = '')
     {
         $this->prefix = $prefix;
-
         return $this;
     }
 
     /**
-     * 全局控制domain.
+     * Set domain.
      *
      * @param $domain
      *
@@ -35,17 +34,16 @@ class CookieJar
     public function setDomain($domain)
     {
         $this->domain = $domain;
-
         return $this;
     }
 
     /**
-     * 获取Cookie值
+     * Get cookie
      *
-     * @param string $key     需要获取的Cookie名
-     * @param mixed  $default 当不存在需要获取的Cookie值时的默认值
+     * @param string $key
+     * @param mixed  $default
      *
-     * @return mixed 返回的Cookie值
+     * @return mixed
      */
     public function get($key = null, $default = null)
     {
@@ -58,9 +56,9 @@ class CookieJar
     }
 
     /**
-     * 返回所有Cookie数据.
+     * Get all cookie.
      *
-     * @return array 返回的所有Cookie数据
+     * @return array
      */
     public function getAll()
     {
@@ -68,43 +66,48 @@ class CookieJar
     }
 
     /**
-     * 设置Cookie值
+     * Set cookie
      *
-     * @param string $key    需要设置的Cookie名
-     * @param string $value  需要设置的Cookie值
-     * @param int    $time   时间 秒
-     * @param string $path   路径
-     * @param string $domain 域
+     * @param        $key
+     * @param        $value
+     * @param int    $time
+     * @param string $path
+     * @param null   $domain
+     * @param bool   $secure
+     * @param bool   $httpOnly
      *
      * @return $this
      */
-    public function set($key, $value, $time = 86400, $path = '/', $domain = null)
+    public function set($key, $value, $time = 86400, $path = '/', $domain = null, $secure = false, $httpOnly = true)
     {
         if ($domain === null) {
             $domain = $this->domain;
         }
         $key = $this->prefix . $key;
-        setcookie($key, $value, time() + $time, $path, $domain);
-        //立即生效
+        if (!is_cli()) {
+            setcookie($key, $value, time() + $time, $path, $domain, $secure, $httpOnly);
+        }
         $_COOKIE[$key] = $value;
 
         return $this;
     }
 
     /**
-     * 删除某Cookie值
+     * Remove cookie
      *
-     * @param string $key    需要设置的Cookie名
-     * @param int    $time   时间 秒
-     * @param string $path   路径
-     * @param string $domain 域
+     * @param        $key
+     * @param string $path
+     * @param null   $domain
      */
-    public function delete($key, $time = 86400, $path = '/', $domain = null)
+    public function delete($key, $path = '/', $domain = null)
     {
         if ($domain === null) {
             $domain = $this->domain;
         }
         $key = $this->prefix . $key;
-        setcookie($key, null, time() - $time, $path, $domain);
+        if (!is_cli()) {
+            setcookie($key, null, -2628000, $path, $domain);
+        }
+        unset($_COOKIE[$key]);
     }
 }

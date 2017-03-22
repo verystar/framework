@@ -7,20 +7,31 @@
 
 namespace Very\Hashing;
 
+use RuntimeException;
+
 class Password
 {
     /**
      * 生成密码
      *
-     * @param       $password
-     * @param int   $algo
+     * @param       $value
      * @param array $options
      *
-     * @return bool|string
+     * @return string
+     *
+     * @throws \RuntimeException
      */
-    public static function make($password, $algo = PASSWORD_DEFAULT, array $options = array())
+    public static function make($value, array $options = array())
     {
-        return password_hash($password, $algo, $options);
+        $cost = isset($options['rounds']) ? $options['rounds'] : 10;
+
+        $hash = password_hash($value, PASSWORD_BCRYPT, ['cost' => $cost]);
+
+        if ($hash === false) {
+            throw new RuntimeException('Bcrypt hashing not supported.');
+        }
+
+        return $hash;
     }
 
     /**
@@ -39,14 +50,15 @@ class Password
      * 检测新的散列算法.
      *
      * @param       $hash
-     * @param int   $algo
      * @param array $options
      *
      * @return string
      */
-    public static function rehash($hash, $algo = PASSWORD_DEFAULT, array $options = array())
+    public static function rehash($hash, array $options = array())
     {
-        return password_needs_rehash($hash, $algo, $options);
+        return password_needs_rehash($hash, PASSWORD_BCRYPT, [
+            'cost' => isset($options['rounds']) ? $options['rounds'] : 10,
+        ]);
     }
 
     /**
