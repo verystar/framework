@@ -8,12 +8,6 @@
       "email": "caixudong@verystar.cn"
     }
   ],
-  "repositories": [
-    {
-      "type": "git",
-      "url": "git@git.verystar.cn:very/framework.git"
-    }
-  ],
   "require": {
     "php": ">=5.6.4",
     "ext-mbstring": "*",
