@@ -1,7 +1,8 @@
 /vendor
-/.idea/
+/.idea
 composer.phar
 composer.lock
 .DS_Store
 .php_cs.cache
 Thumbs.db
+/phpunit.xml
