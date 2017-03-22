@@ -13,7 +13,8 @@
     "ext-mbstring": "*",
     "ext-mcrypt": "*",
     "symfony/debug": "~3.2",
-    "monolog/monolog": "~1.17"
+    "monolog/monolog": "~1.17",
+    "paragonie/random_compat": "~1.4|~2.0"
   },
   "require-dev": {
     "mockery/mockery": "~0.9.4",
