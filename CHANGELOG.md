@@ -1,4 +1,9 @@
 # Release Notes
+
+## v2.8.* (2017-03-22)
+- fix PDO prepare set names not support aliyun DRDS
+- pecification database config 
+
 ## v2.7.* (2017-03-13)
 - PDO ATTR_ERRMODE change to ERRMODE_EXCEPTION
 - add symfony/debug
