@@ -1,3 +1,10 @@
+<p align="center"><a href="http://verystar.cn" target="_blank"><img src="https://static.verystar.cn/s/logo.png"></a></p>
+<p align="center">
+<a href="https://packagist.org/packages/very/framework"><img src="https://poser.pugx.org/very/framework/d/total.svg" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/very/framework"><img src="https://poser.pugx.org/very/framework/v/stable.svg" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/very/framework"><img src="https://poser.pugx.org/very/framework/license.svg" alt="License"></a>
+</p>
+
 # The Verystar php framework
 
 ## 说明
@@ -32,3 +39,12 @@ phpunit --bootstrap tests/bootstrap.php tests
 ```
 
 > 目前测试文档还没有来得及编写，欢迎补充测试文档
+
+## 感谢
+
+- [Laravel](https://github.com/laravel/framework)
+- [symfony](https://github.com/symfony/symfony)
+- [monolog](https://github.com/Seldaek/monolog)
+
+## License
+The Very framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
