@@ -1,4 +1,7 @@
 <?php
+/**
+ * auther https://github.com/webpatser/laravel-uuid
+ */
 
 namespace Very\Hashing;
 
