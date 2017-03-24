@@ -243,8 +243,7 @@ class PDOConnection
      */
     public function getPager($sql, $page, $num = 0, $params = array())
     {
-        $num   = $num + 1;
-        $ret   = $this->getLimit($sql, $page, $num, $params);
+        $ret   = $this->getLimit($sql, $page, $num + 1, $params);
         $count = count($ret);
         $count > $num && array_pop($ret);
 
