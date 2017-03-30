@@ -571,7 +571,7 @@ class PDOConnection
      */
     protected function getElapsedTime($start)
     {
-        return round((microtime(true) - $start) * 1000, 3);
+        return round(microtime(true) - $start, 6);
     }
 
     public function update($table, $where, $bindings = [], $where_field = [])
