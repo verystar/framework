@@ -337,23 +337,23 @@ if (!function_exists('base32_encode')) {
         $index            = 0;
 
         while ($index < strlen($input)) {
-            $stored_data <<= 8;
-            $stored_data += ord($input[$index]);
+            $stored_data      <<= 8;
+            $stored_data      += ord($input[$index]);
             $stored_bit_count += 8;
-            $index += 1;
+            $index            += 1;
 
             //take as much data as possible out of storedData
             while ($stored_bit_count >= 5) {
                 $stored_bit_count -= 5;
-                $output .= $base32_alphabet[$stored_data >> $stored_bit_count];
-                $stored_data &= ((1 << $stored_bit_count) - 1);
+                $output           .= $base32_alphabet[$stored_data >> $stored_bit_count];
+                $stored_data      &= ((1 << $stored_bit_count) - 1);
             }
         } //while
 
         //deal with leftover data
         if ($stored_bit_count > 0) {
             $stored_data <<= (5 - $stored_bit_count);
-            $output .= $base32_alphabet[$stored_data];
+            $output      .= $base32_alphabet[$stored_data];
         }
 
         return $output;
@@ -399,9 +399,9 @@ if (!function_exists('base32_decode')) {
 
             $vbits += 5;
             while ($vbits >= 8) {
-                $vbits -= 8;
+                $vbits  -= 8;
                 $output .= chr($v >> $vbits);
-                $v &= ((1 << $vbits) - 1);
+                $v      &= ((1 << $vbits) - 1);
             }
         }
 
@@ -446,7 +446,7 @@ if (!function_exists('encrypt')) {
         $keylen = strlen($key);
         $strlen = strlen($string);
         for ($i = 0; $i < $strlen; ++$i) {
-            $k = $i % $keylen;
+            $k    = $i % $keylen;
             $code .= $string[$i] ^ $key[$k];
         }
 
@@ -471,7 +471,7 @@ if (!function_exists('decrypt')) {
         $keylen = strlen($key);
         $strlen = strlen($string);
         for ($i = 0; $i < $strlen; ++$i) {
-            $k = $i % $keylen;
+            $k    = $i % $keylen;
             $code .= $string[$i] ^ $key[$k];
         }
 
@@ -496,15 +496,16 @@ if (!function_exists('array_get')) {
 }
 
 
-if (! function_exists('array_set')) {
+if (!function_exists('array_set')) {
     /**
      * Set an array item to a given value using "dot" notation.
      *
      * If no key is given to the method, the entire array will be replaced.
      *
-     * @param  array   $array
-     * @param  string  $key
-     * @param  mixed   $value
+     * @param  array  $array
+     * @param  string $key
+     * @param  mixed  $value
+     *
      * @return array
      */
     function array_set(&$array, $key, $value)
@@ -528,12 +529,13 @@ if (!function_exists('array_has')) {
     }
 }
 
-if (! function_exists('array_forget')) {
+if (!function_exists('array_forget')) {
     /**
      * Remove one or many array items from a given array using "dot" notation.
      *
-     * @param  array  $array
-     * @param  array|string  $keys
+     * @param  array        $array
+     * @param  array|string $keys
+     *
      * @return void
      */
     function array_forget(&$array, $keys)
@@ -556,11 +558,12 @@ if (!function_exists('value')) {
     }
 }
 
-if (! function_exists('collect')) {
+if (!function_exists('collect')) {
     /**
      * Create a collection from the given value.
      *
-     * @param  mixed  $value
+     * @param  mixed $value
+     *
      * @return \Very\Support\Collection
      */
     function collect($value = null)
@@ -569,11 +572,12 @@ if (! function_exists('collect')) {
     }
 }
 
-if (! function_exists('array_wrap')) {
+if (!function_exists('array_wrap')) {
     /**
      * If the given value is not an array, wrap it in one.
      *
-     * @param  mixed  $value
+     * @param  mixed $value
+     *
      * @return array
      */
     function array_wrap($value)
@@ -582,13 +586,14 @@ if (! function_exists('array_wrap')) {
     }
 }
 
-if (! function_exists('data_get')) {
+if (!function_exists('data_get')) {
     /**
      * Get an item from an array or object using "dot" notation.
      *
-     * @param  mixed   $target
-     * @param  string|array  $key
-     * @param  mixed   $default
+     * @param  mixed        $target
+     * @param  string|array $key
+     * @param  mixed        $default
+     *
      * @return mixed
      */
     function data_get($target, $key, $default = null)
@@ -599,11 +604,11 @@ if (! function_exists('data_get')) {
 
         $key = is_array($key) ? $key : explode('.', $key);
 
-        while (! is_null($segment = array_shift($key))) {
+        while (!is_null($segment = array_shift($key))) {
             if ($segment === '*') {
                 if ($target instanceof Collection) {
                     $target = $target->all();
-                } elseif (! is_array($target)) {
+                } elseif (!is_array($target)) {
                     return value($default);
                 }
 
@@ -625,14 +630,15 @@ if (! function_exists('data_get')) {
     }
 }
 
-if (! function_exists('data_set')) {
+if (!function_exists('data_set')) {
     /**
      * Set an item on an array or object using dot notation.
      *
-     * @param  mixed  $target
-     * @param  string|array  $key
-     * @param  mixed  $value
-     * @param  bool  $overwrite
+     * @param  mixed        $target
+     * @param  string|array $key
+     * @param  mixed        $value
+     * @param  bool         $overwrite
+     *
      * @return mixed
      */
     function data_set(&$target, $key, $value, $overwrite = true)
@@ -640,7 +646,7 @@ if (! function_exists('data_set')) {
         $segments = is_array($key) ? $key : explode('.', $key);
 
         if (($segment = array_shift($segments)) === '*') {
-            if (! Arr::accessible($target)) {
+            if (!Arr::accessible($target)) {
                 $target = [];
             }
 
@@ -655,22 +661,22 @@ if (! function_exists('data_set')) {
             }
         } elseif (Arr::accessible($target)) {
             if ($segments) {
-                if (! Arr::exists($target, $segment)) {
+                if (!Arr::exists($target, $segment)) {
                     $target[$segment] = [];
                 }
 
                 data_set($target[$segment], $segments, $value, $overwrite);
-            } elseif ($overwrite || ! Arr::exists($target, $segment)) {
+            } elseif ($overwrite || !Arr::exists($target, $segment)) {
                 $target[$segment] = $value;
             }
         } elseif (is_object($target)) {
             if ($segments) {
-                if (! isset($target->{$segment})) {
+                if (!isset($target->{$segment})) {
                     $target->{$segment} = [];
                 }
 
                 data_set($target->{$segment}, $segments, $value, $overwrite);
-            } elseif ($overwrite || ! isset($target->{$segment})) {
+            } elseif ($overwrite || !isset($target->{$segment})) {
                 $target->{$segment} = $value;
             }
         } else {
@@ -790,17 +796,20 @@ if (!function_exists('app')) {
     /**
      * Get the available container instance.
      *
-     * @param  string $make
+     * @param  string $abstract
+     * @param  array  $parameters
      *
      * @return mixed|\Very\Application
      */
-    function app($make = null)
+    function app($abstract = null, array $parameters = [])
     {
-        if (is_null($make)) {
+        if (is_null($abstract)) {
             return \Very\Application::getInstance();
         }
 
-        return \Very\Application::getInstance()->make($make);
+        return empty($parameters)
+            ? \Very\Application::getInstance()->make($abstract)
+            : \Very\Application::getInstance()->makeWith($abstract, $parameters);
     }
 }
 
@@ -958,13 +967,14 @@ if (!function_exists('response')) {
     }
 }
 
-if (! function_exists('trans')) {
+if (!function_exists('trans')) {
     /**
      * Translate the given message.
      *
-     * @param  string  $key
-     * @param  array   $replace
-     * @param  string  $locale
+     * @param  string $key
+     * @param  array  $replace
+     * @param  string $locale
+     *
      * @return \Very\Translation\Translator|string
      */
     function trans($key = null, $replace = [], $locale = null)
@@ -1056,13 +1066,14 @@ if (!function_exists('retry')) {
     }
 }
 
-if (! function_exists('object_get')) {
+if (!function_exists('object_get')) {
     /**
      * Get an item from an object using "dot" notation.
      *
-     * @param  object  $object
-     * @param  string  $key
-     * @param  mixed   $default
+     * @param  object $object
+     * @param  string $key
+     * @param  mixed  $default
+     *
      * @return mixed
      */
     function object_get($object, $key, $default = null)
@@ -1072,7 +1083,7 @@ if (! function_exists('object_get')) {
         }
 
         foreach (explode('.', $key) as $segment) {
-            if (! is_object($object) || ! isset($object->{$segment})) {
+            if (!is_object($object) || !isset($object->{$segment})) {
                 return value($default);
             }
 
@@ -1083,12 +1094,13 @@ if (! function_exists('object_get')) {
     }
 }
 
-if (! function_exists('tap')) {
+if (!function_exists('tap')) {
     /**
      * Call the given Closure with the given value then return the value.
      *
-     * @param  mixed  $value
-     * @param  callable  $callback
+     * @param  mixed    $value
+     * @param  callable $callback
+     *
      * @return mixed
      */
     function tap($value, $callback)
@@ -1099,7 +1111,7 @@ if (! function_exists('tap')) {
     }
 }
 
-if (! function_exists('windows_os')) {
+if (!function_exists('windows_os')) {
     /**
      * Determine whether the current environment is Windows based.
      *
@@ -1111,11 +1123,12 @@ if (! function_exists('windows_os')) {
     }
 }
 
-if (! function_exists('with')) {
+if (!function_exists('with')) {
     /**
      * Return the given object. Useful for chaining.
      *
-     * @param  mixed  $object
+     * @param  mixed $object
+     *
      * @return mixed
      */
     function with($object)

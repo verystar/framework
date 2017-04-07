@@ -81,6 +81,13 @@ class Container implements ArrayAccess
     protected $buildStack = [];
 
     /**
+     * The parameter override stack.
+     *
+     * @var array
+     */
+    protected $with = [];
+
+    /**
      * The contextual binding map.
      *
      * @var array
@@ -137,8 +144,7 @@ class Container implements ArrayAccess
     /**
      * Determine if the given abstract type has been bound.
      *
-     * @param  string $abstract
-     *
+     * @param  string  $abstract
      * @return bool
      */
     public function bound($abstract)
@@ -151,8 +157,7 @@ class Container implements ArrayAccess
     /**
      * Determine if the given abstract type has been resolved.
      *
-     * @param  string $abstract
-     *
+     * @param  string  $abstract
      * @return bool
      */
     public function resolved($abstract)
@@ -168,22 +173,20 @@ class Container implements ArrayAccess
     /**
      * Determine if a given type is shared.
      *
-     * @param  string $abstract
-     *
+     * @param  string  $abstract
      * @return bool
      */
     public function isShared($abstract)
     {
         return isset($this->instances[$abstract]) ||
-               (isset($this->bindings[$abstract]['shared']) &&
-                $this->bindings[$abstract]['shared'] === true);
+              (isset($this->bindings[$abstract]['shared']) &&
+               $this->bindings[$abstract]['shared'] === true);
     }
 
     /**
      * Determine if a given string is an alias.
      *
-     * @param  string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     public function isAlias($name)
@@ -562,6 +565,18 @@ class Container implements ArrayAccess
     }
 
     /**
+     * Resolve the given type with the given parameter overrides.
+     *
+     * @param  string  $abstract
+     * @param  array  $parameters
+     * @return mixed
+     */
+    public function makeWith($abstract, array $parameters)
+    {
+        return $this->resolve($abstract, $parameters);
+    }
+
+    /**
      * Resolve the given type from the container.
      *
      * @param  string $abstract
@@ -570,7 +585,21 @@ class Container implements ArrayAccess
      */
     public function make($abstract)
     {
-        $needsContextualBuild = !is_null(
+        return $this->resolve($abstract);
+    }
+
+    /**
+     * Resolve the given type from the container.
+     *
+     * @param  string  $abstract
+     * @param  array  $parameters
+     * @return mixed
+     */
+    protected function resolve($abstract, $parameters = [])
+    {
+        $this->with[] = $parameters;
+
+        $needsContextualBuild = ! empty($parameters) || ! is_null(
             $this->getContextualConcrete($abstract = $this->getAlias($abstract))
         );
 
@@ -608,7 +637,12 @@ class Container implements ArrayAccess
 
         $this->fireResolvingCallbacks($abstract, $object);
 
+        // Before returning, we will also set the resolved flag to "true" and pop off
+        // the parameter overrides for this build. After those two things are done
+        // we will be ready to return back the fully constructed class instance.
         $this->resolved[$abstract] = true;
+
+        array_pop($this->with);
 
         return $object;
     }
@@ -706,7 +740,7 @@ class Container implements ArrayAccess
         // hand back the results of the functions, which allows functions to be
         // used as resolvers for more fine-tuned resolution of these objects.
         if ($concrete instanceof Closure) {
-            return $concrete($this);
+            return $concrete($this, end($this->with));
         }
 
         $reflector = new ReflectionClass($concrete);
@@ -715,7 +749,7 @@ class Container implements ArrayAccess
         // an abstract type such as an Interface of Abstract Class and there is
         // no binding registered for the abstractions so we need to bail out.
         if (!$reflector->isInstantiable()) {
-            $this->notInstantiable($concrete);
+           return $this->notInstantiable($concrete);
         }
 
         $this->buildStack[] = $concrete;
@@ -757,6 +791,15 @@ class Container implements ArrayAccess
         $results = [];
 
         foreach ($dependencies as $dependency) {
+            // If this dependency has a override for this particular build we will use
+            // that instead as the value. Otherwise, we will continue with this run
+            // of resolutions and let reflection attempt to determine the result.
+            if ($this->hasParameterOverride($dependency)) {
+                $results[] = $this->getParameterOverride($dependency);
+
+                continue;
+            }
+
             // If the class is null, it means the dependency is a string or some other
             // primitive type which we can not resolve since it is not a class and
             // we will just bomb out with an error since we have no-where to go.
@@ -766,6 +809,28 @@ class Container implements ArrayAccess
         }
 
         return $results;
+    }
+
+    /**
+     * Determine if the given dependency has a parameter override from makeWith.
+     *
+     * @param  \ReflectionParameter  $dependency
+     * @return bool
+     */
+    protected function hasParameterOverride($dependency)
+    {
+        return array_key_exists($dependency->name, end($this->with));
+    }
+
+    /**
+     * Get a parameter override for a dependency.
+     *
+     * @param  \ReflectionParameter  $dependency
+     * @return mixed
+     */
+    protected function getParameterOverride($dependency)
+    {
+        return end($this->with)[$dependency->name];
     }
 
     /**
@@ -779,7 +844,7 @@ class Container implements ArrayAccess
      */
     protected function resolvePrimitive(ReflectionParameter $parameter)
     {
-        if (!is_null($concrete = $this->getContextualConcrete('$' . $parameter->name))) {
+        if (!is_null($concrete = $this->getContextualConcrete('$'.$parameter->name))) {
             return $concrete instanceof Closure ? $concrete($this) : $concrete;
         }
 
