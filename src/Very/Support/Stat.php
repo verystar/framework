@@ -101,30 +101,26 @@ class Stat
         }
     }
 
-    //插入redis队列
     private function log()
     {
-
         if (!$this->is_stat) {
             return false;
         }
 
-        for ($i = 0; $i < 2; $i++) {
+        try {
+            $redis = $this->redis->multi(\Redis::PIPELINE);
 
-            try {
-                $redis = $this->redis->multi(\Redis::PIPELINE);
-
+            if(is_object($redis)) {
                 foreach ($this->data as $data) {
                     $data = json_encode($data);
                     $redis->rPush('__stat__', $data);
                 }
+
                 $redis->exec();
                 $this->data = [];
-            } catch (Exception $e) {
-                logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
             }
-
-            break;
+        } catch (Exception $e) {
+            logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
         }
     }
 
