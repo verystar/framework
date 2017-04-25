@@ -7,7 +7,7 @@
  * Time: 下午2:38
  */
 
-use RedisException;
+use Exception;
 use Very\Database\Connection;
 use Very\Cache\Redis;
 
@@ -94,7 +94,7 @@ class Stat
             try {
                 $data = json_encode($data);
                 $this->redis->lPush('__stat__', $data);
-            } catch (RedisException $e) {
+            } catch (Exception $e) {
                 logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
             }
             break;
@@ -120,7 +120,7 @@ class Stat
                 }
                 $redis->exec();
                 $this->data = [];
-            } catch (RedisException $e) {
+            } catch (Exception $e) {
                 logger()->error('Fstat redis exec error', ["msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
             }
 
