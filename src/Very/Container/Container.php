@@ -821,7 +821,7 @@ class Container implements ArrayAccess
      */
     protected function hasParameterOverride($dependency)
     {
-        return array_key_exists($dependency->name, end($this->with));
+        return array_key_exists($dependency->name, $this->getLastParameterOverride());
     }
 
     /**
@@ -832,7 +832,17 @@ class Container implements ArrayAccess
      */
     protected function getParameterOverride($dependency)
     {
-        return end($this->with)[$dependency->name];
+        return $this->getLastParameterOverride()[$dependency->name];
+    }
+
+    /**
+     * Get the last parameter override.
+     *
+     * @return array
+     */
+    protected function getLastParameterOverride()
+    {
+        return count($this->with) ? end($this->with) : [];
     }
 
     /**
