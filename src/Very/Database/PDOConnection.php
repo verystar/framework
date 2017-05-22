@@ -170,6 +170,7 @@ class PDOConnection
             'SSL connection has been closed unexpectedly',
             'Error writing data to the connection',
             'Resource deadlock avoided',
+            'Transaction() on null',
         ]);
     }
 
