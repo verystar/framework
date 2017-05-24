@@ -1106,10 +1106,7 @@ class Container implements ArrayAccess
      */
     public function forgetExtenders($abstract)
     {
-        $abstract = $this->getAlias($abstract);
-        if (isset($this->extenders[$abstract])) {
-            unset($this->extenders[$abstract]);
-        }
+        unset($this->extenders[$this->getAlias($abstract)]);
     }
 
     /**
