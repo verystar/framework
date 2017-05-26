@@ -7,7 +7,7 @@ namespace Very;
  * User: 蔡旭东 caixudong@verystar.cn
  * Date: 15/2/13 下午11:32
  */
-use Very\Container\Container;
+use Illuminate\Container\Container;
 use Very\Support\Arr;
 
 class Application extends Container
@@ -36,7 +36,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '2.8.8';
+    const VERSION = '2.9.0';
 
     public function __construct($basePath = null)
     {
@@ -129,7 +129,7 @@ class Application extends Container
     public function registerCoreContainerAliases()
     {
         $aliases = [
-            'app'     => [\Very\Application::class, \Very\Container\Container::class],
+            'app'     => [\Very\Application::class, \Illuminate\Container\Container::class],
             'config'  => [\Very\Config::class],
             'cookie'  => [\Very\Cookie\CookieJar::class],
             'logger'  => [\Very\Logger::class],

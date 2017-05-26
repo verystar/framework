@@ -1,4 +1,6 @@
 # Release Notes
+## v2.9.* (2017-05-25)
+- Directly into the Container from laravel framework
 
 ## v2.8.* (2017-03-22)
 - fix PDO prepare set names not support aliyun DRDS
