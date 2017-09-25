@@ -155,7 +155,7 @@ class Request
     public function isSecure()
     {
         $https = $this->server('HTTPS');
-        return !empty($https) && 'off' !== strtolower($https) || (int)$this->server('SERVER_PORT') === 443;
+        return !empty($https) && 'off' !== strtolower($https) || (int)$this->server('SERVER_PORT') === 443 || $this->server('HTTP_X_FORWARDED_PROTO') === 'https';
     }
 
     /**
