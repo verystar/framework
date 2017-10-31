@@ -70,6 +70,18 @@ class PDOConnection
      */
     protected $pdo;
 
+    protected $forcePrefix = "";
+
+    public function forceMaster()
+    {
+        $this->forcePrefix = "/*TDDL:MASTER*/";
+    }
+
+    public function forceSlave()
+    {
+        $this->forcePrefix = "/*TDDL:SLAVE*/";
+    }
+
     public function connect($dsn, $username, $password, $options = array())
     {
         try {
@@ -477,6 +489,10 @@ class PDOConnection
      */
     public function execute($query, $bindings = [])
     {
+        if (strtolower(substr($query, 0, 6)) === "select" && $this->forcePrefix) {
+            $query .= $this->forcePrefix;
+        }
+
         return $this->run($query, $bindings, function ($query, $bindings) {
             if ($this->pretending()) {
                 return true;
