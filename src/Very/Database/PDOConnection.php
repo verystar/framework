@@ -490,7 +490,7 @@ class PDOConnection
     public function execute($query, $bindings = [])
     {
         if (strtolower(substr($query, 0, 6)) === "select" && $this->forcePrefix) {
-            $query .= $this->forcePrefix;
+            $query = $this->forcePrefix . $query;
         }
 
         return $this->run($query, $bindings, function ($query, $bindings) {
