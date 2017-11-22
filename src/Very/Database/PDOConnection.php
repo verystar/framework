@@ -27,7 +27,7 @@ class PDOConnection
         PDO::ATTR_AUTOCOMMIT        => true,
         PDO::ATTR_ORACLE_NULLS      => PDO::NULL_NATURAL,
         PDO::ATTR_STRINGIFY_FETCHES => false,
-        PDO::ATTR_EMULATE_PREPARES  => false,
+        PDO::ATTR_EMULATE_PREPARES  => true,
     ];
 
     /**
