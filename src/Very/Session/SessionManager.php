@@ -13,12 +13,12 @@ class SessionManager
      */
     private $started = false;
 
-    private $default_options = array(
+    private $default_options = [
         'session_save_path' => '',
         'session_type'      => 'file', //memcache,file,mysql
         'session_lefttime'  => 3600, //1 hour
         'session_name'      => 'php_session',
-    );
+    ];
 
     public function __construct($options = array())
     {
