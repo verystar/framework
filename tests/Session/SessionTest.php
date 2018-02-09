@@ -15,6 +15,7 @@ class SessionTest extends TestCase
 
     public function setUp()
     {
+        ob_clean();
         $this->session = new SessionManager([
             'session_save_path' => '',
             'session_type'      => 'file', //memcache,file,mysql
