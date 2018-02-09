@@ -19,6 +19,7 @@ class SessionTest extends TestCase
             'session_save_path' => '',
             'session_type'      => 'file', //memcache,file,mysql
             'session_lefttime'  => 3600, //1 hour
+            'session_name'      => '',
         ]);
 
         $this->session->put([
