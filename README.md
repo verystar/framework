@@ -17,7 +17,7 @@
 
 ```
 "require": {
-    "very/framework": "2.9.*"
+    "very/framework": "3.0.*"
 }
 ```
 
