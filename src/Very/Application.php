@@ -36,7 +36,7 @@ class Application extends Container
      *
      * @var string
      */
-    const VERSION = '2.9.0';
+    const VERSION = '3.0.0';
 
     public function __construct($basePath = null)
     {
