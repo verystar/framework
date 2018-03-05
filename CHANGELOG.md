@@ -1,4 +1,7 @@
 # Release Notes
+## v3.0.* (2017-05-25)
+- Container upgrade to 5.5
+
 ## v2.9.* (2017-05-25)
 - Directly into the Container from laravel framework
 
