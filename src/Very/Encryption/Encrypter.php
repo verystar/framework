@@ -50,18 +50,34 @@ class Encrypter implements EncrypterContract
         return ($cipher === 'AES-128-CBC' && $length === 16) ||
                ($cipher === 'AES-256-CBC' && $length === 32);
     }
+
+
+    /**
+     * Create a new encryption key for the given cipher.
+     *
+     * @param  string $cipher
+     *
+     * @return string
+     * @throws \Exception
+     */
+    public static function generateKey($cipher)
+    {
+        return random_bytes($cipher == 'AES-128-CBC' ? 16 : 32);
+    }
+
     /**
      * Encrypt the given value.
      *
-     * @param  mixed  $value
+     * @param  mixed $value
      * @param  bool  $serialize
+     *
      * @return string
      *
-     * @throws \Very\Contracts\Encryption\EncryptException
+     * @throws \Exception
      */
     public function encrypt($value, $serialize = true)
     {
-        $iv = random_bytes(16);
+        $iv = random_bytes(openssl_cipher_iv_length($this->cipher));
         // First we will encrypt the value using OpenSSL. After this is encrypted we
         // will proceed to calculating a MAC for the encrypted value so that this
         // value can be verified later as not having been changed by the users.
@@ -77,29 +93,35 @@ class Encrypter implements EncrypterContract
         // authenticity. Then, we'll JSON encode the data in a "payload" array.
         $mac = $this->hash($iv = base64_encode($iv), $value);
         $json = json_encode(compact('iv', 'value', 'mac'));
-        if (! is_string($json)) {
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
             throw new EncryptException('Could not encrypt the data.');
         }
         return base64_encode($json);
     }
+
     /**
      * Encrypt a string without serialization.
      *
-     * @param  string  $value
+     * @param  string $value
+     *
      * @return string
+     * @throws \Exception
      */
     public function encryptString($value)
     {
         return $this->encrypt($value, false);
     }
+
     /**
      * Decrypt the given value.
      *
-     * @param  mixed  $payload
+     * @param  mixed $payload
      * @param  bool  $unserialize
+     *
      * @return string
      *
-     * @throws \Very\Contracts\Encryption\DecryptException
+     * @throws \Exception
      */
     public function decrypt($payload, $unserialize = true)
     {
@@ -116,11 +138,14 @@ class Encrypter implements EncrypterContract
         }
         return $unserialize ? unserialize($decrypted) : $decrypted;
     }
+
     /**
      * Decrypt the given string without unserialization.
      *
-     * @param  string  $payload
+     * @param  string $payload
+     *
      * @return string
+     * @throws \Exception
      */
     public function decryptString($payload)
     {
@@ -137,13 +162,15 @@ class Encrypter implements EncrypterContract
     {
         return hash_hmac('sha256', $iv.$value, $this->key);
     }
+
     /**
      * Get the JSON array from the given payload.
      *
-     * @param  string  $payload
+     * @param  string $payload
+     *
      * @return array
      *
-     * @throws \Very\Contracts\Encryption\DecryptException
+     * @throws \Exception
      */
     protected function getJsonPayload($payload)
     {
@@ -171,11 +198,14 @@ class Encrypter implements EncrypterContract
             $payload['iv'], $payload['value'], $payload['mac']
         );
     }
+
     /**
      * Determine if the MAC for the given payload is valid.
      *
-     * @param  array  $payload
+     * @param  array $payload
+     *
      * @return bool
+     * @throws \Exception
      */
     protected function validMac(array $payload)
     {
