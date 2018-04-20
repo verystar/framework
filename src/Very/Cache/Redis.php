@@ -20,7 +20,7 @@ class Redis
      * @param $node
      * @param $singleton
      *
-     * @return mixed
+     * @return $this
      */
     public static function getInstance($node, $singleton = true)
     {
