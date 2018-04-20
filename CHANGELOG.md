@@ -1,4 +1,7 @@
 # Release Notes
+## v3.0.* (2018-04-20)
+- Redis support set not throw an exception
+
 ## v3.0.* (2017-05-25)
 - Container upgrade to 5.5
 
