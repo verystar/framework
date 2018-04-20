@@ -11,8 +11,10 @@ namespace Very\Cache;
 
 class Redis
 {
+
     private $config;
     private $node;
+    private $throw_exception = true;
 
     /**
      * @param $node
@@ -22,15 +24,20 @@ class Redis
      */
     public static function getInstance($node, $singleton = true)
     {
-        static $cache = array();
+        static $cache = [];
 
         if (!isset($cache[$node]) || !$singleton) {
             $cache[$node]         = new self();
-            $cache[$node]->config = config('redis.' . $node);
+            $cache[$node]->config = config('redis.'.$node);
             $cache[$node]->node   = $node;
         }
 
         return $cache[$node];
+    }
+
+    public function setThrowException($throw_exception)
+    {
+        $this->throw_exception = $throw_exception;
     }
 
     private function connect($reconnect = false)
@@ -76,7 +83,9 @@ class Redis
      */
     private function isConnectionLost(\RedisException $e)
     {
-        if (strpos($e->getMessage(), 'Redis server went away') !== false || strpos($e->getMessage(), 'Connection lost') !== false || strpos($e->getMessage(),
+        if (strpos($e->getMessage(), 'Redis server went away') !== false
+            || strpos($e->getMessage(), 'Connection lost') !== false
+            || strpos($e->getMessage(),
                 'read error on connection') !== false
         ) {
             return true;
@@ -91,22 +100,34 @@ class Redis
      *
      * @return mixed
      *
-     * @throws \RedisException
+     * @throws \Exception
      */
     public function __call($func, $params)
     {
         $reconnect = false;
+        $ret       = null;
         for ($i = 0; $i < 2; ++$i) {
             try {
                 $redis_server = $this->connect($reconnect);
-                $ret          = call_user_func_array(array($redis_server, $func), $params);
+                $ret          = call_user_func_array([$redis_server, $func], $params);
             } catch (\RedisException $e) {
                 logger()->error('Redis exec error',
-                    ["host" => "{$this->config['host']}:{$this->config['port']}", "msg" => $e->getMessage(), "file" => $e->getFile(), 'line' => $e->getLine()]);
+                    [
+                        "host" => "{$this->config['host']}:{$this->config['port']}",
+                        "msg"  => $e->getMessage(),
+                        "file" => $e->getFile(),
+                        'line' => $e->getLine(),
+                    ]);
                 if ($i == 0) {
                     $reconnect = true;
                     continue;
                 } else {
+                    if ($this->throw_exception) {
+                        throw $e;
+                    }
+                }
+            } catch (\Exception $e) {
+                if ($this->throw_exception) {
                     throw $e;
                 }
             }
