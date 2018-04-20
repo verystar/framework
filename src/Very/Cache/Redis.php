@@ -111,13 +111,12 @@ class Redis
                 $redis_server = $this->connect($reconnect);
                 $ret          = call_user_func_array([$redis_server, $func], $params);
             } catch (\RedisException $e) {
-                logger()->error('Redis exec error',
-                    [
-                        "host" => "{$this->config['host']}:{$this->config['port']}",
-                        "msg"  => $e->getMessage(),
-                        "file" => $e->getFile(),
-                        'line' => $e->getLine(),
-                    ]);
+                logger()->error('Redis exec error', [
+                    "host"   => "{$this->config['host']}:{$this->config['port']}",
+                    "msg"    => $e->getMessage(),
+                    "method" => $func,
+                    "params" => $params,
+                ]);
                 if ($i == 0) {
                     $reconnect = true;
                     continue;
@@ -127,6 +126,12 @@ class Redis
                     }
                 }
             } catch (\Exception $e) {
+                logger()->error("Redis error", [
+                    "host"   => "{$this->config['host']}:{$this->config['port']}",
+                    "method" => $func,
+                    "params" => $params,
+                ]);
+
                 if ($this->throw_exception) {
                     throw $e;
                 }
