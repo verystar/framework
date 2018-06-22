@@ -57,8 +57,16 @@ class Curl {
         curl_setopt($this->ch, CURLOPT_CUSTOMREQUEST, $method);
         $is_file    = false;
         $encode_arr = [];
+        $user_agent_params = [];
         if ($post_data) {
             if (is_array($post_data)) {
+                // edit by jinxing.liu@verystar.cn 统一 user_agent 信息 start:
+                if (isset($post_data['http_user_agent_params'])) {
+                    $user_agent_params = (array)$post_data['http_user_agent_params'];
+                    unset($post_data['http_user_agent_params']);
+                }
+                // end;
+
                 foreach ($post_data as $k => $v) {
                     if ("@" != substr($v, 0, 1)) //判断是不是文件上传
                     {
@@ -78,6 +86,14 @@ class Curl {
                 curl_setopt($this->ch, CURLOPT_POSTFIELDS, $post_data);
             }
         }
+
+        // edit by jinxing.liu@verystar.cn 统一 user_agent 信息 start:
+        if (strpos($url, '.verystar.cn')) {
+            array_unshift($user_agent_params, 'php');
+            // 用户访问代理 User-Agent
+            curl_setopt($this->ch, CURLOPT_USERAGENT, 'VeryPay/1.0 (' . implode('; ', $user_agent_params) . ')');
+        }
+        // end
 
         if ($this->http_header) {
 //            $this->http_header = array(
