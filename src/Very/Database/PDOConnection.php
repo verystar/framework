@@ -72,14 +72,9 @@ class PDOConnection
 
     protected $forcePrefix = "";
 
-    public function forceMaster()
+    public function hint($hint)
     {
-        $this->forcePrefix = "/*+TDDL:master()*/";
-    }
-
-    public function forceSlave()
-    {
-        $this->forcePrefix = "/*+TDDL:slave()*/";
+        $this->forcePrefix = $hint;
     }
 
     public function connect($dsn, $username, $password, $options = array())
