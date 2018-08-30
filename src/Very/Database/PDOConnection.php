@@ -74,12 +74,12 @@ class PDOConnection
 
     public function forceMaster()
     {
-        $this->forcePrefix = "/*TDDL:MASTER*/";
+        $this->forcePrefix = "/*+TDDL:master()*/";
     }
 
     public function forceSlave()
     {
-        $this->forcePrefix = "/*TDDL:SLAVE*/";
+        $this->forcePrefix = "/*+TDDL:slave()*/";
     }
 
     public function connect($dsn, $username, $password, $options = array())
