@@ -43,10 +43,10 @@ class Handler implements ExceptionHandlerContract
                 case HttpResponseException::ERR_NOTFOUND_ACTION:
                 case HttpResponseException::ERR_NOTFOUND_VIEW:
                     response()->setStatusCode(404);
-                    echo $e->getMessage();
+                    echo htmlspecialchars($e->getMessage());
                     break;
                 default :
-                    echo 0, ':', $e->getMessage();
+                    echo 0, ':', htmlspecialchars($e->getMessage());
                     break;
             }
         } else {
