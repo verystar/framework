@@ -6,6 +6,7 @@ use Very\Routing\Router;
 
 abstract class Kernel
 {
+
     /**
      * The router instance.
      *
@@ -36,20 +37,19 @@ abstract class Kernel
     {
         $class_name = get_called_class();
         app()->set("namespace", str_replace('\Http\Kernel', '', $class_name));
-
-        foreach ($this->middleware as $middleware) {
-            $instance = app()->make($middleware);
-            $instance->handle();
-        }
-
         $this->router = $router;
+
+        //global middleware
+        $this->router->resolveMiddleware($this->middleware);
+
+        //router middleware
         foreach ($this->routeMiddleware as $key => $middlewares) {
             if (request()->is($key)) {
-                $middlewares = is_array($middlewares) ? $middlewares : [$middlewares];
-                $router->pushMiddleware($middlewares);
+                $this->router->pushMiddleware($middlewares);
                 break;
             }
         }
+        $this->router->resolveMiddleware($this->router->getMiddleware());
 
         $this->router->dispatch();
     }

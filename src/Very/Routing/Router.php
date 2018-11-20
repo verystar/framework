@@ -89,7 +89,8 @@ class Router
         }
 
         $instance = app()->make($controllername);
-        $this->pushMiddleware($instance->getMiddleware())->resolveMiddleware();
+        //controller middleware
+        $this->resolveMiddleware($instance->getMiddleware());
         $action     = $action . 'Action';
         $reflector  = new \ReflectionMethod($instance, $action);
         $parameters = $this->resolveMethodDependencies($reflector);
@@ -118,9 +119,9 @@ class Router
         return $this;
     }
 
-    private function resolveMiddleware()
+    public function resolveMiddleware($middlewares)
     {
-        foreach ($this->middleware as $middleware) {
+        foreach ($middlewares as $middleware) {
             $instance = app()->make($middleware);
             $instance->handle();
         }
