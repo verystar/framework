@@ -2,7 +2,7 @@
 namespace Very\Http\Exception;
 /**
  * Created by PhpStorm.
- * User: 蔡旭东 caixudong@verystar.cn
+ * User: fifsky
  * Date: 15/1/28 下午1:58.
  */
 use RuntimeException;

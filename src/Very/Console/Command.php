@@ -3,7 +3,7 @@ namespace Very\Console;
 
 /**
  * Created by PhpStorm.
- * User: 蔡旭东 caixudong@verystar.cn
+ * User: fifsky
  * Date: 13/01/2017 6:24 PM
  */
 class Command

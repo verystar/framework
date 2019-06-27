@@ -3,7 +3,7 @@ namespace Very\Support\Traits;
 
 /**
  * Created by PhpStorm.
- * User: 蔡旭东 caixudong@verystar.cn
+ * User: fifsky
  * Date: 6/3/16 21:58
  * The singleton trait.
  *

@@ -2,7 +2,7 @@
 
 /**
  * Created by PhpStorm.
- * User: 蔡旭东 caixudong@verystar.cn
+ * User: fifsky
  * Date: 15/9/30 下午2:31
  * $dn = new DEncrypt();
  * $user_id = 56;

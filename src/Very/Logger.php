@@ -4,7 +4,7 @@ namespace Very;
 
 /*
  * Created by PhpStorm.
- * User: 蔡旭东 caixudong@verystar.cn
+ * User: fifsky
  * Date: 15/1/7 下午4:38
  */
 

@@ -1,4 +1,4 @@
-<p align="center"><a href="http://verystar.cn" target="_blank"><img src="https://static.verystar.cn/s/logo.png"></a></p>
+<p align="center"><a href="https://verystar.net" target="_blank"><img src="https://static.verystar.cn/s/logo.png"></a></p>
 <p align="center">
 <a href="https://travis-ci.org/verystar/framework"><img src="https://api.travis-ci.org/verystar/framework.svg" alt="Build Status"></a>
 <a href="https://packagist.org/packages/very/framework"><img src="https://poser.pugx.org/very/framework/d/total.svg" alt="Total Downloads"></a>

@@ -4,7 +4,7 @@ namespace Very;
 
 /*
  * Created by PhpStorm.
- * User: 蔡旭东 caixudong@verystar.cn
+ * User: fifsky
  * Date: 15/2/13 下午11:32
  */
 use Illuminate\Container\Container;
@@ -12,6 +12,7 @@ use Very\Support\Arr;
 
 class Application extends Container
 {
+
     /**
      * The application namespace.
      *
@@ -45,13 +46,18 @@ class Application extends Container
         if ($basePath) {
             $this->setBasePath($basePath);
         }
-        define('ENVIRON', (getenv('APP_ENV') ? getenv('APP_ENV') : 'pro'));
+
+        if (!defined('ENVIRON')) {
+            define('ENVIRON', (getenv('APP_ENV') ? getenv('APP_ENV') : 'pro'));
+        }
+
         /*
          * Bind base library
          */
         $this->singleton('config', function ($app) {
             $config = new Config($app['path.config']);
             date_default_timezone_set($config->get('app.timezone', 'Asia/Shanghai'));
+
             return $config;
         });
 
@@ -62,6 +68,7 @@ class Application extends Container
         $this->singleton('view', function ($app) {
             $env = new View();
             $env->setPath($app['path.views']);
+
             return $env;
         });
 
@@ -82,7 +89,7 @@ class Application extends Container
         $this['path.app'] = rtrim($basePath);
 
         foreach (['config', 'views', 'logs'] as $v) {
-            $this['path.' . $v] = realpath(rtrim($basePath) . '/' . $v) . DIRECTORY_SEPARATOR;
+            $this['path.'.$v] = realpath(rtrim($basePath).'/'.$v).DIRECTORY_SEPARATOR;
         }
 
         $this['namespace.controller'] = '';
@@ -92,7 +99,7 @@ class Application extends Container
 
     public function setPath($key, $path)
     {
-        $this['path.' . $key] = rtrim($path, '/') . DIRECTORY_SEPARATOR;
+        $this['path.'.$key] = rtrim($path, '/').DIRECTORY_SEPARATOR;
 
         return $this;
     }
@@ -155,6 +162,7 @@ class Application extends Container
     public function getProvider($provider)
     {
         $name = is_string($provider) ? $provider : get_class($provider);
+
         return Arr::first($this->serviceProviders, function ($value) use ($name) {
             return $value instanceof $name;
         });
@@ -226,6 +234,7 @@ class Application extends Container
 
     /**
      * Run the given array of bootstrap classes.
+     *
      * @return void
      */
     public function bootstrapWith()
