@@ -23,6 +23,7 @@ class Curl {
     private $is_stat = true; //是否监控统计
     private $referer = NULL;
     private $curl_error;
+    private $error_info;
     private $body;
     private $header;
     private $is_log = false;
@@ -106,6 +107,7 @@ class Curl {
         $this->body       = curl_exec($this->ch);
         $this->curl_error = curl_errno($this->ch);
         $this->header     = curl_getinfo($this->ch);
+        $this->error_info = curl_error($this->ch);
         $this->log($url);
         if (is_resource($this->ch)) {
             curl_close($this->ch);
@@ -222,7 +224,8 @@ class Curl {
             '状态'     => $this->getStatusCode(), // http_code
             '请求耗时'   => $this->getRequestTime(), //request_time
             '错误码'    => $this->getError(), //errno
-            'Header' => $this->getHeader(), //errno
+            'Header' => $this->getHeader(), //header
+            'ErrInfo'=> $this->getErrorInfo()//error info
         ];
     }
 
@@ -321,6 +324,10 @@ class Curl {
 
     public function getError() {
         return $this->curl_error;
+    }
+
+    public function getErrorInfo(){
+        return $this->error_info;
     }
 
     public function getBody() {
