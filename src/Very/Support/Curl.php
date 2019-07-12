@@ -11,12 +11,6 @@ namespace Very\Support;
 
 use Very\Contracts\Support\Curlable;
 
-/**
- * Created by PhpStorm.
- * User: 蔡旭东 fifsky@gmail.com
- * Date: 14-7-21
- * Time: 下午2:18
- */
 class Curl implements Curlable {
 
     private $ch;
