@@ -9,13 +9,15 @@
 
 namespace Very\Support;
 
+use Very\Contracts\Support\Curlable;
+
 /**
  * Created by PhpStorm.
  * User: 蔡旭东 fifsky@gmail.com
  * Date: 14-7-21
  * Time: 下午2:18
  */
-class Curl {
+class Curl implements Curlable {
 
     private $ch;
     private $timeout = 5;
@@ -31,6 +33,7 @@ class Curl {
     private $url;
     private $method;
     private $post_data;
+    private $post_using_json = false;
 
     /**
      * Verify SSL Cert.
@@ -60,7 +63,7 @@ class Curl {
         $encode_arr = [];
         $user_agent_params = [];
         if ($post_data) {
-            if (is_array($post_data)) {
+            if (is_array($post_data) && !$this->post_using_json) {
                 // 统一 user_agent 信息 start:
                 if (isset($post_data['http_user_agent_params'])) {
                     $user_agent_params = (array)$post_data['http_user_agent_params'];
@@ -82,7 +85,9 @@ class Curl {
 
             if ($is_file) {
                 curl_setopt($this->ch, CURLOPT_POSTFIELDS, $encode_arr);
-            } else {
+            } elseif ($this->post_using_json) {
+                curl_setopt($this->ch, CURLOPT_POSTFIELDS, json_encode($post_data));
+            }  else {
                 $post_data = is_array($post_data) ? http_build_query($post_data) : $post_data;
                 curl_setopt($this->ch, CURLOPT_POSTFIELDS, $post_data);
             }
@@ -389,6 +394,12 @@ class Curl {
 
     public function setLog($is_log) {
         $this->is_log = $is_log;
+        return $this;
+    }
+
+    public function setPostUsingJson()
+    {
+        $this->post_using_json = true;
         return $this;
     }
 }
