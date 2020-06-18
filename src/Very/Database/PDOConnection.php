@@ -112,7 +112,7 @@ class PDOConnection
     /**
      * Set the reconnect instance on the connection.
      *
-     * @param  callable $reconnector
+     * @param callable $reconnector
      *
      * @return $this
      */
@@ -142,10 +142,10 @@ class PDOConnection
     /**
      * Create a new PDO connection instance.
      *
-     * @param  string $dsn
-     * @param  string $username
-     * @param  string $password
-     * @param  array  $options
+     * @param string $dsn
+     * @param string $username
+     * @param string $password
+     * @param array  $options
      *
      * @return \PDO
      */
@@ -158,7 +158,7 @@ class PDOConnection
     /**
      * Determine if the given exception was caused by a lost connection.
      *
-     * @param  \Exception $e
+     * @param \Exception $e
      *
      * @return bool
      */
@@ -187,10 +187,10 @@ class PDOConnection
     /**
      * Handle a query exception that occurred during query execution.
      *
-     * @param  \Very\Database\QueryException $e
-     * @param  string                        $query
-     * @param  array                         $bindings
-     * @param  \Closure                      $callback
+     * @param \Very\Database\QueryException $e
+     * @param string                        $query
+     * @param array                         $bindings
+     * @param \Closure                      $callback
      *
      * @return mixed
      *
@@ -210,7 +210,7 @@ class PDOConnection
     /**
      * Get the PDO options based on the configuration.
      *
-     * @param  array $options
+     * @param array $options
      *
      * @return array
      */
@@ -339,8 +339,8 @@ class PDOConnection
     /**
      * Bind values to their parameters in the given statement.
      *
-     * @param  \PDOStatement $statement
-     * @param  array         $bindings
+     * @param \PDOStatement $statement
+     * @param array         $bindings
      *
      * @return void
      */
@@ -371,9 +371,9 @@ class PDOConnection
     /**
      * Run a SQL statement.
      *
-     * @param  string   $query
-     * @param  array    $bindings
-     * @param  \Closure $callback
+     * @param string   $query
+     * @param array    $bindings
+     * @param \Closure $callback
      *
      * @return mixed
      *
@@ -404,10 +404,10 @@ class PDOConnection
     /**
      * Handle a query exception.
      *
-     * @param  \Very\Database\QueryException $e
-     * @param  string                        $query
-     * @param  array                         $bindings
-     * @param  \Closure                      $callback
+     * @param \Very\Database\QueryException $e
+     * @param string                        $query
+     * @param array                         $bindings
+     * @param \Closure                      $callback
      *
      * @return mixed
      */
@@ -422,9 +422,9 @@ class PDOConnection
     /**
      * Run a SQL statement and log its execution context.
      *
-     * @param  string   $query
-     * @param  array    $bindings
-     * @param  \Closure $callback
+     * @param string   $query
+     * @param array    $bindings
+     * @param \Closure $callback
      *
      * @return mixed
      *
@@ -445,7 +445,7 @@ class PDOConnection
             $result = $this->handleQueryException(
                 $e, $query, $bindings, $callback
             );
-            logger()->error('SQL Error', [$query, $bindings]);
+            logger()->error('SQL Error', ["code" => $e->getCode(), "msg" => $e->getMessage(), "trace" => $e->getTrace()]);
             mstat()->set(1, 'BUG错误', 'SQL执行错误', $query, $e->getMessage(), 100);
         }
 
@@ -480,8 +480,8 @@ class PDOConnection
     /**
      * Execute an SQL statement and return the boolean result.
      *
-     * @param  string $query
-     * @param  array  $bindings
+     * @param string $query
+     * @param array  $bindings
      *
      * @return \PDOStatement
      */
@@ -508,8 +508,8 @@ class PDOConnection
     /**
      * Run an SQL statement and get the number of rows affected.
      *
-     * @param  string $query
-     * @param  array  $bindings
+     * @param string $query
+     * @param array  $bindings
      *
      * @return int
      */
@@ -522,9 +522,9 @@ class PDOConnection
     /**
      * Log a query in the connection's query log.
      *
-     * @param  string     $query
-     * @param  array      $bindings
-     * @param  float|null $time
+     * @param string     $query
+     * @param array      $bindings
+     * @param float|null $time
      *
      * @return void
      */
@@ -588,7 +588,7 @@ class PDOConnection
     /**
      * Get the elapsed time since a given starting point.
      *
-     * @param  float $start
+     * @param float $start
      *
      * @return float
      */
