@@ -7,6 +7,7 @@ namespace Very\Http;
  * User: fifsky
  * Date: 15/2/16 下午5:29.
  */
+
 use Very\Support\Str;
 use Very\Support\Traits\Singleton;
 
@@ -14,6 +15,27 @@ class Request
 {
     protected $params = [];
     use Singleton;
+
+    protected $headers = [];
+
+    public function __construct()
+    {
+        $this->initHeader();
+    }
+
+    private function initHeader()
+    {
+        $headers = [];
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $name           = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                $headers[strtolower($name)] = $value;
+            } elseif (\in_array($name, ['CONTENT_TYPE', 'CONTENT_LENGTH', 'CONTENT_MD5'], true)) {
+                $headers[strtolower($name)] = $value;
+            }
+        }
+        $this->headers = $headers;
+    }
 
     private function fetchArray($array, $index = '', $default = null)
     {
@@ -37,6 +59,17 @@ class Request
     public function getParams()
     {
         return $this->params;
+    }
+
+    public function header($key, $default = null)
+    {
+        $key = strtolower($key);
+        return isset($this->headers[$key]) ? $this->headers[$key] : $default;
+    }
+
+    public function headers()
+    {
+        return $this->headers;
     }
 
     public function get($index = '', $default = null)
