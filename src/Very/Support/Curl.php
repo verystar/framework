@@ -16,6 +16,7 @@ class Curl implements Curlable {
     private $ch;
     private $timeout = 5;
     private $is_ajax = false;
+    //@deprecated
     private $is_stat = true; //是否监控统计
     private $referer = NULL;
     private $curl_error;
@@ -165,40 +166,6 @@ class Curl implements Curlable {
     //监控统计
     private function log($url)
     {
-        if ($this->is_stat) {
-            $stat_url_arr = parse_url($url);
-
-            if ($stat_url_arr['host'] === 'wx.qlogo.cn') {
-                $stat_url_arr['path'] = '/mmopen';
-            }
-
-            $stat_url = $stat_url_arr['host'].$stat_url_arr['path'];
-
-            if ($error_no = curl_errno($this->ch)) {
-                $curl_error_info = array(
-                    '3' => '网址格式不正确(3)',
-                    '6' => 'DNS解析失败(6)',
-                    '28' => 'HTTP请求超时(28)',
-                );
-                $stat_name = isset($curl_error_info[$error_no]) ? $curl_error_info[$error_no] : '错误('.$error_no.')';
-                //$header = curl_getinfo($this->ch);
-                //$v4 = rand_sample(print_r($header,true),100);//百分之一的采样
-                mstat()->set(1, 'CURL请求', $stat_name, $stat_url_arr['host'], $url);
-            } else {
-                mstat()->set(1, 'CURL请求', '成功', $stat_url_arr['host']);
-            }
-            if ($this->getStatusCode() == 200) {
-                mstat()->set(1, 'CURL状态', $this->getStatusCode(), $stat_url_arr['host']);
-            } else {
-                mstat()->set(1, 'CURL状态', $this->getStatusCode(), $stat_url_arr['host'], $url);
-            }
-
-            $diff_time = $this->getRequestTime();
-            $diff_time_str = mstat()->formatTime($diff_time);
-
-            mstat()->set(1, 'CURL接口效率', $diff_time_str, $stat_url."($error_no)", $_SERVER['PHP_SELF']);
-        }
-
         if ($this->is_log) {
             //记录LOG
             $log = logger();

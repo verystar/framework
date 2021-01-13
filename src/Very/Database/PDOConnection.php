@@ -97,14 +97,7 @@ class PDOConnection
                 }
             }
 
-            $connection_time = $this->getElapsedTime($start_time);
-            //监控SQL连接效率
-            if ($connection_time) {
-                mstat()->set(1, 'SQL连接效率', mstat()->formatTime($connection_time), $dsn);
-            }
-        } catch (PDOException $e) {
-            //监控SQL连接错误
-            mstat()->set(1, 'BUG错误', 'SQL连接错误', $dsn, $e->getMessage());
+        } catch (\PDOException $e) {
             throw new \PDOException("DB connect error for dns $dsn:" . $e->getMessage());
         }
     }
@@ -446,15 +439,9 @@ class PDOConnection
                 $e, $query, $bindings, $callback
             );
             logger()->error('SQL Error', ["code" => $e->getCode(), "msg" => $e->getMessage(), "trace" => $e->getTrace()]);
-            mstat()->set(1, 'BUG错误', 'SQL执行错误', $query, $e->getMessage(), 100);
         }
 
         $execute_time = $this->getElapsedTime($start);
-        //监控SQL执行效率
-        if ($execute_time) {
-            mstat()->set(1, 'SQL执行效率', mstat()->formatTime($execute_time), $query);
-        }
-
         // Once we have run the query we will calculate the time that it took to run and
         // then log the query, bindings, and execution time so we will report them on
         // the event that the developer needs them. We'll log time in milliseconds.
