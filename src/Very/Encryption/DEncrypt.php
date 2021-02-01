@@ -33,6 +33,13 @@ class DEncrypt
 
     private $fixed_code = '61';
     private $length = 10;
+    //随机码长度范围1-4
+    private $randlen = 4;
+
+    public function setRandomLen($length)
+    {
+        $this->randlen = $length;
+    }
 
     public function setLength($length)
     {
@@ -59,7 +66,7 @@ class DEncrypt
 //        $salt_rand = mt_rand(0, 9);
         //由MOD10算法生成校验码
         $salt_rand = $this->generateNumber($user_id);
-        $rand      = substr(str_shuffle($this->salt[$salt_rand]), 0, 4);
+        $rand      = substr(str_shuffle($this->salt[$salt_rand]), 0, $this->randlen);
 
         $str = $this->fixed_code . $salt_rand;
 
@@ -99,7 +106,7 @@ class DEncrypt
         $fixlen    = strlen($this->fixed_code);
         $user_id   = substr($str, -$this->length);
         $salt_rand = (int)substr($str, $fixlen, 1);
-        $rand      = substr($str, $fixlen + 1, 4);
+        $rand      = substr($str, $fixlen + 1, $this->randlen);
 
         $len  = strlen($user_id);
         $rlen = strlen($rand);
