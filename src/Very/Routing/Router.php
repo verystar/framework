@@ -42,7 +42,20 @@ class Router
     public function dispatch()
     {
         $uri    = request()->path();
-        $params = $uri == '/' ? [] : explode('/', $uri);
+        $tmpParams = $uri == '/' ? [] : explode('/', $uri);
+        $l = count($tmpParams);
+
+        $params = [];
+        for ($i = 0; $i < $l; $i++) {
+            $key = $tmpParams[$i];
+            if ($key[0] === "_") {
+                $key = substr($key, 1);
+                $i++;
+                request()->setParam($key, $tmpParams[$i]);
+            }else {
+                $params[] = $key;
+            }
+        }
 
         if ($params) {
             $last_params = array_pop($params);
