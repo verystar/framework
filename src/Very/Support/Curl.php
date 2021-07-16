@@ -37,6 +37,7 @@ class Curl implements Curlable {
     private $ssl_verifypeer = false;
     private $ssl_cert_file = '';
     private $ssl_key_file = '';
+    private $ssl_version = '';
 
     /**
      * @param        $url
@@ -286,6 +287,12 @@ class Curl implements Curlable {
             curl_setopt($ch, CURLOPT_SSLKEYTYPE, 'PEM');
             curl_setopt($ch, CURLOPT_SSLKEY, $this->ssl_key_file);
         }
+
+        if(!empty($this->ssl_version)) {
+            $version = $this->ssl_version;
+            curl_setopt($ch, CURLOPT_SSL_CIPHER_LIST, $version);
+            $this->ssl_version = '';
+        }
     }
 
     public function getError() {
@@ -298,6 +305,10 @@ class Curl implements Curlable {
 
     public function getBody() {
         return $this->body;
+    }
+
+    public function setSslVersion($version) {
+        return $this->ssl_version = $version;
     }
 
     public function setHeader($headers) {
