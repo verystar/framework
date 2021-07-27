@@ -13,7 +13,7 @@
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "illuminate/container": "5.5.*",
-    "psr/container": "~1.0",
+    "psr/container": "1.0.0",
     "symfony/debug": "~3.3",
     "monolog/monolog": "~1.17"
   },
