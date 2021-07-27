@@ -268,11 +268,11 @@ class Application extends Container
     /**
      * alias.
      *
-     * @param $key
+     * @param string $key
      *
      * @return mixed
      */
-    public function get($key)
+    public function get(string $key)
     {
         return $this->__get($key);
     }
