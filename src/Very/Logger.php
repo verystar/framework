@@ -9,6 +9,7 @@ namespace Very;
  */
 
 use Monolog\Logger as MonologLogger;
+use Monolog\Formatter\JsonFormatter;
 use Psr\Log\LoggerInterface as PsrLoggerInterface;
 use Monolog\Formatter\LineFormatter;
 use InvalidArgumentException;
@@ -51,11 +52,15 @@ class Logger implements PsrLoggerInterface
      * @param     $path
      * @param int $log_max_files
      */
-    public function __construct($path, $log_max_files = 7, $name = 'log')
+    public function __construct($path, $log_max_files = 7, $name = 'log',$formatter = "line")
     {
         $log_max_files          = $log_max_files ? $log_max_files : 7;
         $this->monolog          = new MonologLogger($name);
-        $this->defaultFormatter = new LineFormatter(null, null, true, true);
+        if($formatter === "json") {
+            $this->defaultFormatter = new LineFormatter(null, null, true, true);
+        }else {
+            $this->defaultFormatter = new JsonFormatter();
+        }
         $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'log.log', $log_max_files);
     }
 

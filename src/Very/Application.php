@@ -63,11 +63,11 @@ class Application extends Container
         });
 
         $this->singleton('logger', function ($app) {
-            return new Logger($app['path.logs'], $app['config']['app.log_max_files']);
+            return new Logger($app['path.logs'], $app['config']['app.log_max_files'],"log", $app['config']['app.log_format']);
         });
 
         $this->singleton('access_logger', function ($app) {
-            return new Logger($app['path.logs'], $app['config']['app.log_max_files'], "access");
+            return new Logger($app['path.logs'], $app['config']['app.log_max_files'], "access", $app['config']['app.log_format']);
         });
 
         $this->singleton('view', function ($app) {
