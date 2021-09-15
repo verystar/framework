@@ -57,9 +57,9 @@ class Logger implements PsrLoggerInterface
         $log_max_files          = $log_max_files ? $log_max_files : 7;
         $this->monolog          = new MonologLogger($name);
         if($formatter === "json") {
-            $this->defaultFormatter = new LineFormatter(null, null, true, true);
-        }else {
             $this->defaultFormatter = new JsonFormatter();
+        }else {
+            $this->defaultFormatter = new LineFormatter(null, null, true, true);
         }
         $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'log.log', $log_max_files);
     }
