@@ -7,7 +7,7 @@ if (!function_exists('app_path')) {
     /**
      * Get the path to the application folder.
      *
-     * @param  string $path
+     * @param string $path
      *
      * @return string
      */
@@ -21,9 +21,9 @@ if (!function_exists('url')) {
     /**
      * Generate a url for the application.
      *
-     * @param  string $path
-     * @param  mixed  $parameters
-     * @param  bool   $secure
+     * @param string $path
+     * @param mixed  $parameters
+     * @param bool   $secure
      *
      * @return \Very\Routing\UrlGenerator|string
      */
@@ -142,7 +142,7 @@ if (!function_exists('e')) {
     /**
      * Escape HTML special characters in a string.
      *
-     * @param  string $value
+     * @param string $value
      *
      * @return string
      */
@@ -483,9 +483,9 @@ if (!function_exists('array_get')) {
     /**
      * Get an item from an array using "dot" notation.
      *
-     * @param  \ArrayAccess|array $array
-     * @param  string             $key
-     * @param  mixed              $default
+     * @param \ArrayAccess|array $array
+     * @param string             $key
+     * @param mixed              $default
      *
      * @return mixed
      */
@@ -502,9 +502,9 @@ if (!function_exists('array_set')) {
      *
      * If no key is given to the method, the entire array will be replaced.
      *
-     * @param  array  $array
-     * @param  string $key
-     * @param  mixed  $value
+     * @param array  $array
+     * @param string $key
+     * @param mixed  $value
      *
      * @return array
      */
@@ -518,8 +518,8 @@ if (!function_exists('array_has')) {
     /**
      * Check if an item or items exist in an array using "dot" notation.
      *
-     * @param  \ArrayAccess|array $array
-     * @param  string|array       $keys
+     * @param \ArrayAccess|array $array
+     * @param string|array       $keys
      *
      * @return bool
      */
@@ -533,8 +533,8 @@ if (!function_exists('array_forget')) {
     /**
      * Remove one or many array items from a given array using "dot" notation.
      *
-     * @param  array        $array
-     * @param  array|string $keys
+     * @param array        $array
+     * @param array|string $keys
      *
      * @return void
      */
@@ -548,7 +548,7 @@ if (!function_exists('value')) {
     /**
      * Return the default value of the given value.
      *
-     * @param  mixed $value
+     * @param mixed $value
      *
      * @return mixed
      */
@@ -562,7 +562,7 @@ if (!function_exists('collect')) {
     /**
      * Create a collection from the given value.
      *
-     * @param  mixed $value
+     * @param mixed $value
      *
      * @return \Very\Support\Collection
      */
@@ -576,7 +576,7 @@ if (!function_exists('array_wrap')) {
     /**
      * If the given value is not an array, wrap it in one.
      *
-     * @param  mixed $value
+     * @param mixed $value
      *
      * @return array
      */
@@ -590,9 +590,9 @@ if (!function_exists('data_get')) {
     /**
      * Get an item from an array or object using "dot" notation.
      *
-     * @param  mixed        $target
-     * @param  string|array $key
-     * @param  mixed        $default
+     * @param mixed        $target
+     * @param string|array $key
+     * @param mixed        $default
      *
      * @return mixed
      */
@@ -634,10 +634,10 @@ if (!function_exists('data_set')) {
     /**
      * Set an item on an array or object using dot notation.
      *
-     * @param  mixed        $target
-     * @param  string|array $key
-     * @param  mixed        $value
-     * @param  bool         $overwrite
+     * @param mixed        $target
+     * @param string|array $key
+     * @param mixed        $value
+     * @param bool         $overwrite
      *
      * @return mixed
      */
@@ -796,8 +796,8 @@ if (!function_exists('app')) {
     /**
      * Get the available container instance.
      *
-     * @param  string $abstract
-     * @param  array  $parameters
+     * @param string $abstract
+     * @param array  $parameters
      *
      * @return mixed|\Very\Application
      */
@@ -840,8 +840,8 @@ if (!function_exists('config')) {
      *
      * If an array is passed as the key, we will assume you want to set an array of values.
      *
-     * @param  array|string $key
-     * @param mixed         $default
+     * @param array|string $key
+     * @param mixed        $default
      *
      * @return mixed | \Very\Config
      */
@@ -875,6 +875,19 @@ if (!function_exists('logger')) {
         }
 
         app('logger')->info($message, $context);
+    }
+}
+
+
+if (!function_exists('access_logger')) {
+    /**
+     * Log a access logger to the logs.
+     *
+     * @return \Very\Logger
+     */
+    function access_logger()
+    {
+        return app('access_logger');
     }
 }
 
@@ -971,9 +984,9 @@ if (!function_exists('trans')) {
     /**
      * Translate the given message.
      *
-     * @param  string $key
-     * @param  array  $replace
-     * @param  string $locale
+     * @param string $key
+     * @param array  $replace
+     * @param string $locale
      *
      * @return \Very\Translation\Translator|string
      */
@@ -1070,9 +1083,9 @@ if (!function_exists('object_get')) {
     /**
      * Get an item from an object using "dot" notation.
      *
-     * @param  object $object
-     * @param  string $key
-     * @param  mixed  $default
+     * @param object $object
+     * @param string $key
+     * @param mixed  $default
      *
      * @return mixed
      */
@@ -1098,8 +1111,8 @@ if (!function_exists('tap')) {
     /**
      * Call the given Closure with the given value then return the value.
      *
-     * @param  mixed    $value
-     * @param  callable $callback
+     * @param mixed    $value
+     * @param callable $callback
      *
      * @return mixed
      */
@@ -1127,7 +1140,7 @@ if (!function_exists('with')) {
     /**
      * Return the given object. Useful for chaining.
      *
-     * @param  mixed $object
+     * @param mixed $object
      *
      * @return mixed
      */

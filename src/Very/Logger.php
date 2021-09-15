@@ -26,6 +26,9 @@ class Logger implements PsrLoggerInterface
      */
     protected $monolog;
 
+
+    protected $defaultFormatter;
+
     /**
      * The Log levels.
      *
@@ -48,10 +51,11 @@ class Logger implements PsrLoggerInterface
      * @param     $path
      * @param int $log_max_files
      */
-    public function __construct($path, $log_max_files = 7)
+    public function __construct($path, $log_max_files = 7, $name = 'log')
     {
-        $log_max_files = $log_max_files ? $log_max_files : 7;
-        $this->monolog = new MonologLogger('log');
+        $log_max_files          = $log_max_files ? $log_max_files : 7;
+        $this->monolog          = new MonologLogger($name);
+        $this->defaultFormatter = new LineFormatter(null, null, true, true);
         $this->useDailyFiles(rtrim($path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'log.log', $log_max_files);
     }
 
@@ -269,12 +273,22 @@ class Logger implements PsrLoggerInterface
     }
 
     /**
+     * Set the logger formatter
+     *
+     * @param $formatter
+     */
+    public function setDefaultFormatter($formatter)
+    {
+        $this->defaultFormatter = $formatter;
+    }
+
+    /**
      * Get a defaut Monolog formatter instance.
      *
      * @return \Monolog\Formatter\LineFormatter
      */
     protected function getDefaultFormatter()
     {
-        return new LineFormatter(null, null, true, true);
+        return $this->defaultFormatter;
     }
 }

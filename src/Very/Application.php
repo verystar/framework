@@ -7,6 +7,7 @@ namespace Very;
  * User: fifsky
  * Date: 15/2/13 下午11:32
  */
+
 use Illuminate\Container\Container;
 use Very\Support\Arr;
 
@@ -65,6 +66,10 @@ class Application extends Container
             return new Logger($app['path.logs'], $app['config']['app.log_max_files']);
         });
 
+        $this->singleton('access_logger', function ($app) {
+            return new Logger($app['path.logs'], $app['config']['app.log_max_files'], "access");
+        });
+
         $this->singleton('view', function ($app) {
             $env = new View();
             $env->setPath($app['path.views']);
@@ -89,7 +94,7 @@ class Application extends Container
         $this['path.app'] = rtrim($basePath);
 
         foreach (['config', 'views', 'logs'] as $v) {
-            $this['path.'.$v] = realpath(rtrim($basePath).'/'.$v).DIRECTORY_SEPARATOR;
+            $this['path.' . $v] = realpath(rtrim($basePath) . '/' . $v) . DIRECTORY_SEPARATOR;
         }
 
         $this['namespace.controller'] = '';
@@ -99,7 +104,7 @@ class Application extends Container
 
     public function setPath($key, $path)
     {
-        $this['path.'.$key] = rtrim($path, '/').DIRECTORY_SEPARATOR;
+        $this['path.' . $key] = rtrim($path, '/') . DIRECTORY_SEPARATOR;
 
         return $this;
     }
@@ -116,8 +121,8 @@ class Application extends Container
     /**
      * Alias a type to a different name.
      *
-     * @param  string $abstract
-     * @param  string $alias
+     * @param string $abstract
+     * @param string $alias
      *
      * @return void
      */
@@ -155,7 +160,7 @@ class Application extends Container
     /**
      * Get the registered service provider instance if it exists.
      *
-     * @param  \Very\Support\ServiceProvider|string $provider
+     * @param \Very\Support\ServiceProvider|string $provider
      *
      * @return \Very\Support\ServiceProvider|null
      */
@@ -171,7 +176,7 @@ class Application extends Container
     /**
      * Resolve a service provider instance from the class name.
      *
-     * @param  string $provider
+     * @param string $provider
      *
      * @return \Very\Support\ServiceProvider
      */
@@ -183,7 +188,7 @@ class Application extends Container
     /**
      * Mark the given provider as registered.
      *
-     * @param  \Very\Support\ServiceProvider $provider
+     * @param \Very\Support\ServiceProvider $provider
      *
      * @return void
      */
@@ -197,9 +202,9 @@ class Application extends Container
     /**
      * Register a service provider with the application.
      *
-     * @param  \Very\Support\ServiceProvider|string $provider
-     * @param  array                                $options
-     * @param  bool                                 $force
+     * @param \Very\Support\ServiceProvider|string $provider
+     * @param array                                $options
+     * @param bool                                 $force
      *
      * @return \Very\Support\ServiceProvider
      */
